@@ -6,6 +6,8 @@ Use the [build checklist](06-build-checklist.md) as the authoritative scope trac
 
 ## Working now
 
+- Vercel Firebase Admin credential support through the server-only `FIREBASE_ADMIN_CREDENTIALS` JSON secret, with project validation, redacted configuration errors, preserved local ADC, and emulator isolation. See [deployment guide](33-vercel-deployment.md); actual production access still needs deployment verification.
+
 - Next.js/React application with a UI-independent TypeScript core, Firebase Auth, server-verified sessions, CSRF/origin protection, and server-owned memberships.
 - Super-admin Workspace access: role-scoped legal/accounting invitations, claims, resend/revoke records, membership revocation/reactivation, session invalidation, revisions, idempotency, and audit history.
 - Shared artwork records with metadata, search, archiving, private originals/previews, hashes, authorized downloads, asset validation, and audit events.

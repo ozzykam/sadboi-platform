@@ -1281,8 +1281,8 @@ td small {
   display: flex;
   flex-direction: column;
   padding: 35px 7vw 24px;
-  background:
-    radial-gradient(ellipse at 85% 40%, #3b242c, transparent 65%), var(--canvas);
+  background: var(--canvas) url("/images/home/landing-page-hero-bg.png") center /
+    cover no-repeat;
 }
 .entrance-top {
   display: flex;
@@ -1309,15 +1309,31 @@ td small {
   font-size: 9px;
   letter-spacing: 1.8px;
 }
-.entrance-content {
-  padding: 80px 0;
+.entrance-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(150px, 20vw, 280px);
+  align-items: center;
+  gap: clamp(32px, 5vw, 72px);
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: clamp(48px, 6vw, 80px) 0;
   flex: 1;
+}
+.entrance-content {
+  min-width: 0;
+}
+.entrance-logo {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
 }
 .entrance h1 {
   font:
-    normal clamp(66px, 10vw, 150px)/0.95 Georgia,
+    normal clamp(56px, 7.5vw, 112px)/1 Georgia,
     serif;
-  letter-spacing: -5px;
+  letter-spacing: -0.045em;
 }
 .entrance-rule {
   width: 55px;
@@ -1341,6 +1357,21 @@ td small {
   line-height: 1.7;
   color: #c3b3b5;
   letter-spacing: 0.6px;
+}
+@media (max-width: 760px) {
+  .entrance-hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 40px;
+    padding: 40px 0 56px;
+  }
+  .entrance-logo {
+    grid-row: 1;
+    justify-self: center;
+    width: 140px;
+  }
+  .entrance h1 {
+    font-size: clamp(48px, 10vw, 76px);
+  }
 }
 .locked-screen {
   max-width: 650px;
@@ -2243,19 +2274,15 @@ td small {
   z-index: 10;
 }
 .shop-logo {
-  font:
-    bold 30px/1 Georgia,
-    serif;
-  letter-spacing: -2px;
-  color: #302a2d;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
 }
-.shop-logo span {
-  font:
-    10px Arial,
-    sans-serif;
-  letter-spacing: 1.5px;
-  margin-left: 8px;
-  color: #92747a;
+.shop-logo-image {
+  display: block;
+  width: auto;
+  height: 48px;
+  object-fit: contain;
 }
 .shop-header nav {
   display: flex;
@@ -2504,9 +2531,6 @@ td small {
   }
   .shop-header nav {
     display: none;
-  }
-  .shop-logo {
-    font-size: 27px;
   }
   .shop-hero {
     padding: 80px 22px 88px;

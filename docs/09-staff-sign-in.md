@@ -45,6 +45,8 @@ Local server credentials were configured through `gcloud auth application-defaul
 
 A deployed server must use a suitable service identity with only the Firebase Auth/Firestore permissions it needs. Never copy a developer's local credentials into a deployment.
 
+Vercel support now accepts the complete service-account JSON through the server-only `FIREBASE_ADMIN_CREDENTIALS` environment variable. It validates the project and key format without logging the secret; emulator mode ignores live credentials. See [Vercel deployment](33-vercel-deployment.md) for the exact build/environment settings and production verification steps. Local gcloud fallback remains available when the variable is unset outside Vercel.
+
 ## Staff access model
 
 The one-time provisioning command is:

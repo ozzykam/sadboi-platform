@@ -17,6 +17,7 @@ import {
   type CheckoutAttempt,
 } from "@/lib/store-checkout-client";
 import Image from "next/image";
+import landscapeLogo from "../../public/images/logo-landscape.webp";
 import Link from "next/link";
 import { ArrowLeft, Eye, House, ShoppingBag } from "lucide-react";
 import type { PublicCatalogItem } from "@/server/public-catalog";
@@ -162,8 +163,14 @@ export function ShopCatalog({ products }: { products: PublicCatalogItem[] }) {
   return (
     <>
       <header className="shop-header">
-        <Link href="/" className="shop-logo">
-          sadboi<span>/ studio</span>
+        <Link href="/" className="shop-logo" aria-label="Sadboi Studios home">
+          <Image
+            src={landscapeLogo}
+            alt="Sadboi Studios"
+            className="shop-logo-image"
+            sizes="91px"
+            loading="eager"
+          />
         </Link>
         <nav>
           <a href="#shop-products">Shop</a>

@@ -10,6 +10,8 @@ The platform includes connected staff, artwork, inventory, purchasing/production
 
 Source repository: [ozzykam/sadboi-platform](https://github.com/ozzykam/sadboi-platform) (private), with `main` as the default branch. Local environment files, credentials, dependencies, generated builds, and logs are excluded from Git; `web-app/.env.example` and the pnpm lockfile are included. GitHub stores the source; application hosting is a separate setup step.
 
+For hosting, use the [Vercel deployment guide](docs/33-vercel-deployment.md). The server accepts the complete service-account JSON through the private `FIREBASE_ADMIN_CREDENTIALS` environment variable; local development can continue using gcloud credentials.
+
 ## Start the application
 
 From this directory, run pnpm install --frozen-lockfile, then pnpm dev. This machine is configured for live staff sign-in at http://127.0.0.1:3100/sign-in. See [staff onboarding and setup](docs/09-staff-sign-in.md). The original local artwork preview remains available through explicit development preview mode. Run pnpm check for type checking, lint, domain tests, and the production build; pnpm test:auth runs authentication checks, and pnpm test:artwork checks authentication plus shared artwork and private images. pnpm test:inventory includes those checks plus products, stock, and transfers. pnpm test:purchasing includes all of those plus suppliers, orders, and delivery inspection.
