@@ -1,0 +1,32 @@
+{
+  "name": "sadboi-platform",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.28.1",
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @sadboi/web dev",
+    "build": "pnpm --filter @sadboi/web build",
+    "start": "pnpm --filter @sadboi/web start",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm --filter @sadboi/web lint",
+    "test": "pnpm --filter @sadboi/core test",
+    "check": "pnpm typecheck && pnpm lint && pnpm test && pnpm build",
+    "firebase": "firebase",
+    "emulators": "firebase emulators:start --only auth,firestore,storage --project demo-sadboi-platform",
+    "test:rules": "firebase emulators:exec --only auth,firestore,storage --project demo-sadboi-platform \"node --test scripts/firebase-rules.test.mjs\"",
+    "test:auth": "firebase emulators:exec --only auth,firestore --project demo-sadboi-platform \"node scripts/auth-integration.mjs\"",
+    "test:workspace": "firebase emulators:exec --only auth,firestore --project demo-sadboi-platform \"node scripts/auth-integration.mjs --workspace\"",
+    "test:contacts": "firebase emulators:exec --only auth,firestore --project demo-sadboi-platform \"node scripts/auth-integration.mjs --contacts\"",
+    "test:store-orders": "firebase emulators:exec --only auth,firestore --project demo-sadboi-platform \"node scripts/auth-integration.mjs --store-orders\"",
+    "staff:bootstrap": "node scripts/bootstrap-staff.cjs",
+    "test:artwork": "firebase emulators:exec --only auth,firestore,storage --project demo-sadboi-platform \"node scripts/auth-integration.mjs --artworks\"",
+    "test:inventory": "firebase emulators:exec --only auth,firestore,storage --project demo-sadboi-platform \"node scripts/auth-integration.mjs --artworks --inventory\"",
+    "test:purchasing": "firebase emulators:exec --only auth,firestore,storage --project demo-sadboi-platform \"node scripts/auth-integration.mjs --artworks --inventory --purchasing\""
+  },
+  "devDependencies": {
+    "firebase-tools": "15.30.1"
+  }
+}

@@ -1,0 +1,96 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "input.status", "order": "ASCENDING" },
+        { "fieldPath": "input.publication", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "productVariants",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "input.status", "order": "ASCENDING" },
+        { "fieldPath": "input.publication", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "inventoryMovements",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "variantId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "stockTransfers",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "variantId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "proofs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "input.orderId", "order": "ASCENDING" },
+        { "fieldPath": "input.variantId", "order": "ASCENDING" },
+        { "fieldPath": "input.version", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "proofs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "input.orderId", "order": "ASCENDING" },
+        { "fieldPath": "input.variantId", "order": "ASCENDING" },
+        { "fieldPath": "input.status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "productionBatches",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "input.orderId", "order": "ASCENDING" },
+        { "fieldPath": "input.variantId", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "reprints",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "input.orderId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "journalEntries",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "input.sourceType", "order": "ASCENDING" },
+        { "fieldPath": "input.sourceId", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "payments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "input.billId", "order": "ASCENDING" },
+        { "fieldPath": "input.status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "refunds",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "input.paymentId", "order": "ASCENDING" },
+        { "fieldPath": "input.status", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

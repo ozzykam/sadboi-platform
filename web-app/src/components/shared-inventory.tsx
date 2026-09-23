@@ -1,0 +1,902 @@
+﻿"use client";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import {
+  parseUsd,
+  type InventoryCatalog,
+  type ProductRecord,
+  type StockVariantRecord,
+  type StockLocationRecord,
+  type ArtworkPage,
+} from "@sadboi/core";
+import { inventoryRequest } from "@/lib/inventory-client";
+import { Button, Badge, PageHeading } from "./ui";
+import {
+  InventoryForm,
+  Input,
+  Textarea,
+  Select,
+  Status,
+  value,
+  usd,
+} from "./inventory-form";
+import { InventoryStockPanel } from "./inventory-stock";
+import { ReplenishmentPanel } from "./inventory-planning";
+import { InventoryReservations } from "./inventory-reservations";
+type Editing = {
+  resource: "products" | "variants" | "locations";
+  id: string;
+  productId?: string;
+};
+function ImageUpload({
+  resource,
+  id,
+  hasImage,
+  onUploaded,
+}: {
+  resource: "products" | "variants";
+  id?: string;
+  hasImage?: boolean;
+  onUploaded: () => void;
+}) {
+  const [busy, setBusy] = useState(false),
+    [message, setMessage] = useState("");
+  async function upload(file: File) {
+    if (!id) return;
+    setBusy(true);
+    setMessage("");
+    try {
+      const proof = await fetch("/api/auth/csrf", { cache: "no-store" });
+      const token = (await proof.json()).token;
+      const response = await fetch(`/api/inventory/images/${resource}/${id}`, {
+        method: "POST",
+        body: file,
+        headers: { "Content-Type": file.type, "X-CSRF-Token": token },
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? "Upload failed.");
+      setMessage("Image uploaded.");
+      onUploaded();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Upload failed.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <div className="field inv-image-upload">
+      <label htmlFor={`${resource}-image`}>Shop image</label>
+      {id ? (
+        <>
+          <input
+            id={`${resource}-image`}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            disabled={busy}
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (file) void upload(file);
+            }}
+          />
+          <p className="field-hint">
+            {hasImage
+              ? "Replace the current public catalog image."
+              : "Upload a square or portrait JPEG, PNG, or WebP."}
+          </p>
+          {message && (
+            <p className="notice" role="status">
+              {message}
+            </p>
+          )}
+        </>
+      ) : (
+        <p className="field-hint">
+          Save this {resource === "products" ? "product" : "variant"} first,
+          then upload its shop image here.
+        </p>
+      )}
+    </div>
+  );
+}
+function ArtworkChoice() {
+  const [page, setPage] = useState<ArtworkPage | null>(null),
+    [error, setError] = useState(""),
+    [busy, setBusy] = useState(false);
+  useEffect(() => {
+    let active = true;
+    inventoryRequest("/api/artworks")
+      .then((data) => {
+        if (active) setPage(data);
+      })
+      .catch((e) => {
+        if (active) setError(e.message);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+  async function more() {
+    setBusy(true);
+    setError("");
+    try {
+      const data: ArtworkPage = await inventoryRequest(
+        "/api/artworks" +
+          (page?.nextCursor ? "?cursor=" + page.nextCursor : ""),
+      );
+      setPage((current) => ({
+        artworks: [...(current?.artworks ?? []), ...data.artworks],
+        nextCursor: data.nextCursor,
+      }));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not load artwork.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <div className="inv-wide">
+      <Select
+        label="Original artwork"
+        name="artworkId"
+        required
+        defaultValue=""
+      >
+        <option value="">
+          {page ? "Choose artwork" : "Loading artwork..."}
+        </option>
+        {page?.artworks.map((art) => (
+          <option key={art.id} value={art.id}>
+            {art.title} ({art.year})
+          </option>
+        ))}
+      </Select>
+      {error && (
+        <p role="alert" className="notice error">
+          {error}
+        </p>
+      )}
+      {(error || page?.nextCursor) && (
+        <Button variant="secondary" disabled={busy} onClick={more}>
+          {busy ? "Loading..." : error ? "Retry artwork" : "Load more artwork"}
+        </Button>
+      )}
+      {page && !page.artworks.length && (
+        <p className="field-hint">
+          Start by{" "}
+          <Link href="/admin/artworks/new" className="inline-link">
+            adding an artwork
+          </Link>
+          .
+        </p>
+      )}
+    </div>
+  );
+}
+function ProductFields({ record }: { record?: ProductRecord }) {
+  return (
+    <>
+      <p className="field-hint inv-wide">
+        A product is the item you offer, such as an art print or a T-shirt.
+        After saving, add its sizes or styles as variants.
+      </p>
+      {!record && <ArtworkChoice />}
+      <Input
+        label="Product title"
+        name="title"
+        required
+        maxLength={160}
+        defaultValue={record?.title}
+        placeholder="Midnight Garden â€” Art Print"
+      />
+      <Select
+        label="Category"
+        name="kind"
+        defaultValue={record?.kind ?? "print"}
+      >
+        <option value="print">Print</option>
+        <option value="apparel">Apparel</option>
+        <option value="accessory">Accessory</option>
+        <option value="other">Other</option>
+      </Select>
+      <Textarea
+        label="Description"
+        name="description"
+        maxLength={3000}
+        rows={8}
+        defaultValue={record?.description}
+        placeholder="Describe the piece, materials, story, and what makes this edition distinct."
+        helperText="Use a blank line between paragraphs."
+      />
+      {record && (
+        <ImageUpload
+          resource="products"
+          id={record.id}
+          hasImage={!!record.imageAssetId}
+          onUploaded={() => {}}
+        />
+      )}
+      <div className="inv-color-fields">
+        <Input
+          label="Dialog gradient start"
+          name="gradientStart"
+          type="color"
+          defaultValue={record?.gradientStart ?? "#312b30"}
+        />
+        <Input
+          label="Dialog gradient end"
+          name="gradientEnd"
+          type="color"
+          defaultValue={record?.gradientEnd ?? "#9f596a"}
+        />
+      </div>
+      \r\n <Status initial={record?.status} />
+      <Select
+        label="Publication"
+        name="publication"
+        defaultValue={record?.publication ?? "private"}
+      >
+        <option value="private">Private</option>
+        <option value="public">Public catalog</option>
+      </Select>
+    </>
+  );
+}
+function VariantFields({
+  record,
+  productId,
+  catalog,
+}: {
+  record?: StockVariantRecord;
+  productId?: string;
+  catalog: InventoryCatalog;
+}) {
+  return (
+    <>
+      <p className="field-hint inv-wide">
+        Each version with its own price or stock count needs a variant and a
+        unique SKU. Keep related sizes, colors, frames, and finishes under the
+        same product; each combination gets its own variant. Add one variant
+        even if the product has only one size or style.
+      </p>
+      {!record && (
+        <Select
+          label="Product"
+          name="productId"
+          required
+          defaultValue={productId ?? ""}
+        >
+          <option value="">Choose product</option>
+          {catalog.products
+            .filter((p) => p.status === "active")
+            .map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.title}
+              </option>
+            ))}
+        </Select>
+      )}
+      <Input
+        label="SKU"
+        name="sku"
+        required
+        maxLength={60}
+        defaultValue={record?.sku}
+        readOnly={!!record}
+        helperText="A unique permanent code, such as SB-PRINT-001-A3."
+      />
+      <Input
+        label="Variant name"
+        name="name"
+        required
+        maxLength={160}
+        defaultValue={record?.name}
+        placeholder="A3 archival print"
+      />
+      <Input
+        label="Size"
+        name="size"
+        maxLength={100}
+        defaultValue={record?.size}
+      />
+      <Input
+        label="Color"
+        name="color"
+        maxLength={80}
+        defaultValue={record?.color}
+      />
+      <Input
+        label="Material"
+        name="material"
+        maxLength={160}
+        defaultValue={record?.material}
+      />
+      <Input
+        label="Finish"
+        name="finish"
+        maxLength={160}
+        defaultValue={record?.finish}
+      />
+      <Input
+        label="Retail price (USD)"
+        name="price"
+        inputMode="decimal"
+        required
+        defaultValue={record ? (record.priceMinor / 100).toFixed(2) : ""}
+        placeholder="45.00"
+      />
+      <Input
+        label="Weight (grams, optional)"
+        name="weightGrams"
+        type="number"
+        min={1}
+        max={1000000}
+        step={1}
+        defaultValue={record?.weightGrams ?? ""}
+      />
+      <Select
+        label="Fulfillment"
+        name="fulfillment"
+        defaultValue={record?.fulfillment ?? "stocked"}
+      >
+        <option value="stocked">Stocked</option>
+        <option value="made_to_order">Made to order</option>
+      </Select>
+      {record && (
+        <ImageUpload
+          resource="variants"
+          id={record.id}
+          hasImage={!!record.imageAssetId}
+          onUploaded={() => {}}
+        />
+      )}
+      <Status initial={record?.status} />
+      <Select
+        label="Publication"
+        name="publication"
+        defaultValue={record?.publication ?? "private"}
+      >
+        <option value="private">Private</option>
+        <option value="public">Public catalog</option>
+      </Select>
+    </>
+  );
+}
+function LocationFields({ record }: { record?: StockLocationRecord }) {
+  const [kind, setKind] = useState(record?.kind ?? "studio");
+  return (
+    <>
+      <Input
+        label="Location name"
+        name="name"
+        required
+        maxLength={120}
+        defaultValue={record?.name}
+        placeholder="Studio shelves"
+      />
+      <Select
+        label="Location type"
+        name="kind"
+        value={kind}
+        onChange={(e) => setKind(e.target.value as StockLocationRecord["kind"])}
+      >
+        <option value="studio">Studio / fulfillment</option>
+        <option value="gallery">Gallery</option>
+        <option value="event">Event / convention</option>
+        <option value="transit">Transit holding location</option>
+      </Select>
+      <Status initial={record?.status} />
+      <label className="inv-check">
+        <input
+          type="checkbox"
+          name="onlineEligible"
+          defaultChecked={record?.onlineEligible ?? false}
+          disabled={kind === "transit"}
+        />
+        Can fulfill website orders
+      </label>
+      <p className="field-hint inv-wide">
+        Gallery and event stock stays separate from website fulfillment unless
+        you enable it here. Locations must be empty with no pending transfers
+        before archiving.
+      </p>
+    </>
+  );
+}
+function MetadataEditor({
+  editing,
+  catalog,
+  onSaved,
+  onClose,
+}: {
+  editing: Editing;
+  catalog: InventoryCatalog;
+  onSaved: (id: string) => Promise<void>;
+  onClose: () => void;
+}) {
+  const product =
+    editing.resource === "products"
+      ? catalog.products.find((p) => p.id === editing.id)
+      : undefined;
+  const variant =
+    editing.resource === "variants"
+      ? catalog.variants.find((p) => p.id === editing.id)
+      : undefined;
+  const location =
+    editing.resource === "locations"
+      ? catalog.locations.find((p) => p.id === editing.id)
+      : undefined;
+  const record = product ?? variant ?? location;
+  function prepare(data: FormData) {
+    const status = value(data, "status");
+    if (editing.resource === "products")
+      return {
+        artworkId: product?.artworkId ?? value(data, "artworkId"),
+        title: value(data, "title"),
+        kind: value(data, "kind"),
+        description: value(data, "description"),
+        imageAssetId: product?.imageAssetId,
+        gradientStart: value(data, "gradientStart"),
+        gradientEnd: value(data, "gradientEnd"),
+        status,
+        publication: value(data, "publication"),
+      };
+    if (editing.resource === "variants")
+      return {
+        productId: variant?.productId ?? value(data, "productId"),
+        sku: variant?.sku ?? value(data, "sku"),
+        name: value(data, "name"),
+        size: value(data, "size"),
+        color: value(data, "color"),
+        material: value(data, "material"),
+        finish: value(data, "finish"),
+        priceMinor: parseUsd(value(data, "price")),
+        currency: "USD",
+        weightGrams: value(data, "weightGrams")
+          ? Number(value(data, "weightGrams"))
+          : null,
+        fulfillment: value(data, "fulfillment"),
+        imageAssetId: variant?.imageAssetId,
+        status,
+        publication: value(data, "publication"),
+      };
+    return {
+      name: value(data, "name"),
+      kind: value(data, "kind"),
+      onlineEligible: data.has("onlineEligible"),
+      status,
+    };
+  }
+  return (
+    <section className="inv-panel">
+      <div className="section-heading">
+        <h2>
+          {record ? "Edit" : "Add"}{" "}
+          {editing.resource === "products"
+            ? "product"
+            : editing.resource === "variants"
+              ? "variant"
+              : "location"}
+        </h2>
+        <Button variant="ghost" onClick={onClose}>
+          Close
+        </Button>
+      </div>
+      <InventoryForm
+        action={editing.resource}
+        record={record}
+        prepare={prepare}
+        onSaved={onSaved}
+        again={false}
+      >
+        {editing.resource === "products" ? (
+          <ProductFields record={product} />
+        ) : editing.resource === "variants" ? (
+          <VariantFields
+            record={variant}
+            productId={editing.productId}
+            catalog={catalog}
+          />
+        ) : (
+          <LocationFields record={location} />
+        )}
+      </InventoryForm>
+    </section>
+  );
+}
+export function SharedInventory({
+  initial,
+  canEdit,
+}: {
+  initial: InventoryCatalog;
+  canEdit: boolean;
+}) {
+  const [catalog, setCatalog] = useState(initial),
+    [tab, setTab] = useState<
+      "catalog" | "stock" | "locations" | "replenishment" | "reservations"
+    >("catalog");
+  const [nextStep, setNextStep] = useState<{
+    resource: Editing["resource"];
+    id: string;
+  } | null>(null);
+  const [editing, setEditing] = useState<Editing | null>(null),
+    [selected, setSelected] = useState(initial.variants[0]?.id ?? "");
+  const [error, setError] = useState(""),
+    [busy, setBusy] = useState(false),
+    [query, setQuery] = useState(""),
+    [stockVersion, setStockVersion] = useState(0);
+  async function refresh() {
+    setBusy(true);
+    setError("");
+    try {
+      setCatalog(await inventoryRequest("/api/inventory"));
+      setStockVersion((n) => n + 1);
+      return true;
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not refresh inventory.");
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function saved(id: string) {
+    const previous = editing;
+    if (previous?.resource === "variants") setSelected(id);
+    setEditing(null);
+    if ((await refresh()) && previous?.id === "new")
+      setNextStep({ resource: previous.resource, id });
+  }
+  function edit(resource: Editing["resource"], id = "new", productId?: string) {
+    setNextStep(null);
+    setEditing({ resource, id, productId });
+  }
+  function viewStock(id: string) {
+    setNextStep(null);
+    setSelected(id);
+    setTab("stock");
+  }
+  const products = catalog.products.filter((p) =>
+    (
+      p.title +
+      " " +
+      catalog.variants
+        .filter((v) => v.productId === p.id)
+        .map((v) => v.sku + " " + v.name)
+        .join(" ")
+    )
+      .toLowerCase()
+      .includes(query.toLowerCase()),
+  );
+  return (
+    <>
+      <PageHeading
+        eyebrow="INVENTORY / STUDIO OPERATIONS"
+        title="From artwork to object."
+        description="Products, physical stock, and every movement between the studio, galleries, and events."
+        action={
+          <Button variant="secondary" onClick={refresh} disabled={busy}>
+            {busy ? "Refreshing..." : "Refresh inventory"}
+          </Button>
+        }
+      />
+      {!canEdit && (
+        <p className="notice">
+          Accounting access: view catalog, balances, receiving costs, and
+          movement history.
+        </p>
+      )}
+      <p className="howto-context">
+        Need a walkthrough?{" "}
+        <Link className="inline-link" href="/admin/how-to#products">
+          Create or edit products &amp; variants
+        </Link>{" "}
+        Â·{" "}
+        <Link className="inline-link" href="/admin/how-to#stock">
+          Set up or count stock
+        </Link>
+      </p>
+      {error && (
+        <p className="notice error" role="alert">
+          {error} Use Refresh inventory to load the latest saved records.
+        </p>
+      )}
+      <nav className="inv-tabs" aria-label="Inventory sections">
+        {(
+          [
+            "catalog",
+            "stock",
+            "locations",
+            "replenishment",
+            "reservations",
+          ] as const
+        ).map((section) => (
+          <button
+            className="button secondary"
+            key={section}
+            aria-pressed={tab === section}
+            onClick={() => {
+              setTab(section);
+              setEditing(null);
+              setNextStep(null);
+            }}
+          >
+            {section === "catalog"
+              ? "Products & variants"
+              : section === "stock"
+                ? "Stock & transfers"
+                : section === "locations"
+                  ? "Locations"
+                  : section === "replenishment"
+                    ? "Low stock"
+                    : "Reservations"}
+          </button>
+        ))}
+      </nav>
+      {nextStep && (
+        <div className="notice inv-next" role="status">
+          <p>
+            {nextStep.resource === "products"
+              ? "Product saved. Next, add its first size or style as a variant."
+              : nextStep.resource === "variants"
+                ? "Variant saved. Next, choose a location and record its opening stock."
+                : "Location saved. Open a variant to receive or count stock here."}
+          </p>
+          {nextStep.resource === "products" ? (
+            <Button
+              variant="secondary"
+              onClick={() => edit("variants", "new", nextStep.id)}
+            >
+              Add first variant
+            </Button>
+          ) : nextStep.resource === "variants" ? (
+            <Button variant="secondary" onClick={() => viewStock(nextStep.id)}>
+              Record stock
+            </Button>
+          ) : (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setNextStep(null);
+                setTab("stock");
+              }}
+            >
+              Choose a variant
+            </Button>
+          )}
+        </div>
+      )}
+      {editing ? (
+        <MetadataEditor
+          key={editing.resource + editing.id}
+          editing={editing}
+          catalog={catalog}
+          onSaved={saved}
+          onClose={() => setEditing(null)}
+        />
+      ) : tab === "reservations" ? (
+        <InventoryReservations inventory={catalog} canEdit={canEdit} />
+      ) : tab === "catalog" ? (
+        <section>
+          <details className="inv-guide" open={!catalog.products.length}>
+            <summary>How products, variants, and stock fit together</summary>
+            <ol>
+              <li>
+                <strong>Artwork:</strong> the original creative work.{" "}
+                {canEdit && (
+                  <Link className="inline-link" href="/admin/artworks">
+                    Open artwork library
+                  </Link>
+                )}
+              </li>
+              <li>
+                <strong>Product:</strong> the item based on that art, such as
+                â€œMidnight Garden â€” Art Print.â€
+              </li>
+              <li>
+                <strong>Variant:</strong> the exact version, such as an A3 matte
+                print. Each variant has its own permanent SKU, price, and stock.
+              </li>
+              <li>
+                <strong>Location and stock:</strong> record how many units are
+                physically at the studio, gallery, or event. Start with Receive
+                accepted stock or Count physical stock.
+              </li>
+            </ol>
+            <p>
+              To retire a product, choose Edit product â†’ Status â†’ Archived.
+              Its stock and history are preserved.
+            </p>
+          </details>
+          <div className="inv-toolbar">
+            <Input
+              label="Search products or SKUs"
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            {canEdit && (
+              <Button onClick={() => edit("products")}>Add product</Button>
+            )}
+          </div>
+          <p className="field-hint">
+            This is your private product catalog. Storefront publishing and
+            checkout come later.
+          </p>
+          {!catalog.products.length && (
+            <div className="empty-state roomy">
+              <h2>Add your first product.</h2>
+              <p>
+                Choose its artwork, then give each size or style its own variant
+                and SKU.
+              </p>
+            </div>
+          )}
+          {!!catalog.products.length && !products.length && (
+            <p className="notice">No products match your search.</p>
+          )}
+          <div className="inv-cards">
+            {products.map((p) => (
+              <article className="inv-panel" key={p.id}>
+                <div className="section-heading">
+                  <div>
+                    <h2>{p.title}</h2>
+                    <p className="field-hint">
+                      {p.kind} / {p.status}
+                    </p>
+                  </div>
+                  {canEdit && (
+                    <Button
+                      variant="ghost"
+                      onClick={() => edit("products", p.id)}
+                    >
+                      Edit product
+                    </Button>
+                  )}
+                </div>
+                {p.description && (
+                  <p className="inv-description">{p.description}</p>
+                )}
+                {canEdit && (
+                  <Link
+                    className="inline-link"
+                    href={"/admin/artworks/" + p.artworkId}
+                  >
+                    View original artwork
+                  </Link>
+                )}
+                <ul className="inv-variants">
+                  {catalog.variants
+                    .filter((v) => v.productId === p.id)
+                    .map((v) => (
+                      <li key={v.id}>
+                        <div>
+                          <strong>{v.name}</strong>
+                          <p>
+                            {v.sku} / {usd(v.priceMinor)} /{" "}
+                            {v.fulfillment.replaceAll("_", " ")}
+                          </p>
+                          <p>
+                            {[v.size, v.color, v.material, v.finish]
+                              .filter(Boolean)
+                              .join(" / ")}
+                          </p>
+                          {v.status === "archived" && <Badge>Archived</Badge>}
+                        </div>
+                        <div className="inv-actions">
+                          <Button
+                            variant="secondary"
+                            onClick={() => {
+                              setSelected(v.id);
+                              setTab("stock");
+                            }}
+                          >
+                            View stock
+                          </Button>
+                          {canEdit && (
+                            <Button
+                              variant="ghost"
+                              onClick={() => edit("variants", v.id)}
+                            >
+                              Edit
+                            </Button>
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                </ul>
+                {canEdit && p.status === "active" && (
+                  <Button
+                    variant="secondary"
+                    onClick={() => edit("variants", "new", p.id)}
+                  >
+                    Add variant
+                  </Button>
+                )}
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : tab === "locations" ? (
+        <section>
+          <div className="section-heading">
+            <h2>Where the work lives.</h2>
+            {canEdit && (
+              <Button onClick={() => edit("locations")}>Add location</Button>
+            )}
+          </div>
+          {!catalog.locations.length && (
+            <div className="empty-state roomy">
+              <h2>Start with the studio.</h2>
+              <p>
+                Add the places you store or sell stock, then receive your first
+                print run.
+              </p>
+            </div>
+          )}
+          <div className="inv-cards">
+            {catalog.locations.map((site) => (
+              <article className="inv-panel" key={site.id}>
+                <h2>{site.name}</h2>
+                <p className="inv-description">
+                  {site.kind} / {site.status}
+                </p>
+                <Badge tone={site.onlineEligible ? "green" : "neutral"}>
+                  {site.onlineEligible
+                    ? "Website fulfillment"
+                    : "Separate from website stock"}
+                </Badge>
+                {canEdit && (
+                  <div className="inv-actions">
+                    <Button
+                      variant="secondary"
+                      onClick={() => edit("locations", site.id)}
+                    >
+                      Edit location
+                    </Button>
+                  </div>
+                )}
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : tab === "replenishment" ? (
+        <ReplenishmentPanel
+          key={stockVersion}
+          canEdit={canEdit}
+          onViewStock={viewStock}
+        />
+      ) : (
+        <section>
+          <Select
+            label="Variant to manage"
+            value={selected}
+            onChange={(e) => setSelected(e.target.value)}
+          >
+            <option value="">Choose a variant</option>
+            {catalog.variants.map((v) => (
+              <option key={v.id} value={v.id}>
+                {v.sku} - {v.name}
+                {v.status === "archived" ? " (archived)" : ""}
+              </option>
+            ))}
+          </Select>
+          {catalog.variants.find((v) => v.id === selected) ? (
+            <InventoryStockPanel
+              key={selected + ":" + stockVersion}
+              catalog={catalog}
+              variant={catalog.variants.find((v) => v.id === selected)!}
+              canEdit={canEdit}
+            />
+          ) : (
+            <div className="empty-state roomy">
+              <h2>Choose a variant.</h2>
+              <p>
+                Create a product and SKU in Products &amp; variants to start
+                tracking stock.
+              </p>
+            </div>
+          )}
+        </section>
+      )}
+    </>
+  );
+}

@@ -1,0 +1,6 @@
+import { expect, it } from "vitest";
+import { contactInputSchema } from "./contacts";
+const id = "a".repeat(64);
+const contact = { kind: "person", name: "Alex", email: "alex@example.com", phone: "", website: "", organizationId: id, relationships: [{ kind: "client", label: "Commission" }], notes: "", nextFollowUp: "2026-10-01", followUpNote: "Send brief", status: "active" };
+it("validates people, organizations, dates, and relationship labels", () => { expect(contactInputSchema.safeParse(contact).success).toBe(true); expect(contactInputSchema.safeParse({ ...contact, kind: "organization", organizationId: id }).success).toBe(false); expect(contactInputSchema.safeParse({ ...contact, email: "bad" }).success).toBe(false); expect(contactInputSchema.safeParse({ ...contact, nextFollowUp: "2026-02-30" }).success).toBe(false); });
+it("rejects duplicate relationships and excessive fields", () => { expect(contactInputSchema.safeParse({ ...contact, relationships: [{ kind: "client", label: "A" }, { kind: "client", label: "a" }] }).success).toBe(false); expect(contactInputSchema.safeParse({ ...contact, relationships: Array.from({ length: 21 }, (_, i) => ({ kind: "other", label: String(i) })) }).success).toBe(false); });

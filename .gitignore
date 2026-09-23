@@ -1,0 +1,51 @@
+# Dependencies and package-manager caches
+node_modules/
+.pnpm-store/
+
+# Generated application builds and caches
+.next/
+.next-auth-test/
+dist/
+build/
+out/
+.turbo/
+.cache/
+*.tsbuildinfo
+.eslintcache
+
+# Local environment configuration; keep the placeholder setup template
+.env*
+!.env.example
+
+# Private credentials and signing material
+.secrets/
+*.pem
+*.key
+*.p12
+*.pfx
+*-firebase-adminsdk-*.json
+service-account*.json
+serviceAccount*.json
+credentials*.json
+application_default_credentials.json
+
+# Local Firebase / hosting state and emulator exports
+.firebase/
+.vercel/
+firebase-export-*/
+emulator-data/
+
+# Logs and generated test output
+*.log
+coverage/
+playwright-report/
+test-results/
+blob-report/
+
+# Operating-system and editor temporary files
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~

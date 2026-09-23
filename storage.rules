@@ -1,0 +1,9 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Private masters and documents must never use public starter rules.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

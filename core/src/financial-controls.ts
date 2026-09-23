@@ -1,0 +1,17 @@
+import { z } from "zod";
+import { inventoryId, type InventoryRecord } from "./inventory";
+const text = (max: number) => z.string().trim().max(max);
+export const allocationInputSchema = z.object({ paymentId: inventoryId, billId: inventoryId, amountMinor: z.number().int().min(1).max(100_000_000_000) }).strict();
+export type AllocationInput = z.infer<typeof allocationInputSchema>;
+export type AllocationRecord = InventoryRecord<AllocationInput> & { invoiceNumber: string; supplierName: string };
+export type AllocationCatalog = { allocations: AllocationRecord[] };
+export const disputeInputSchema = z.object({ paymentId: inventoryId, reason: text(2000).min(3), status: z.enum(["opened", "under_review", "resolved", "rejected"]), reference: text(160), openedDate: z.iso.date(), notes: text(2000) }).strict();
+export type DisputeInput = z.infer<typeof disputeInputSchema>;
+export type DisputeRecord = InventoryRecord<DisputeInput> & { invoiceNumber: string; supplierName: string };
+export type DisputeCatalog = { disputes: DisputeRecord[] };
+export const reconciliationInputSchema = z.object({ account: text(120).min(1), statementDate: z.iso.date(), openingMinor: z.number().int().min(0).max(100_000_000_000), closingMinor: z.number().int().min(0).max(100_000_000_000), status: z.enum(["open", "reconciled"]), notes: text(2000) }).strict();
+export type ReconciliationInput = z.infer<typeof reconciliationInputSchema>;
+export type ReconciliationRecord = InventoryRecord<ReconciliationInput>;
+export type ReconciliationCatalog = { reconciliations: ReconciliationRecord[] };
+export const periodLockInputSchema = z.object({ period: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/), reason: text(1000).min(3) }).strict();
+export type PeriodLockInput = z.infer<typeof periodLockInputSchema>;
