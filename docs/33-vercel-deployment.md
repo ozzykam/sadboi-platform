@@ -54,6 +54,7 @@ For sign-in and recovery steps, use [staff sign-in](09-staff-sign-in.md). Fireba
 
 ## Troubleshooting and key changes
 
+- `ERR_REQUIRE_ESM` while loading `firebase-admin/auth`: production logs on 2026-09-23 showed `jwks-rsa@4.1.0` synchronously requiring the ESM-only `jose@6.2.12`. The homepage loaded, but Shop, Gallery, and Sign-in returned 500. The version-specific pnpm patch in `patches/jwks-rsa@4.1.0.patch` loads `jose` with `await import()` inside the existing async key resolver. Commit the patch, `pnpm-workspace.yaml`, and lockfile together, then deploy. This preserves the installed cryptography library versions. Reassess the patch when upgrading `jwks-rsa`; upstream tracking: [Firebase issue 3181](https://github.com/firebase/firebase-admin-node/issues/3181).
 - A build cannot resolve `@sadboi/core` or the JSON registration: check Root Directory, workspace installation, and the outside-source setting.
 - A missing/invalid credential error: replace the Vercel secret with the complete service-account JSON for this project, then redeploy. Do not paste the key into logs or support messages.
 - Permission denied after the key parses: inspect the service account's IAM permissions. Successful parsing does not prove the account is enabled or authorized.
@@ -64,5 +65,7 @@ For sign-in and recovery steps, use [staff sign-in](09-staff-sign-in.md). Fireba
 ## Verification scope
 
 `pnpm test:firebase-config` tests SDK initialization with a generated disposable key, escaped newlines, local ADC fallback, missing Vercel configuration, emulator isolation, redacted validation errors, and project mismatch. It never requests access tokens or contacts live Firebase. `pnpm check` includes this suite. Emulator auth tests verify existing session behavior separately.
+
+`pnpm test:firebase-runtime`, also included in `pnpm check`, disables synchronous `require(ESM)` to reproduce the production loading restriction. It checks server SDK imports and resolves a disposable RSA signing key through Firebase's installed JWKS dependency, verifying valid and tampered signatures without network access.
 
 Actual Vercel build, IAM access, production sign-in, and private-image access need verification against the deployed project. Local checks alone do not establish a successful deployment.

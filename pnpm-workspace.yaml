@@ -1,6 +1,10 @@
 packages:
   - core
   - web-app
+
 onlyBuiltDependencies:
   - sharp
   - esbuild
+
+patchedDependencies:
+  jwks-rsa@4.1.0: patches/jwks-rsa@4.1.0.patch

@@ -28,6 +28,12 @@ The in-app tutorial is `/admin/how-to#gallery` and is linked from the publishing
 
 `pnpm check` runs type checking, lint, domain tests, Firebase credential tests, and a production build. `pnpm test:gallery` runs existing artwork/authentication coverage plus gallery publication, privacy, filters, stable URLs, product links, retries, archival, and withdrawal checks against disposable emulators.
 
+Verified September 23, 2026: 69 combined authentication/artwork/gallery integration checks passed. Browser verification covered the populated emulator gallery, artwork detail, viewer zoom, Escape dismissal and focus restoration, mobile detail reflow at 390px, shared navbar reflow at 320px, and the live gallery-to-shop cart handoff. Public test artwork was created only in the emulator. A streamed 200 response for absent artwork was corrected by removing the detail route's loading boundary; missing and withdrawn pieces now pass 404 checks.
+
+For repeatable browser inspection, run `pnpm firebase emulators:exec --only auth,firestore,storage --project demo-sadboi-platform "node scripts/auth-integration.mjs --gallery --gallery-preview"`. After the integration checks it prints a temporary populated gallery URL on port 3102. Create `web-app/.next-auth-test/gallery-preview.done` when finished; the suite then completes and shuts down. The preview also expires after ten minutes.
+
+Final `pnpm check` passed after the shared navbar/login changes: typecheck, lint, 63 domain tests, 7 Firebase credential tests, and production build. The sign-in link was also followed in Chrome and confirmed to retain the public navbar.
+
 ## Remaining scope
 
 One public image per work; manual publication only. Multi-image stories, scheduling, separate curated collection pages, and a fuller featured-work homepage remain future slices. Existing site-wide noindex settings remain unchanged. The login link uses the existing sign-in route; a client portal is still separate planned work.
