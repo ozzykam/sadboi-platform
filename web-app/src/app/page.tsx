@@ -8,7 +8,7 @@ export default function Home() {
   return (
     <main className="entrance">
       <div className="entrance-top">
-        <span className="mobile-wordmark">sadboi</span>
+        <span className="mobile-wordmark"></span>
         <span>
           <Link href="/sign-in">
             STAFF/CLIENT LOGIN

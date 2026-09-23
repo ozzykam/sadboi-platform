@@ -42,6 +42,9 @@ playwright-report/
 test-results/
 blob-report/
 
+# Large local design source
+/web-app/public/images/shop/landing-page-hero.psd
+
 # Operating-system and editor temporary files
 .DS_Store
 Thumbs.db
