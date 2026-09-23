@@ -220,7 +220,7 @@ export function ArtworkForm({
                   placeholder="Concept, inspiration, or a description of the work."
                 />
                 <p className="field-hint">
-                  This can become the public artwork description later.
+                  Publishing to the gallery shares this saved description.
                 </p>
               </div>
               <Input
@@ -312,7 +312,7 @@ export function ArtworkForm({
                         : "Saved in this browser"}
                     </>
                   ) : onSave ? (
-                    "Private studio record - nothing is published"
+                    "Save studio details, then use Public gallery below to publish changes"
                   ) : (
                     "Local draft - nothing is published"
                   )}

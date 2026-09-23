@@ -6,6 +6,7 @@ import type { ArtworkAsset, ArtworkInput, SharedArtwork } from "@sadboi/core";
 import { artworkRequest } from "@/lib/artwork-client";
 import { ArtworkForm } from "./artwork-editor";
 import { ArtworkAssets } from "./artwork-assets";
+import { ArtworkPublishing } from "./artwork-publishing";
 import { Badge, PageHeading } from "./ui";
 export function SharedArtworkEditor({
   initial,
@@ -18,6 +19,7 @@ export function SharedArtworkEditor({
 }) {
   const router = useRouter(),
     [artwork, setArtwork] = useState(initial);
+  const [currentAssets, setCurrentAssets] = useState(assets);
   const operation = useRef(""),
     lastPayload = useRef("");
   async function save(input: ArtworkInput) {
@@ -90,7 +92,24 @@ export function SharedArtworkEditor({
         onSave={save}
       />
       {artwork ? (
-        <ArtworkAssets artworkId={artwork.id} initial={assets} canEdit />
+        <>
+          <ArtworkAssets
+            artworkId={artwork.id}
+            initial={assets}
+            canEdit
+            onUploaded={(asset) =>
+              setCurrentAssets((current) => [
+                asset,
+                ...current.filter((item) => item.id !== asset.id),
+              ])
+            }
+          />
+          <ArtworkPublishing
+            artwork={artwork}
+            assets={currentAssets}
+            onSaved={setArtwork}
+          />
+        </>
       ) : (
         <p className="notice">Save the artwork first, then add its images.</p>
       )}

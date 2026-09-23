@@ -18,6 +18,8 @@ From this directory, run pnpm install --frozen-lockfile, then pnpm dev. This mac
 
 ## Read the plan
 
+The [public gallery and shared navbar](docs/34-public-gallery.md) add `/art`, individual artwork pages, and explicit publication from the Artwork editor. Run `pnpm test:gallery` for emulator coverage; staff instructions are in **How-to → Publish artwork to the gallery**.
+
 The most recent continuation is [reliable public checkout and request recovery](docs/29-store-orders.md). Run `pnpm test:store-orders` for its disposable Firebase integration suite. Stripe remains deferred pending business setup. Fulfillment and payment-event lifecycle fixes are the next commerce steps.
 
 In the signed-in platform, **How-to** (`/admin/how-to`) provides staff tutorials for creating and editing products/variants, archiving, stock counts, purchasing, supplier production progress, and inspected deliveries. Inventory and Purchasing link directly to the relevant sections. Available to super admins and accounting. Every new feature or workflow change must include its in-app tutorial under the feature build guide below.

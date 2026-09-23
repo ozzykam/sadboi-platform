@@ -6,6 +6,7 @@ import { requireStaff } from "@/server/staff";
 export const metadata: Metadata = { title: "How-to | Sadboi Studio" };
 
 const topics = [
+  ["gallery", "Publish artwork to the gallery"],
   ["products", "Create products & variants"],
   ["editing", "Edit or archive"],
   ["workspace", "Manage staff access"],
@@ -49,6 +50,96 @@ export default async function Page() {
         ))}
       </nav>
       <div className="howto-content">
+        <section
+          className="howto-section"
+          id="gallery"
+          aria-labelledby="gallery-title"
+        >
+          <p className="eyebrow">ARTWORK / PUBLIC GALLERY</p>
+          <h2 id="gallery-title">Put a piece on display</h2>
+          <p>
+            The gallery is the public body of work, including pieces that are
+            not for sale. Publishing is available to super admins. Start with a
+            saved artwork, a completed image upload, and permission to display
+            the work.
+          </p>
+          <ol>
+            <li>
+              Open <strong>Artwork</strong>, select a piece or choose{" "}
+              <strong>Add artwork</strong>, and enter its title, year, medium,
+              series, story, and tags. Keep private information in{" "}
+              <strong>Internal notes</strong>.
+            </li>
+            <li>
+              Set <strong>Workspace status</strong> to{" "}
+              <strong>Ready for review</strong>, resolve the{" "}
+              <strong>Rights classification</strong>, and choose{" "}
+              <strong>Save artwork</strong>. This does not publish it.
+            </li>
+            <li>
+              Under <strong>Originals &amp; previews</strong>, choose a file
+              with <strong>Add an artwork image</strong>, then choose{" "}
+              <strong>Upload image</strong>. Wait for completion. Originals
+              remain private.
+            </li>
+            <li>
+              Under <strong>Public gallery</strong>, choose the{" "}
+              <strong>Gallery image</strong>. Write an{" "}
+              <strong>Image description (alt text)</strong> describing what is
+              visible. Add an optional caption and public credits.
+            </li>
+            <li>
+              Set <strong>Display order</strong> if needed: lower numbers appear
+              first, with ties sorted by newest year, title, then record.
+              Confirm the public-display permission checkbox.
+            </li>
+            <li>
+              Choose <strong>Publish to gallery</strong>, then{" "}
+              <strong>View public artwork</strong> to review it. Visitors can
+              find it through Gallery or Explore the art on the homepage.
+            </li>
+          </ol>
+          <aside className="howto-example">
+            <strong>Example: a piece with no prints</strong>
+            <p>
+              Create a fictional artwork titled “Night Visitor,” save it as
+              Ready for review with Artist owned rights, upload its image, and
+              publish it with a visual description. It appears in the gallery
+              without requiring a product, price, or stock. These are example
+              details, not live business records.
+            </p>
+          </aside>
+          <p>
+            <strong>Connections:</strong> public products linked to this artwork
+            appear under From this work. Publishing does not change prices,
+            stock, orders, or sales. Sold-out products do not remove the
+            artwork. The gallery shares a web-sized display image, never an
+            original download.
+          </p>
+          <p>
+            <strong>Changes and recovery:</strong> save artwork edits first,
+            then choose <strong>Update gallery</strong> to publish those saved
+            details. New uploads do not replace the selected public image
+            automatically. <strong>Unpublish</strong> removes the piece and its
+            gallery image endpoint while keeping the studio record. Saving
+            Draft, Archived, or Needs review also removes it; restoring Ready
+            does not republish it. If a save is uncertain, keep your choices and
+            retry. If someone else changed the record, open the latest saved
+            version before reconciling your edits.
+          </p>
+          <p>
+            <strong>Limits:</strong> one display image per artwork; publication
+            is manual. The original public URL stays the same after a title
+            change. An image already downloaded by a visitor cannot be recalled.
+            Private originals, private previews, and studio notes still require
+            staff access. Search covers title, series, and tags, with separate
+            series and medium filters. Scheduled publishing and multi-image
+            stories are not included yet.
+          </p>
+          <Link className="button secondary" href="/admin/artworks">
+            Open Artwork
+          </Link>
+        </section>
         <section
           className="howto-section"
           id="workspace"

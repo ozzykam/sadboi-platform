@@ -4,6 +4,7 @@ export * from "./fixtures";
 export * from "./preview";
 
 export * from "./shared-artwork";
+export * from "./gallery";
 export * from "./inventory";
 export * from "./purchasing";
 export * from "./staff-management";

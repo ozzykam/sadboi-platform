@@ -100,6 +100,7 @@ try {
  if(process.argv.includes("--inventory")) { const {inventoryChecks}=await import("./inventory-integration.mjs"); await inventoryChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin}); }
  if(process.argv.includes("--purchasing")) { const {purchasingChecks}=await import("./purchasing-integration.mjs"); await purchasingChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin}); }
  if(process.argv.includes("--store-orders")) { const {storeOrderChecks}=await import("./store-orders-integration.mjs"); await storeOrderChecks({request,csrf,ownerCookie,db,check,origin}); }
+ if(process.argv.includes("--gallery")) { const {galleryChecks}=await import("./gallery-integration.mjs"); await galleryChecks({request,csrf,ownerCookie,legalCookie,db,check,origin}); }
  await db.doc("businesses/sadboi/memberships/"+legal.uid).update({status:"revoked"});
  assert.equal((await status(legalCookie)).status,401);
  assert.equal((await signIn(legal)).status,403);check("revoked membership blocks sessions and re-entry");

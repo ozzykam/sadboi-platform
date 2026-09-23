@@ -7,10 +7,12 @@ export function ArtworkAssets({
   artworkId,
   initial,
   canEdit,
+  onUploaded,
 }: {
   artworkId: string;
   initial: ArtworkAsset[];
   canEdit: boolean;
+  onUploaded?: (asset: ArtworkAsset) => void;
 }) {
   const [assets, setAssets] = useState(initial),
     [file, setFile] = useState<File | null>(null);
@@ -56,6 +58,7 @@ export function ArtworkAssets({
         ...current.filter((asset) => asset.id !== data.asset.id),
       ]);
       setFile(null);
+      onUploaded?.(data.asset);
       operation.current = "";
       if (input.current) input.current.value = "";
       setMessage(
@@ -77,7 +80,10 @@ export function ArtworkAssets({
         <span>IMAGES</span>
         <div>
           <h2>Originals & previews</h2>
-          <p>Every upload keeps its original file. Nothing here is public.</p>
+          <p>
+            Every upload keeps its private original. Choose a display image
+            separately in Public gallery.
+          </p>
         </div>
       </div>
       {canEdit && (

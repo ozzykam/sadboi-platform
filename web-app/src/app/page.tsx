@@ -1,42 +1,32 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
-import { getMode } from "@/server/mode";
 export const dynamic = "force-dynamic";
 export default function Home() {
-  const preview = getMode() === "preview";
   return (
     <main className="entrance">
       <div className="entrance-top">
-        <span className="mobile-wordmark"></span>
+        <nav className="entrance-nav" aria-label="Main navigation">
+          <Link href="/art">Gallery</Link>
+          <Link href="/shop">Shop</Link>
+        </nav>
         <span>
-          <Link href="/sign-in">
-            STAFF/CLIENT LOGIN
-          </Link>
+          <Link href="/sign-in">STAFF/CLIENT LOGIN</Link>
         </span>
       </div>
       <div className="entrance-hero">
         <div className="entrance-content">
           <p className="eyebrow">WELCOME TO</p>
-          <h1>
-            
-            Sadboi Studios
-          </h1>
+          <h1>Sadboi Studios</h1>
           <div className="entrance-rule" />
           <p>
             Original work and editions
             <br />
             by Joel Hedstrom
           </p>
-          {preview ? (
-            <Link href="/shop" className="button primary">
-              Explore<ArrowUpRight size={18} />
-            </Link>
-          ) : (
-            <Link href="/shop" className="button primary">
-              Explore<ArrowUpRight size={18} />
-            </Link>
-          )}
+          <Link href="/art" className="button primary">
+            Explore the art <ArrowUpRight size={18} />
+          </Link>
         </div>
         <Image
           src="/images/logo-portrait.png"

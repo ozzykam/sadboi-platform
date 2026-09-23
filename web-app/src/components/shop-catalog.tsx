@@ -17,9 +17,7 @@ import {
   type CheckoutAttempt,
 } from "@/lib/store-checkout-client";
 import Image from "next/image";
-import landscapeLogo from "../../public/images/logo-landscape.webp";
-import Link from "next/link";
-import { ArrowLeft, Eye, House, ShoppingBag } from "lucide-react";
+import { ArrowLeft, Eye, ShoppingBag } from "lucide-react";
 import type { PublicCatalogItem } from "@/server/public-catalog";
 import { StoreOrderForm, type StoreCartLine } from "./store-order-form";
 import { Button, Input } from "./ui";
@@ -63,16 +61,26 @@ export function ShopCatalog({ products }: { products: PublicCatalogItem[] }) {
       } finally {
         const attempt = pendingCheckout();
         setPending(attempt);
-        if (attempt) setCartOpen(true);
+        if (
+          attempt ||
+          new URLSearchParams(window.location.search).get("cart") === "open"
+        )
+          setCartOpen(true);
         setCartReady(true);
       }
     }, 0);
     return () => window.clearTimeout(timer);
   }, [products]);
   useEffect(() => {
+    const openCart = () => setCartOpen(true);
+    window.addEventListener("sadboi-open-cart", openCart);
+    return () => window.removeEventListener("sadboi-open-cart", openCart);
+  }, []);
+  useEffect(() => {
     if (!cartReady) return;
     try {
       window.localStorage.setItem("sadboi-shop-cart", JSON.stringify(cart));
+      window.dispatchEvent(new Event("sadboi-cart-updated"));
     } catch {
       /* Keep the cart usable when storage is blocked or full. */
     }
@@ -162,36 +170,6 @@ export function ShopCatalog({ products }: { products: PublicCatalogItem[] }) {
   }
   return (
     <>
-      <header className="shop-header">
-        <Link href="/" className="shop-logo" aria-label="Sadboi Studios home">
-          <Image
-            src={landscapeLogo}
-            alt="Sadboi Studios"
-            className="shop-logo-image"
-            sizes="91px"
-            loading="eager"
-          />
-        </Link>
-        <nav>
-          <a href="#shop-products">Shop</a>
-          <a href="#shop-categories">Categories</a>
-        </nav>
-        <div className="shop-header-actions">
-          <button
-            type="button"
-            className="shop-cart-button"
-            onClick={() => setCartOpen(true)}
-          >
-            Cart{" "}
-            <span>
-              {cart.reduce((total, line) => total + line.quantity, 0)}
-            </span>
-          </button>
-          <Link className="shop-back" href="/">
-            Studio home <House size={14} strokeWidth={1.8} aria-hidden="true" />
-          </Link>
-        </div>
-      </header>
       <section className="shop-hero shop-hero-compact">
         <p className="eyebrow">SADBOI / SHOP</p>
         <h1>
@@ -259,7 +237,11 @@ export function ShopCatalog({ products }: { products: PublicCatalogItem[] }) {
                   product.variants.find((variant) => variant.imageUrl)
                     ?.imageUrl;
                 return (
-                  <article className="shop-product" key={product.id}>
+                  <article
+                    className="shop-product"
+                    id={`product-${product.id}`}
+                    key={product.id}
+                  >
                     <button
                       type="button"
                       className={`shop-product-image art-${index % 4}`}

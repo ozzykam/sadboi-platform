@@ -169,6 +169,8 @@ September 23 continuation: persisted cart validation and retry-safe multi-line o
 
 ## 10. Public design and publishing
 
+Implemented gallery slice: `/art` and stable artwork detail pages, search/series/medium filters, publication snapshots with selected display images, caption/alt text/credits/order, unpublish and automatic withdrawal on archive/draft/rights review, related work and product links, enlarged viewer, and the shared public shop-style navbar. See [public gallery](34-public-gallery.md). Broader publishing, homepage composition, collections, and SEO groups below remain open.
+
 - [ ] **B/E/N** Implement design tokens and shared mobile UI primitives from the [design brief](05-design.md).
 - [ ] **N** Create and review actual-art mobile/desktop compositions for the hero, archive, artwork detail, shop, and collaboration story.
 - [ ] **N** Build the art-first landing sequence, latest collection, appearances, collaborations, artist intro, and inquiry links.

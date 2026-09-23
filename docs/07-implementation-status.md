@@ -1,5 +1,7 @@
 # Implementation status
 
+Public gallery and shared navigation: `/art`, individual artwork pages, explicit publishing from Artwork, and a common public navbar are implemented. See [gallery scope and verification](34-public-gallery.md). Gallery publication does not depend on product stock and does not publish existing private records automatically.
+
 Updated September 23, 2026, in `C:\Users\azizk\magkamco\sadboi-platform`.
 
 Use the [build checklist](06-build-checklist.md) as the authoritative scope tracker. Every completed user-facing workflow also has an in-app how-to requirement described in the [feature build guide](14-feature-build-guide.md).

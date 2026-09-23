@@ -15,6 +15,7 @@
     "test": "pnpm --filter @sadboi/core test",
     "check": "pnpm typecheck && pnpm lint && pnpm test && pnpm test:firebase-config && pnpm build",
     "test:firebase-config": "node --conditions=react-server --experimental-strip-types --test scripts/firebase-credentials.test.mjs",
+    "test:gallery": "firebase emulators:exec --only auth,firestore,storage --project demo-sadboi-platform \"node scripts/auth-integration.mjs --artworks --gallery\"",
     "firebase": "firebase",
     "emulators": "firebase emulators:start --only auth,firestore,storage --project demo-sadboi-platform",
     "test:rules": "firebase emulators:exec --only auth,firestore,storage --project demo-sadboi-platform \"node --test scripts/firebase-rules.test.mjs\"",
