@@ -58,5 +58,5 @@ export const storeOrderRequestSchema = z
 export type StoreOrderRecord = InventoryRecord<StoreOrderInput> & {
   orderNumber: string;
   totalMinor: number;
-  status: "pending_payment" | "paid" | "cancelled" | "fulfilled";
+  status: "pending_payment" | "paid" | "cancelled" | "expired" | "fulfilled";
 };

@@ -6,7 +6,7 @@ export async function POST(request: Request) {
   try {
     const staff = await inventoryStaff(true);
     const body = await protectedBody(request, 32768);
-    return authResponse(await saveFulfillment(body.input, staff), 201);
+    return authResponse(await saveFulfillment(body, staff), 201);
   } catch (error) {
     return inventoryFailure(error);
   }

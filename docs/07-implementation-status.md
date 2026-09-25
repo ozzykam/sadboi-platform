@@ -8,6 +8,8 @@ Use the [build checklist](06-build-checklist.md) as the authoritative scope trac
 
 ## Working now
 
+- September 25 lifecycle continuation: 30-minute pending holds, exact cancellation/expiry releases, private customer order status/cancellation, test-only Stripe hosted Checkout with account-scoped signed webhooks, and staff late-payment reallocation or completed-refund verification. [Configuration and scope](35-order-lifecycle-stripe.md). Scheduler and actual Stripe test account activation are external setup steps, not yet verified.
+
 - Vercel Firebase Admin credential support through the server-only `FIREBASE_ADMIN_CREDENTIALS` JSON secret, with project validation, redacted configuration errors, preserved local ADC, and emulator isolation. See [deployment guide](33-vercel-deployment.md); actual production access still needs deployment verification.
 
 - Next.js/React application with a UI-independent TypeScript core, Firebase Auth, server-verified sessions, CSRF/origin protection, and server-owned memberships.
@@ -32,20 +34,27 @@ Use the [build checklist](06-build-checklist.md) as the authoritative scope trac
 - Public catalog publication controls and a server-filtered `/shop` page that exposes only active public products and variants with online availability.
 - Public order foundation with server-side publication/availability rechecks and transactional allocation of stocked quantities.
 - Persistent public cart with validated catalog data, order confirmation, and retry-safe multi-line checkout. Pending requests recover the same order after lost responses; stock allocation and numbering commit once. See [public customer orders](29-store-orders.md).
-- Shipping and fulfillment foundation for paid orders, with domestic address/method/tracking records and transactional consumption or release of allocated stock.
-- Provider-neutral payment confirmation endpoint with idempotent event handling, amount/state verification, and paid-order transition; Stripe webhook handoff instructions are documented.
-- Stripe account, LLC filing, Checkout session creation, and external webhook deployment are intentionally pending business setup; the provider-neutral boundary remains ready.
+- Paid-order fulfillment uses exact checkout allocations, consumes stock at dispatch/collection, releases it on pre-dispatch cancellation, maintains location totals and history, and protects retries, stale edits, and terminal states. Historical records needing reconciliation are blocked. See [fulfillment](31-shipping-fulfillment.md).
+- Payment confirmation preserves paid/fulfilled/closed states, validates full event identity, binds payments to one order/account, and records mismatches/additional payments/late successes for review. Orders includes staff/accounting payment history and reviewed resolution. See [payment confirmation](30-stripe-payment-confirmation.md) and [Stripe test setup](35-order-lifecycle-stripe.md).
+- Stripe Checkout and signature verification are implemented for test mode only. Placeholder test credentials, external webhook deployment, scheduler activation, and real sandbox verification remain pending configuration.
 
 Start the development server with `pnpm dev` at `http://127.0.0.1:3100`. Live business records are not seeded by the test suites; emulator tests use disposable local Firebase services.
 
 ## Validation
+
+- September 25 lifecycle/Stripe continuation: `pnpm check` passed typecheck, lint, 76 core tests, 7 credential tests, 2 runtime tests and the production build. The final combined emulator suite passed 63 integration checks. Browser verification covered guest and staff cancellation, late-payment acceptance, persisted resolution audit, return-page access, and the guest page at 390×844. See [full scope and setup](35-order-lifecycle-stripe.md). Actual Stripe sandbox and deployed scheduling verification remain outstanding.
+
+- September 25 payment continuation: `pnpm check` passed typecheck, lint, 73 core tests, 7 Firebase credential tests, 2 Firebase runtime tests, and the production build. The combined checkout/fulfillment/payment emulator harness passed 56 checks. Connected Chrome verified accounting payment history, review markers, load/refresh, empty/error states, read-only controls, help, keyboard focus, and no horizontal overflow at 390×844. See [payment validation](30-stripe-payment-confirmation.md).
+
+- September 25 fulfillment: `pnpm check` passed typecheck, lint, 67 core tests, 7 Firebase credential tests, 2 Firebase runtime tests, and the production build. The Auth/Firestore harness with `--store-orders --fulfillment --fulfillment-preview` passed all 45 authentication/checkout/fulfillment checks.
+- Connected Chrome, disposable emulator data: completed pack → ship → deliver, address-free made-to-order pickup, pre-dispatch cancellation, persisted tracking/notes, terminal read-only controls, two-tab stale-save rejection/reload, and the contextual help link. At a 390×844 viewport the pickup form had no horizontal overflow, 16px form text, and working keyboard focus. No browser console errors were observed; full screen-reader and real-device validation remain outstanding.
 
 - `pnpm check` passes type checking, ESLint, 59 core domain tests across 20 files, and the production build (September 23).
 - `pnpm test:store-orders` passes 35 authentication/checkout emulator checks (September 23), including duplicate/concurrent submissions, multi-line allocation, publication checks, shortage rollback, and last-unit contention.
 - Previously recorded: `pnpm test:workspace` passed 33 authentication/Workspace emulator checks; this suite was not rerun during the September 23 checkout slice.
 - Previously recorded: `pnpm test:purchasing` passed 145 authentication, artwork, inventory, purchasing, production, and tutorial integration checks; this suite was not rerun during the September 23 checkout slice.
 - Firebase rules checks and artwork/inventory suites pass as recorded in their feature documents.
-- Browser discovery found no connected browser. Real form interaction, visual/mobile checks, keyboard/screen-reader checks, and real email-link completion remain outstanding.
+- Historical September 23 validation had no connected browser. Subsequent gallery and fulfillment browser checks are recorded in their feature guides; real email-link completion remains outstanding.
 
 Run build and emulator suites sequentially. Next route type generation writes shared generated files, so overlapping build/test processes can interfere with one another.
 
@@ -53,15 +62,14 @@ Run build and emulator suites sequentially. Next route type generation writes sh
 
 Application caps and workflow limits are documented with each feature: [artwork](10-shared-artwork.md), [inventory](11-inventory.md), [purchasing](13-purchasing.md), [production](15-supplier-production.md), [Workspace access](16-workspace-access.md), [contacts](17-contacts.md), [printer quotes](18-printer-quotes.md), [print-file handoff](19-print-file-handoff.md), [production batches](20-production-batches.md), [reprint requests](21-reprint-requests.md), [vendor bills](22-vendor-bills.md), [balanced journals](23-balanced-journal.md), [payments](24-payments.md), [refunds](25-refunds-and-disputes.md), and [financial controls](26-financial-controls.md). The Firebase project is on Blaze billing, but live Firestore/Storage/Auth consumption and billing totals are not tracked in the application yet.
 
-The platform still lacks external supplier file delivery, signed proof approvals, calendar/production capacity reservations, a complete paid storefront checkout, shipping rates/labels, customer accounts, cancellation/returns, commissions, agreements, licensing, events/POS, backups/monitoring, and automated email delivery. Existing journals, vendor bills, batches, stock reservations, publication, payment confirmation, and fulfillment are foundations rather than completed end-to-end modules.
+The platform still lacks external supplier file delivery, signed proof approvals, calendar/production capacity reservations, live paid storefront checkout, shipping rates/labels, customer accounts, returns, commissions, agreements, licensing, events/POS, backups/monitoring, and automated email delivery. Existing journals, vendor bills, batches, stock reservations, publication, payment confirmation, and fulfillment are foundations rather than completed end-to-end modules.
 
-The September 23 review found remaining fulfillment allocation/state issues and payment-event ordering issues. These were outside the completed order-creation slice and are recorded explicitly in [build resumption findings](32-build-resume.md). The platform is not ready for live paid checkout.
+The September 25 slices add reliable fulfillment, payment-event ordering/identity, pending-order expiry/cancellation, private guest access, and verified late-payment resolution. External activation and remaining limits are in [Stripe setup](35-order-lifecycle-stripe.md). The platform is not ready for live paid checkout.
 
 ## Next build sequence
 
-1. Make fulfillment consume/release exact order allocations and verify delivery/cancellation retries, made-to-order lines, multiple locations, and legacy orders.
-2. Harden payment event ordering and identity, then add pending-order cancellation/expiry and late-payment reconciliation.
-3. Complete shipping, customer order access, communications, and returns; connect Stripe after the Sadboi LLC and Stripe account are ready.
-4. Continue capacity planning, production lead times, financial posting/cost connections, and later modules in the build checklist.
+1. Configure the placeholder Stripe test credentials, signed webhook and Google Cloud Scheduler job; verify actual sandbox checkout, expiry and review recovery.
+2. Complete shipping/tax decisions, customer communications, receipts and returns; migrate to Sadboi's account and separately review live-payment readiness.
+3. Continue capacity planning, production lead times, financial posting/cost connections, and later modules in the build checklist.
 
 The original preview-only status is superseded by this connected-platform status. Feature-specific history remains in guides 08–32.

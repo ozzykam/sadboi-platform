@@ -8,6 +8,12 @@ The first application/catalog slice is recorded in [implementation status](07-im
 
 ## Completion criteria for every feature
 
+September 25 pending-order/Stripe slice: 30-minute holds, customer/staff cancellation, a protected scheduled expiry endpoint, Stripe test Checkout and signed webhooks, private order access, and verified late-payment acceptance/refund resolution are implemented. See [setup and limitations](35-order-lifecycle-stripe.md). External scheduler activation and real Stripe sandbox verification remain pending. Broad reservation, live-payment, refunds, financial and customer-account groups remain unchecked.
+
+September 25 fulfillment slice: exact paid-order allocations, dispatch/collection and pre-dispatch cancellation, revision/retry safety, location rollups and history, staff/accounting UI, and linked how-to are implemented. See [fulfillment scope and verification](31-shipping-fulfillment.md). Broader commerce/fulfillment groups remain open for payments, partial shipments, shipping labels/rates, notifications, and returns.
+
+September 25 payment slice: provider event identity/replay, success/terminal-state protection, cross-order payment binding, conflict review records, staff payment history, and linked instructions are implemented. See [payment scope and verification](30-stripe-payment-confirmation.md). Payment collection/provider connection, expiry, review resolution, automated refunds, and complete paid commerce remain unchecked.
+
 Apply these criteria to every task in every phase, including extensions to existing features. Follow the [feature build guide](14-feature-build-guide.md).
 
 - [ ] Implement the complete authorized workflow, permissions, validation, concurrency/retry behavior, and responsive interface.

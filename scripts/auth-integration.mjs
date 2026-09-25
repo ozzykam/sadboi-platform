@@ -1,6 +1,6 @@
 
 import assert from "node:assert/strict";
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { createRequire } from "node:module";
 import { spawn } from "node:child_process";
 import path from "node:path";
@@ -17,12 +17,15 @@ const app = initializeApp({projectId: "demo-sadboi-platform"});
 const auth = getAuth(app); const db = getFirestore(app);
 // Browser previews use a separate hostname so their cookies cannot replace a
 // live developer session on 127.0.0.1:3100 (cookies are not scoped to ports).
-const browserPreview = process.argv.includes("--gallery-preview");
+const browserPreview = process.argv.includes("--gallery-preview") || process.argv.includes("--fulfillment-preview") || process.argv.includes("--payment-preview") || process.argv.includes("--lifecycle-preview");
+const paymentSecret = "emulator-only-" + randomUUID();
+const expirySecret = "emulator-only-expiry-" + randomUUID();
+const stripe = process.argv.includes("--order-lifecycle") ? await (await import("./stripe-fixture.mjs")).stripeFixture() : null;
 const origin = browserPreview ? "http://localhost:3102" : "http://127.0.0.1:3102";
 const aliasOrigin = browserPreview ? "http://127.0.0.1:3102" : "http://localhost:3102";
 const server = spawn(process.execPath, [fromWeb.resolve("next/dist/bin/next"), "dev", "--hostname", "127.0.0.1", "--port", "3102"], {
  cwd: path.join(root, "web-app"),
- env: {...process.env, SADBOI_MODE:"staff", SADBOI_AUTH_ENV:"emulator", SADBOI_APP_ORIGIN:origin, SADBOI_AUTH_TEST:"1", NEXT_TELEMETRY_DISABLED:"1"},
+ env: {...process.env, SADBOI_MODE:"staff", SADBOI_AUTH_ENV:"emulator", SADBOI_APP_ORIGIN:origin, SADBOI_AUTH_TEST:"1", NEXT_TELEMETRY_DISABLED:"1", SADBOI_PAYMENT_WEBHOOK_SECRET:paymentSecret, SADBOI_EXPIRY_SECRET:expirySecret, SADBOI_STRIPE_ENABLED:"0", ...(stripe?.env ?? {})},
  stdio:["ignore","pipe","pipe"], windowsHide:true,
 });
 let log = ""; server.stdout.on("data", x=>{log=(log+x).slice(-12000)}); server.stderr.on("data", x=>{log=(log+x).slice(-12000)});
@@ -112,7 +115,10 @@ try {
  if(process.argv.includes("--inventory")) { const {inventoryChecks}=await import("./inventory-integration.mjs"); await inventoryChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin}); }
  if(process.argv.includes("--purchasing")) { const {purchasingChecks}=await import("./purchasing-integration.mjs"); await purchasingChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin}); }
  if(process.argv.includes("--store-orders")) { const {storeOrderChecks}=await import("./store-orders-integration.mjs"); await storeOrderChecks({request,csrf,ownerCookie,db,check,origin}); }
+ if(process.argv.includes("--fulfillment")) { const {fulfillmentChecks}=await import("./fulfillment-integration.mjs"); await fulfillmentChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin}); }
+ if(process.argv.includes("--store-payments")) { const {storePaymentChecks}=await import("./store-payments-integration.mjs"); await storePaymentChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin,paymentSecret}); }
  if(process.argv.includes("--gallery")) { const {galleryChecks}=await import("./gallery-integration.mjs"); await galleryChecks({request,csrf,ownerCookie,legalCookie,db,check,origin}); }
+ if(process.argv.includes("--order-lifecycle")) { const {orderLifecycleChecks}=await import("./order-lifecycle-integration.mjs"); await orderLifecycleChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin,paymentSecret,expirySecret,stripe}); }
  await db.doc("businesses/sadboi/memberships/"+legal.uid).update({status:"revoked"});
  assert.equal((await status(legalCookie)).status,401);
  assert.equal((await signIn(legal)).status,403);check("revoked membership blocks sessions and re-entry");
@@ -136,6 +142,7 @@ try {
  throw error;
 } finally {
  server.kill();
+ stripe?.server.close();
  await db.terminate();
  await delay(500);
 }

@@ -1,11 +1,12 @@
 import "server-only";
-import { createHash, randomUUID } from "node:crypto";
+import { createHash, randomUUID, randomBytes } from "node:crypto";
 import {
   assertStock,
   stockAvailable,
   stockVariantInputSchema,
   storeOrderRequestSchema,
   type StockBalance,
+  orderHoldMinutes,
 } from "@sadboi/core";
 import { adminServices } from "./firebase";
 import { AccessError, businessId } from "./staff";
@@ -46,6 +47,8 @@ export async function createStoreOrder(raw: unknown) {
         id: string;
         orderNumber: string;
         totalMinor: number;
+        managementToken?: string;
+        expiresAt?: string;
       };
     }
     const [counter, locations, variantDocs] = await Promise.all([
@@ -143,13 +146,16 @@ export async function createStoreOrder(raw: unknown) {
     )
       fail("Order numbering needs review.", 503);
     const orderNumber = `SO-${String(count + 1).padStart(6, "0")}`;
-    const result = { id: orderRef.id, orderNumber, totalMinor };
+    const managementToken = randomBytes(32).toString("hex");
+    const expiresAt = new Date(Date.now() + orderHoldMinutes * 60_000).toISOString();
+    const result = { id: orderRef.id, orderNumber, totalMinor, managementToken, expiresAt };
     tx.create(orderRef, {
       input,
       lines: snapshots,
       totalMinor,
       orderNumber,
       status: "pending_payment",
+      expiresAt, managementTokenHash: hash(managementToken), allocationState: "held", lifecycleRevision: 0,
       businessId,
       createdAt: now,
       updatedAt: now,

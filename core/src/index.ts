@@ -22,4 +22,5 @@ export * from "./reservations";
 export * from "./store-orders";
 export * from "./store-cart";
 export * from "./store-payments";
+export * from "./order-lifecycle";
 export * from "./fulfillment";

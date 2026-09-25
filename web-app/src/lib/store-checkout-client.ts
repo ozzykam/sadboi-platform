@@ -51,5 +51,5 @@ export async function submitCheckout(attempt: CheckoutAttempt) {
     throw new Error(
       "The order response was incomplete. Retry to recover your order number.",
     );
-  return result as { id: string; orderNumber: string; totalMinor: number };
+  return result as { id: string; orderNumber: string; totalMinor: number; managementToken?: string; expiresAt?: string };
 }

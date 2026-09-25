@@ -1,5 +1,7 @@
 # Public customer orders
 
+September 25 update: new orders now hold stock for 30 minutes and return private management access. Customer/staff cancellation, automatic expiry, and test checkout are described in [order lifecycle and Stripe](35-order-lifecycle-stripe.md); this supersedes earlier lifecycle limitations below.
+
 Updated September 23, 2026.
 
 The public `/shop` page now accepts a customer name, email, quantities, and notes. The server rechecks that every selected variant is active and public. Stocked quantities are allocated transactionally from online-eligible locations; made-to-order quantities do not require on-hand stock. Orders begin in `pending_payment` and receive an order number.
@@ -30,4 +32,4 @@ September 23 verification: `pnpm test:store-orders` passed all 35 authentication
 
 ## Remaining limits
 
-This is an order request flow, not a completed paid checkout. Shipping/tax calculation, automatic customer email, payment collection, allocation expiry, rate limiting, cancellation/returns, and full fulfillment lifecycle validation remain open. Made-to-order lines do not reserve production capacity. The server authoritatively prices at submission; a price-change confirmation step is still needed. Recovery is scoped to an attempt, not separate independent checkouts in different tabs. Legacy orders have no per-location allocation snapshots. Do not assume the older fulfillment handler uses the new snapshots yet. Browser interaction and responsive verification remain outstanding because no browser is connected.
+This is an order request flow, not a completed paid checkout. Shipping/tax calculation, automatic customer email, payment collection, allocation expiry, rate limiting, pending-order cancellation, and returns remain open. Made-to-order lines do not reserve production capacity. The server authoritatively prices at submission; a price-change confirmation step is still needed. Recovery is scoped to an attempt, not separate independent checkouts in different tabs. The September 25 [fulfillment slice](31-shipping-fulfillment.md) now consumes/releases the exact snapshots for paid orders and protects terminal states and retries. Legacy orders without allocation snapshots require review; no allocation migration is inferred from pooled stock.

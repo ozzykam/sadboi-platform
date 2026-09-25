@@ -41,6 +41,9 @@ export function ShopCatalog({ products }: { products: PublicCatalogItem[] }) {
   const [pending, setPending] = useState<CheckoutAttempt | null>(null);
   const checkoutLock = useRef(false);
   const [orderConfirmation, setOrderConfirmation] = useState<{
+    id: string;
+    managementToken?: string;
+    expiresAt?: string;
     orderNumber: string;
     totalMinor: number;
   } | null>(null);
@@ -414,12 +417,12 @@ export function ShopCatalog({ products }: { products: PublicCatalogItem[] }) {
                     <p className="eyebrow">ORDER RECEIVED</p>
                     <h3>{orderConfirmation.orderNumber}</h3>
                     <p>
-                      Your request is saved. We’ll follow up with payment
-                      confirmation and fulfillment details.
+                        Your request is saved. Stock is held for 30 minutes while awaiting payment.
                     </p>
-                    <strong>
-                      ${(orderConfirmation.totalMinor / 100).toFixed(2)}
-                    </strong>
+                      <strong>
+                        ${(orderConfirmation.totalMinor / 100).toFixed(2)}
+                      </strong>
+                      {orderConfirmation.managementToken && <a className="inline-link" href={`/orders/${orderConfirmation.id}#${orderConfirmation.managementToken}`}>View order and payment options</a>}
                     <button
                       type="button"
                       onClick={() => {
@@ -582,7 +585,7 @@ export function ShopCatalog({ products }: { products: PublicCatalogItem[] }) {
                         <p>
                           For example, two $25 prints have a $50 item subtotal.
                           Shipping and tax are not calculated here. Stocked
-                          items are held when your request is saved. Adding
+                            items are held for 30 minutes when your request is saved. Adding
                           items to the cart alone does not hold them.
                         </p>
                         <p>
@@ -590,8 +593,7 @@ export function ShopCatalog({ products }: { products: PublicCatalogItem[] }) {
                           If a request needs confirmation, use Retry order
                           request to recover the same order. Keep this tab open
                           until you see its number. Contact the studio with that
-                          number for changes afterward; payment and fulfillment
-                          are arranged separately.
+                            number for changes afterward. Use the order link to check payment status or cancel an unpaid order.
                         </p>
                       </details>
                     </form>

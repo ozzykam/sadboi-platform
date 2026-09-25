@@ -6,6 +6,10 @@
   --color-muted: #b5b2ad;
   --color-accent: #912d3f;
 }
+.customer-order { max-width: 780px; margin: 48px auto; padding: 0 20px; }
+.customer-order .inv-panel { display: grid; gap: 18px; overflow-wrap: anywhere; }
+.customer-order h1 { font-size: clamp(1.6rem, 5vw, 2.6rem); }
+.store-payment-history fieldset { min-width: 0; }
 :root {
   color-scheme: dark;
   --canvas: #18191b;
@@ -1966,6 +1970,26 @@ td small {
 }
 .inv-form {
   margin-top: 22px;
+}
+.store-payment-history {
+  margin: 24px 0;
+  padding: 20px 0;
+  border-block: 1px solid #ffffff30;
+  overflow-wrap: anywhere;
+}
+.store-payment-history p {
+  margin: 12px 0;
+  line-height: 1.5;
+}
+.store-payment-events {
+  list-style: none;
+  padding: 0;
+  margin: 20px 0 0;
+}
+.store-payment-events li + li {
+  border-top: 1px solid #ffffff30;
+  margin-top: 20px;
+  padding-top: 20px;
 }
 .inv-form fieldset {
   border: 0;

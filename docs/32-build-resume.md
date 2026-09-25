@@ -16,7 +16,18 @@ The initial `pnpm check` passed typecheck, lint, 55 domain tests, and the produc
 
 ## Next continuation
 
-1. Validate and repair fulfillment against exact order allocations, including multiple locations, made-to-order lines, idempotent delivery/cancellation, and historical orders without allocation snapshots. The existing fulfillment handler uses aggregate allocated stock, and its cancellation/state handling needs regression coverage.
-2. Harden provider-neutral payment events against late failed events and reused event identities before connecting Stripe. The current event handler can regress an already-paid order on a new failed event; this is a review finding, not fixed by the checkout slice.
-3. Add pending-order cancellation/expiry and safe late-payment reconciliation, then shipping rates/tax decisions, customer access/notifications, and the deferred provider connection.
-4. Run browser/mobile/keyboard validation when a browser is connected. Continue the larger dependency-ordered build checklist after these commerce boundaries are reliable.
+Latest validation: `pnpm check` passed with 76 core tests and the production build; the combined emulator suite passed 63 checks. Connected Chrome confirmed customer/staff cancellation and reviewed late-payment acceptance, with resolution history and mobile guest-page checks. See [setup and verification](35-order-lifecycle-stripe.md). No credentials, scheduler jobs, external payment accounts, or live business records were changed.
+
+Latest continuation: pending-order cancellation/expiry and Stripe **test-mode** Checkout are implemented with private customer order access and staff review resolution. The user chose a 30-minute hold and a placeholder test account; Google Cloud Scheduler will invoke the Vercel endpoint directly. Follow [the setup/handoff guide](35-order-lifecycle-stripe.md) for environment variables, webhook, scheduler, and account migration. This supersedes the older deferred-provider/unfinished-expiry notes below. Next external work is deployment/configuration and real Stripe sandbox end-to-end verification; live payments remain disabled.
+
+The September 25 continuation implements exact-allocation fulfillment, made-to-order handling, dispatch/collection consumption, pre-dispatch cancellation, revision checks, retry recovery, location rollups, inventory/audit history, and historical-record review. Orders is discoverable in staff navigation; accounting remains read-only. See [fulfillment](31-shipping-fulfillment.md) for scope and validation.
+
+Validation: `pnpm check` passed with 67 core tests and a successful production build; the combined checkout/fulfillment emulator harness passed 45 checks. Connected Chrome exercised shipping, pickup, cancellation, stale-tab recovery, terminal read-only states, help, and narrow-screen/keyboard behavior using disposable records. No live records or payment provider configuration changed.
+
+The subsequent September 25 payment slice protects successful payment/terminal order states, checks complete event identity, binds payment IDs across orders, records conflicts for review, and adds staff payment history and instructions. Exact replays and legacy records are handled explicitly. See [payment confirmation and review](30-stripe-payment-confirmation.md). The previously identified late-failure regression is repaired; no provider connection was activated.
+
+Payment validation: `pnpm check` passed with 73 core tests and the production build; the combined authentication/checkout/fulfillment/payment harness passed 56 checks. Browser checks used a disposable accounting account to verify history, review markers, refresh, empty/error states, read-only controls, help, and phone-width/keyboard behavior. Full screen-reader and real-device testing remain outstanding.
+
+1. Add pending-order cancellation/expiry and safe late-payment reconciliation, including a reviewed resolution workflow for payment flags. Payment after cancellation is now recorded for review without reopening the order; actual reallocation/refund resolution remains unfinished.
+2. Add shipping rates/tax decisions, customer access/notifications, and the deferred provider connection.
+3. Continue the larger dependency-ordered build checklist after these commerce boundaries are reliable; preserve whole-order fulfillment limits until partial shipments/returns are designed.

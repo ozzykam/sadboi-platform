@@ -22,6 +22,8 @@ const topics = [
   ["reservations", "Reserve and allocate stock"],
   ["catalog", "Publish the public catalog"],
   ["store-orders", "Review shop order requests"],
+  ["fulfillment", "Pack, ship, collect, or cancel an order"],
+  ["store-payments", "Review shop payment events"],
   ["production", "Track supplier production"],
   ["deliveries", "Inspect & receive deliveries"],
   ["examples", "Everyday examples"],
@@ -1105,6 +1107,91 @@ export default async function Page() {
 
         <section
           className="howto-section"
+          id="store-payments"
+          aria-labelledby="store-payments-title"
+        >
+          <p className="eyebrow">SHOP / PAYMENTS</p>
+          <h2 id="store-payments-title">Review shop payment events</h2>
+          <p>Super admins and accounting can inspect payment reports in Orders.
+              Stripe test checkout is available once the administrator configures the test account and signed webhook. Live payments remain disabled.</p>
+          <ol>
+            <li>Open Orders and choose View order or Open fulfillment.</li>
+            <li>Under Payment history, choose Load payment history. Use Refresh
+              payment history to check for newer reports without editing fulfillment.</li>
+            <li>Read both the provider result and the outcome. Payment confirmed
+              means the order was marked paid. No order change means the report
+              was recorded without changing the existing order status.</li>
+            <li>For Review required, compare the order number, amount, payment ID,
+              and event ID with the provider’s records. Check for an extra payment,
+              a mismatched amount, or payment after cancellation. Coordinate with
+              the studio administrator before arranging a refund or another order.</li>
+          </ol>
+          <p>Example (fictional): a $50 order is paid and later receives a delayed
+            failure report. It stays paid, keeps the successful payment reference,
+            and shows the failure as No order change. A different successful $50
+            payment on that order is flagged for review instead of replacing the
+            original payment.</p>
+          <p>Repeated reports do not repeat their effects. Payment confirmation
+            does not deduct inventory; shipping or collection does that. A success
+            after cancellation does not reopen the order or reserve stock again.
+            Historical event means the older report did not record its original
+            order effect; do not assume that it proves the current order is paid.</p>
+            <p>Super admins resolve Review required in the payment history. For a late payment, choose Accept late payment and reserve stock, enter Resolution notes, then Save review resolution. Stripe must confirm the matching unrefunded payment and enough stock must be available. The closed order becomes paid with a fresh stock hold. If stock is unavailable, no partial hold is saved.</p>
+            <p>Alternatively, complete a full refund in the Stripe test dashboard, choose Verify completed Stripe refund, enter its Completed Stripe refund ID and Resolution notes, then save. The app checks the refund with Stripe and records the result; it does not send a refund. Successful payments cannot be dismissed. Dismiss failed-payment review is available only for failed reports. Accounting can read these records but cannot resolve them.</p>
+            <p>Example (fictional): a $50 payment arrives after a print hold expired. If two prints remain available, a super admin can accept it and reserve those prints again. If they sold meanwhile, refund the payment in Stripe and verify its refund ID here. The flag clears only when every review on the order has a recorded resolution.</p>
+            <p>If the result is unknown, keep the page open and use Retry same resolution. Refresh payment history after a stale-review warning. Historical events without a Stripe account mapping need administrator reconciliation. Received times may differ from payment times. Live collection, partial refunds, automated refunds and ledger postings remain separate workflows.</p>
+          <Link className="button secondary" href="/admin/orders">Open orders</Link>
+        </section>
+
+        <section
+          className="howto-section"
+          id="fulfillment"
+          aria-labelledby="fulfillment-title"
+        >
+          <p className="eyebrow">SHOP / FULFILLMENT</p>
+          <h2 id="fulfillment-title">Pack, ship, collect, or cancel an order</h2>
+          <p>Open Orders in the studio navigation. Super admins manage paid orders;
+            accounting can review saved addresses, tracking, notes, and status.</p>
+          <ol>
+            <li>Choose Open fulfillment on a paid order. Check the recipient and
+              address copied from checkout. Choose Studio pickup, Standard shipping,
+              or Express shipping. Pickup does not need a postal address.</li>
+            <li>Prepare every line, including made-to-order work, then save Packed.
+              This keeps stock allocated and does not schedule production.</li>
+            <li>For shipping, enter tracking if available and save Shipped when
+              handing the parcel to the carrier. This consumes the exact stock
+              allocated to this order. Once dispatched, the recipient, address,
+              and method cannot change; tracking and notes can still be corrected.</li>
+            <li>After delivery, save Delivered. For pickup, save Collected by customer
+              directly from Packed when handing over the work. Stock is consumed
+              once; confirming a shipped delivery does not deduct it again.</li>
+            <li>To stop a paid order before dispatch or collection, save Cancelled.
+              This releases its allocations and closes fulfillment. It does not
+              refund a payment: arrange and record any refund separately.</li>
+          </ol>
+          <p>Example (fictional): an order holds two prints at the studio and one
+            at a gallery. Dispatch consumes those exact three units, even if the
+            location is no longer offered online. Other orders’ allocations stay
+            unchanged. Made-to-order lines never draw from stocked balances.</p>
+          <p>If a save result is unknown, keep the page open and choose Retry same
+            save. Details remain locked until its result is known. If the tab closes,
+            reopen Orders and inspect the saved status before making another change.
+            A confirmed save followed by a refresh error is still saved: use Refresh
+            orders. If someone edited the order elsewhere, Reload saved order discards
+            the unsaved form and loads their changes.</p>
+          <p>An allocation-review warning means the saved order, stock balance, or
+            older fulfillment history needs reconciliation. Check the order’s original
+            location allocations, inventory movement history, and physical stock with
+            the studio administrator. Do not create replacement orders or guess stock
+            adjustments to bypass the warning. Historical migration is not automatic.</p>
+          <p>Orders already delivered or cancelled cannot be reopened. Partial
+            shipments, post-dispatch returns, refunds, shipping rates/labels, and
+            automatic customer notifications are separate unfinished workflows.</p>
+          <Link className="button secondary" href="/admin/orders">Open orders</Link>
+        </section>
+
+        <section
+          className="howto-section"
           id="store-orders"
           aria-labelledby="store-orders-title"
         >
@@ -1142,8 +1229,7 @@ export default async function Page() {
             </li>
             <li>
               Open Orders to review the request. Customers should contact the
-              studio with their order number for changes after submission;
-              self-service changes and cancellation are not available yet.
+                studio with their order number for item or address changes. The private View order and payment options link allows status checks, test checkout when enabled, and Cancel unpaid order. Keep that link private and use the same browser when returning from Stripe.
             </li>
           </ol>
           <p>
@@ -1162,9 +1248,9 @@ export default async function Page() {
           </p>
           <p>
             Made-to-order lines do not allocate physical stock or schedule
-            production. Payment collection, automated follow-up, reservation
-            expiry, and shipping rates still require further work.
-          </p>
+              production. New orders hold stock for 30 minutes. A super admin can open the pending order, enter Cancellation reason, and choose Cancel unpaid order to release it sooner. This does not refund a payment; late payments require review. On Orders, Run pending-order expiry check is the manual fallback if the scheduled check is delayed. Existing orders without a deadline are not expired automatically.
+            </p>
+            <p>Automatic checks must be activated by the administrator. At the deadline the order stops accepting normal payment even if a stock-release check is delayed. Stripe checkout closure may wait for the next check. A failed cancellation can be retried with Retry same cancellation; check the saved order before starting a different request. Automated follow-up, live payments, shipping rates and tax remain unfinished.</p>
           <div className="inv-actions">
             <Link className="button secondary" href="/admin/orders">
               Open Orders

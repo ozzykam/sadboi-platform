@@ -1,0 +1,43 @@
+// Local Stripe HTTP fixture; the application allows it only with Firebase emulators.
+import { createServer } from "node:http";
+export async function stripeFixture() {
+  const sessions = new Map(), payments = new Map(), refunds = new Map(), keys = new Map();
+  const accountId = "acct_fixtureCurrent", secret = "whsec_disposable_fixture";
+  let creates = 0;
+  const server = createServer(async (req, res) => {
+    const url = new URL(req.url, "http://127.0.0.1");
+    const chunks = []; for await (const chunk of req) chunks.push(chunk);
+    const body = new URLSearchParams(Buffer.concat(chunks).toString());
+    let result;
+    if (url.pathname === "/v1/account") result = { id: accountId, object: "account" };
+    else if (url.pathname === "/v1/checkout/sessions" && req.method === "POST") {
+      const key = req.headers["idempotency-key"];
+      if (keys.has(key)) result = sessions.get(keys.get(key));
+      else {
+        const id = "cs_test_fixture" + ++creates;
+        result = { id, object: "checkout.session", livemode: false, mode: "payment", status: "open", payment_status: "unpaid", payment_intent: null,
+          amount_total: Number(body.get("line_items[0][price_data][unit_amount]")), currency: "usd", client_reference_id: body.get("client_reference_id"),
+          metadata: Object.fromEntries(["orderId", "businessId", "accountId"].map(k => [k, body.get(`metadata[${k}]`)])),
+          expires_at: Number(body.get("expires_at")), url: "https://checkout.stripe.com/c/pay/" + id };
+        keys.set(key, id); sessions.set(id, result);
+      }
+    } else if (url.pathname.startsWith("/v1/checkout/sessions/")) {
+      const id = url.pathname.split("/")[4]; result = sessions.get(id);
+      if (result && req.method === "POST" && url.pathname.endsWith("/expire")) { result.status = "expired"; result.url = null; }
+    } else if (url.pathname.startsWith("/v1/payment_intents/")) result = payments.get(url.pathname.split("/")[3]);
+    else if (url.pathname.startsWith("/v1/refunds/")) result = refunds.get(url.pathname.split("/")[3]);
+    res.setHeader("Content-Type", "application/json"); res.statusCode = result ? 200 : 404;
+    res.end(JSON.stringify(result ?? { error: { type: "invalid_request_error", message: "Fixture not found", code: "resource_missing" } }));
+  });
+  await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+  return { server, sessions, payments, refunds, accountId, secret, creates: () => creates,
+    env: { SADBOI_STRIPE_ENABLED: "1", STRIPE_ACCOUNT_ID: accountId, STRIPE_SECRET_KEY: "sk_test_disposable_fixture", STRIPE_WEBHOOK_SECRET: secret, SADBOI_STRIPE_TEST_PORT: String(server.address().port) },
+    pay(id) {
+      const session = sessions.get(id), paymentId = "pi_fixture" + id.replaceAll("_", "");
+      session.status = "complete"; session.payment_status = "paid"; session.payment_intent = paymentId;
+      payments.set(paymentId, { id: paymentId, object: "payment_intent", livemode: false, status: "succeeded", currency: "usd", amount_received: session.amount_total,
+        metadata: session.metadata, latest_charge: { id: "ch_fixture", object: "charge", amount_refunded: 0 } });
+      return session;
+    },
+  };
+}

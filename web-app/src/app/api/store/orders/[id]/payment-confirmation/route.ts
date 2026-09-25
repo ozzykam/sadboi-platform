@@ -1,4 +1,5 @@
-import { confirmStorePayment } from "@/server/store-orders";
+import { createHash, timingSafeEqual } from "node:crypto";
+import { confirmStorePayment, paymentFailure } from "@/server/store-payments";
 import { authResponse, boundedBody } from "@/server/auth-http";
 import { AccessError } from "@/server/staff";
 export const runtime = "nodejs";
@@ -8,17 +9,24 @@ export async function POST(
 ) {
   try {
     const secret = process.env.SADBOI_PAYMENT_WEBHOOK_SECRET;
-    if (!secret || request.headers.get("x-sadboi-payment-secret") !== secret)
+    const supplied = request.headers.get("x-sadboi-payment-secret");
+    if (!secret || !supplied || !timingSafeEqual(
+      createHash("sha256").update(supplied).digest(),
+      createHash("sha256").update(secret).digest(),
+    ))
       throw new AccessError(
         401,
         "payment-webhook",
         "Payment confirmation is not authorized.",
       );
-    const body = JSON.parse(
-      (await boundedBody(request, 32768)).toString("utf8"),
-    );
+    if (request.headers.get("content-type")?.split(";")[0] !== "application/json")
+      throw new AccessError(415, "content-type", "JSON is required.");
+    const bytes = await boundedBody(request, 32768);
+    let body: unknown;
+    try { body = JSON.parse(bytes.toString("utf8")); }
+    catch { throw new AccessError(400, "invalid-payment", "Invalid payment confirmation payload."); }
     const { id } = await context.params;
-    if (body.orderId !== id)
+    if (!body || typeof body !== "object" || Array.isArray(body) || !("orderId" in body) || body.orderId !== id)
       throw new AccessError(
         400,
         "payment-webhook",
@@ -26,12 +34,6 @@ export async function POST(
       );
     return authResponse(await confirmStorePayment(body), 200);
   } catch (error) {
-    return authResponse(
-      {
-        error:
-          error instanceof Error ? error.message : "Could not confirm payment.",
-      },
-      error instanceof AccessError ? error.status : 400,
-    );
+    return paymentFailure(error);
   }
 }
