@@ -20,6 +20,8 @@ export function SharedArtworkEditor({
   const router = useRouter(),
     [artwork, setArtwork] = useState(initial);
   const [currentAssets, setCurrentAssets] = useState(assets);
+  const [formState, setFormState] = useState({ dirty: false, saving: false });
+  const [publishing, setPublishing] = useState(false);
   const operation = useRef(""),
     lastPayload = useRef("");
   async function save(input: ArtworkInput) {
@@ -40,10 +42,11 @@ export function SharedArtworkEditor({
         }),
       },
     );
+    setArtwork(data.artwork);
     if (!artwork) {
       router.replace("/admin/artworks/" + data.artwork.id);
-      router.refresh();
-    } else setArtwork(data.artwork);
+    }
+    router.refresh();
     operation.current = "";
     lastPayload.current = "";
   }
@@ -82,6 +85,19 @@ export function SharedArtworkEditor({
     );
   return (
     <>
+      <p className="notice" role="status">
+        {artwork?.gallery?.published
+          ? "Live in the public gallery. Save changes here, then update the gallery to show them publicly."
+          : "Private studio artwork. Saving keeps your work here; publishing makes it visible in the gallery."}
+        {artwork && (
+          <>
+            {" "}
+            <a className="text-link" href="#artwork-gallery">
+              Go to Public gallery ↓
+            </a>
+          </>
+        )}
+      </p>
       <ArtworkForm
         artwork={
           artwork
@@ -90,6 +106,8 @@ export function SharedArtworkEditor({
         }
         variants={0}
         onSave={save}
+        onStateChange={setFormState}
+        disabled={publishing}
       />
       {artwork ? (
         <>
@@ -108,6 +126,9 @@ export function SharedArtworkEditor({
             artwork={artwork}
             assets={currentAssets}
             onSaved={setArtwork}
+            detailsDirty={formState.dirty}
+            detailsSaving={formState.saving}
+            onBusyChange={setPublishing}
           />
         </>
       ) : (

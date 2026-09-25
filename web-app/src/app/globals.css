@@ -947,7 +947,7 @@ select {
   background: #fefefe;
   padding: 12px 13px;
   min-height: 44px;
-  color: #f0ece5;
+  color: #252525;
   font-size: 13px;
 }
 .field textarea {
@@ -1323,11 +1323,6 @@ td small {
 .entrance-content {
   min-width: 0;
 }
-.entrance-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
 .entrance-logo {
   display: block;
   width: 100%;
@@ -1354,7 +1349,6 @@ td small {
 }
 .entrance footer {
   display: flex;
-  align-items: center;
   justify-content: space-between;
   gap: 20px;
   border-top: 1px solid #5c4248;
@@ -1364,23 +1358,7 @@ td small {
   color: #c3b3b5;
   letter-spacing: 0.6px;
 }
-.entrance footer > span {
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-.entrance-login {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 44px;
-}
-.entrance-login svg {
-  flex-shrink: 0;
-}
 @media (max-width: 760px) {
-  .entrance-login-prefix {
-    display: none;
-  }
   .entrance-hero {
     grid-template-columns: minmax(0, 1fr);
     gap: 40px;
@@ -1758,8 +1736,8 @@ td small {
     letter-spacing: -3px;
   }
   .entrance footer {
+    flex-direction: column;
     gap: 10px;
-    letter-spacing: 0;
   }
 }
 @media (prefers-reduced-motion: reduce) {

@@ -15,7 +15,11 @@ assert.equal(process.env.FIREBASE_AUTH_EMULATOR_HOST, "127.0.0.1:9099");
 assert.equal(process.env.FIRESTORE_EMULATOR_HOST, "127.0.0.1:8080");
 const app = initializeApp({projectId: "demo-sadboi-platform"});
 const auth = getAuth(app); const db = getFirestore(app);
-const origin = "http://127.0.0.1:3102";
+// Browser previews use a separate hostname so their cookies cannot replace a
+// live developer session on 127.0.0.1:3100 (cookies are not scoped to ports).
+const browserPreview = process.argv.includes("--gallery-preview");
+const origin = browserPreview ? "http://localhost:3102" : "http://127.0.0.1:3102";
+const aliasOrigin = browserPreview ? "http://127.0.0.1:3102" : "http://localhost:3102";
 const server = spawn(process.execPath, [fromWeb.resolve("next/dist/bin/next"), "dev", "--hostname", "127.0.0.1", "--port", "3102"], {
  cwd: path.join(root, "web-app"),
  env: {...process.env, SADBOI_MODE:"staff", SADBOI_AUTH_ENV:"emulator", SADBOI_APP_ORIGIN:origin, SADBOI_AUTH_TEST:"1", NEXT_TELEMETRY_DISABLED:"1"},
@@ -40,8 +44,16 @@ async function csrf() {
  return {token:(await response.json()).token,cookie:response.headers.get("set-cookie").split(";")[0]};
 }
 async function signIn(user, extras={}) {
+ // Match a real sign-in: get a fresh auth_time, including after a long browser
+ // preview. Reusing the original token tests recent-login expiry, not access.
+ const login = await fetch("http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=demo-key", {
+  method:"POST", headers:{"Content-Type":"application/json"},
+  body:JSON.stringify({email:user.email,password:"Emulator-password-123!",returnSecureToken:true}),
+ });
+ assert.equal(login.status,200);
+ const { idToken } = await login.json();
  const proof = await csrf();
- return request("/api/auth/session",{method:"POST",headers:{"Content-Type":"application/json",Origin:origin,Cookie:proof.cookie,"X-CSRF-Token":proof.token},body:JSON.stringify({idToken:user.token,...extras})});
+ return request("/api/auth/session",{method:"POST",headers:{"Content-Type":"application/json",Origin:origin,Cookie:proof.cookie,"X-CSRF-Token":proof.token},body:JSON.stringify({idToken,...extras})});
 }
 const session = response => response.headers.getSetCookie().find(c=>c.startsWith("sadboi_session=")).split(";")[0];
 async function status(cookie) { return request("/api/auth/session",{headers:{Cookie:cookie}}); }
@@ -60,13 +72,13 @@ try {
  check("anonymous API access denied");
  redirected(await request("/admin"),"/sign-in"); check("anonymous dashboard redirected");
  const login = await request("/sign-in"); assert.equal(login.status,200); assert.match(await login.text(),/First visit/); check("sign-in page renders");
- const alias = await fetch("http://localhost:3102/sign-in", {redirect:"manual",signal:AbortSignal.timeout(30000)});
+ const alias = await fetch(aliasOrigin+"/sign-in", {redirect:"manual",signal:AbortSignal.timeout(30000)});
  assert.equal(alias.status,307);
  assert.equal(alias.headers.get("location"),origin+"/sign-in"); check("loopback alias redirects to canonical sign-in before authentication");
  const proof=await csrf();
  const base={"Content-Type":"application/json",Origin:origin,Cookie:proof.cookie,"X-CSRF-Token":proof.token};
  assert.equal((await request("/api/auth/session",{method:"POST",headers:{...base,Origin:"https://attacker.example"},body:"{}"})).status,403); check("foreign origin rejected");
- assert.equal((await request("/api/auth/session",{method:"POST",headers:{...base,Origin:"http://localhost:3102"},body:"{}"})).status,403); check("session still requires exact canonical origin");
+ assert.equal((await request("/api/auth/session",{method:"POST",headers:{...base,Origin:aliasOrigin},body:"{}"})).status,403); check("session still requires exact canonical origin");
  const noOrigin={...base}; delete noOrigin.Origin;
  assert.equal((await request("/api/auth/session",{method:"POST",headers:noOrigin,body:"{}"})).status,403); check("missing origin rejected");
  assert.equal((await request("/api/auth/session",{method:"POST",headers:{...base,"X-CSRF-Token":"a".repeat(64)},body:"{}"})).status,403); check("invalid CSRF rejected");

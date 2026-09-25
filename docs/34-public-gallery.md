@@ -10,6 +10,8 @@ Super admins open a saved artwork and use **Public gallery**, after uploading an
 
 Save artwork details before publishing. Publication snapshots the saved title, story, year, medium, series, and tags; **Update gallery** applies subsequent saved changes. New uploads never silently replace the public image. Lower display-order numbers come first, then newest year, title, and ID.
 
+The editor identifies a piece as private or live, shows unsaved/saving/saved feedback, and links directly to Public gallery. Publishing is disabled while artwork details are unsaved or saving; artwork editing is disabled during publication to avoid competing revisions. The catalog distinguishes private pieces, published pieces, and published pieces with newer saved details. Creating a record immediately adopts the saved server record and refreshes navigation data.
+
 **Unpublish** removes public page/list/image access and preserves the studio record and files. Saving Draft, Archived, or Needs review also withdraws it in the same transaction. Restoring Ready does not republish automatically. Title changes preserve the first public slug.
 
 The in-app tutorial is `/admin/how-to#gallery` and is linked from the publishing panel.
@@ -31,6 +33,10 @@ The in-app tutorial is `/admin/how-to#gallery` and is linked from the publishing
 Verified September 23, 2026: 69 combined authentication/artwork/gallery integration checks passed. Browser verification covered the populated emulator gallery, artwork detail, viewer zoom, Escape dismissal and focus restoration, mobile detail reflow at 390px, shared navbar reflow at 320px, and the live gallery-to-shop cart handoff. Public test artwork was created only in the emulator. A streamed 200 response for absent artwork was corrected by removing the detail route's loading boundary; missing and withdrawn pieces now pass 404 checks.
 
 For repeatable browser inspection, run `pnpm firebase emulators:exec --only auth,firestore,storage --project demo-sadboi-platform "node scripts/auth-integration.mjs --gallery --gallery-preview"`. After the integration checks it prints a temporary populated gallery URL on port 3102. Create `web-app/.next-auth-test/gallery-preview.done` when finished; the suite then completes and shuts down. The preview also expires after ten minutes.
+
+Browser previews use `http://localhost:3102`, keeping emulator cookies separate from the live local development session on `127.0.0.1:3100`. The disposable sign-in is `owner@example.test` / `Emulator-password-123!`; these credentials exist only in the running demo emulator.
+
+Verified September 25, 2026: all 69 combined integration checks passed. Browser checks on disposable data confirmed required-field validation, creating and reloading a saved record, editing an existing record, catalog updates, the unsaved-details publication guard, publishing the saved story to its public page, and unpublishing with the public page withdrawn. The reported nonresponsive Save click was not reproduced: the existing browser save persisted successfully before the UI changes. No live artwork was modified or published during verification.
 
 Final `pnpm check` passed after the shared navbar/login changes: typecheck, lint, 63 domain tests, 7 Firebase credential tests, and production build. The sign-in link was also followed in Chrome and confirmed to retain the public navbar.
 

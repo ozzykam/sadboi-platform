@@ -53,10 +53,14 @@ export function ArtworkForm({
   artwork,
   variants,
   onSave,
+  onStateChange,
+  disabled = false,
 }: {
   artwork?: Artwork;
   variants: number;
   onSave?: (input: ArtworkInput) => Promise<void>;
+  onStateChange?: (state: { dirty: boolean; saving: boolean }) => void;
+  disabled?: boolean;
 }) {
   const router = useRouter();
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -64,6 +68,9 @@ export function ArtworkForm({
   const [dirty, setDirty] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
+  useEffect(() => {
+    onStateChange?.({ dirty, saving });
+  }, [dirty, saving, onStateChange]);
   useEffect(() => {
     if (!dirty) return;
     const warn = (event: BeforeUnloadEvent) => {
@@ -75,6 +82,7 @@ export function ArtworkForm({
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (saving || disabled) return;
     setMessage("");
     setSaved(false);
     const form = new FormData(event.currentTarget);
@@ -154,6 +162,7 @@ export function ArtworkForm({
         description="Keep the original work separate from the products and editions it becomes."
       />
       <form
+        id="artwork-details"
         onSubmit={submit}
         noValidate
         onChange={() => {
@@ -162,7 +171,7 @@ export function ArtworkForm({
         }}
         className="editor-layout"
       >
-        <fieldset disabled={saving} className="editor-fields">
+        <fieldset disabled={saving || disabled} className="editor-fields">
           <div className="editor-main">
             <section className="form-section">
               <div className="form-section-heading">
@@ -217,8 +226,17 @@ export function ArtworkForm({
                   rows={5}
                   maxLength={5000}
                   defaultValue={artwork?.description ?? ""}
+                  aria-invalid={!!errors.description}
+                  aria-describedby={
+                    errors.description ? "description-error" : undefined
+                  }
                   placeholder="Concept, inspiration, or a description of the work."
                 />
+                {errors.description && (
+                  <p id="description-error" className="field-error">
+                    {errors.description}
+                  </p>
+                )}
                 <p className="field-hint">
                   Publishing to the gallery shares this saved description.
                 </p>
@@ -289,12 +307,21 @@ export function ArtworkForm({
                   rows={4}
                   maxLength={5000}
                   defaultValue={artwork?.internalNotes ?? ""}
+                  aria-invalid={!!errors.internalNotes}
+                  aria-describedby={
+                    errors.internalNotes ? "notes-error" : undefined
+                  }
                   placeholder={
                     onSave
                       ? "Private notes for you and Joel."
                       : "Keep this preview non-sensitive."
                   }
                 />
+                {errors.internalNotes && (
+                  <p id="notes-error" className="field-error">
+                    {errors.internalNotes}
+                  </p>
+                )}
               </div>
             </section>
             <div className="save-bar">
@@ -304,13 +331,17 @@ export function ArtworkForm({
                 </p>
               ) : (
                 <p role="status">
-                  {saved ? (
+                  {saving ? (
+                    "Saving artwork…"
+                  ) : saved ? (
                     <>
                       <Check size={16} />
                       {onSave
-                        ? "Saved to the shared studio"
+                        ? "Artwork saved. Review Public gallery below to publish changes."
                         : "Saved in this browser"}
                     </>
+                  ) : dirty ? (
+                    "You have unsaved artwork changes."
                   ) : onSave ? (
                     "Save studio details, then use Public gallery below to publish changes"
                   ) : (

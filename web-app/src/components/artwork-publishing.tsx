@@ -9,10 +9,16 @@ export function ArtworkPublishing({
   artwork,
   assets,
   onSaved,
+  detailsDirty = false,
+  detailsSaving = false,
+  onBusyChange,
 }: {
   artwork: SharedArtwork;
   assets: ArtworkAsset[];
   onSaved: (art: SharedArtwork) => void;
+  detailsDirty?: boolean;
+  detailsSaving?: boolean;
+  onBusyChange?: (busy: boolean) => void;
 }) {
   const saved = artwork.gallery;
   const [assetId, setAssetId] = useState(
@@ -24,10 +30,15 @@ export function ArtworkPublishing({
   const attempt = useRef({ payload: "", id: "" });
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (busy || detailsSaving) return;
     const form = new FormData(event.currentTarget);
     const publishing =
       (event.nativeEvent as SubmitEvent).submitter?.getAttribute("value") !==
       "unpublish";
+    if (publishing && detailsDirty) {
+      setError("Save your artwork changes above before publishing them.");
+      return;
+    }
     const input: GalleryInput = {
       published: publishing,
       assetId: assetId || null,
@@ -41,6 +52,7 @@ export function ArtworkPublishing({
     if (payload !== attempt.current.payload)
       attempt.current = { payload, id: crypto.randomUUID() };
     setBusy(true);
+    onBusyChange?.(true);
     setError("");
     setMessage("");
     try {
@@ -71,10 +83,12 @@ export function ArtworkPublishing({
       );
     } finally {
       setBusy(false);
+      onBusyChange?.(false);
     }
   }
   return (
     <section
+      id="artwork-gallery"
       className="form-section gallery-publishing"
       aria-labelledby="gallery-publishing-title"
     >
@@ -97,6 +111,16 @@ export function ArtworkPublishing({
         saved title, story, series, year, medium, and tags. Original files and
         studio notes stay private.
       </p>
+      {(detailsDirty || detailsSaving) && (
+        <p className="notice" role="status">
+          {detailsSaving
+            ? "Waiting for artwork details to finish saving."
+            : "You have unsaved artwork changes. Save them before publishing."}{" "}
+          <a className="text-link" href="#artwork-details">
+            Return to artwork details ↑
+          </a>
+        </p>
+      )}
       {saved?.published && artwork.revision !== saved.publishedRevision && (
         <p className="notice">
           Saved details have changed since publication. Choose Update gallery to
@@ -109,7 +133,7 @@ export function ArtworkPublishing({
         </p>
       ) : (
         <form onSubmit={submit}>
-          <fieldset disabled={busy}>
+          <fieldset disabled={busy || detailsSaving}>
             <div className="field">
               <label htmlFor="gallery-image">Gallery image</label>
               <select
@@ -199,7 +223,12 @@ export function ArtworkPublishing({
               already-published piece.
             </p>
             <div className="gallery-publish-actions">
-              <button className="button primary" type="submit" value="publish">
+              <button
+                className="button primary"
+                type="submit"
+                value="publish"
+                disabled={detailsDirty}
+              >
                 {busy
                   ? "Saving…"
                   : saved?.published

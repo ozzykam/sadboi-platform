@@ -151,6 +151,15 @@ export function SharedArtworkList({
                       : "Licensed work"}
                 </span>
               </div>
+              {canEdit && (
+                <p className="field-hint">
+                  {art.gallery?.published
+                    ? art.revision !== art.gallery.publishedRevision
+                      ? "In gallery · Saved changes need publishing"
+                      : "In public gallery"
+                    : "Private · Not in gallery"}
+                </p>
+              )}
             </Link>
           ))}
         </div>
