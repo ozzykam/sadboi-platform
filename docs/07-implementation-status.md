@@ -1,5 +1,7 @@
 # Implementation status
 
+September 25 payment-return fix: private order status verifies the saved Checkout Session directly with Stripe and records an idempotent verification receipt through the existing payment handler. The UI suppresses repeat payment during processing, review, or verification failure. Late discovery preserves stock-expiry review rules. `pnpm stripe:listen` configures local test forwarding using the ignored local environment. See [setup and verification](35-order-lifecycle-stripe.md).
+
 Public gallery and shared navigation: `/art`, individual artwork pages, explicit publishing from Artwork, and a common public navbar are implemented. See [gallery scope and verification](34-public-gallery.md). Gallery publication does not depend on product stock and does not publish existing private records automatically.
 
 Updated September 23, 2026, in `C:\Users\azizk\magkamco\sadboi-platform`.

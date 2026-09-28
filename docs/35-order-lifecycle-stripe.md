@@ -8,7 +8,8 @@ September 25, 2026. The selected policy is a **30-minute stock hold** and **test
 - Customers can cancel unpaid orders using that link. Super admins cancel from Orders with a reason; accounting remains read-only. Closing releases the original allocated quantities atomically, changes no physical stock, and records an operation/audit trail. Corrupt allocations and ambiguous historical payment/fulfillment records block cancellation for reconciliation. Repeated requests never release twice.
 - The expiry worker scans up to 50 pending orders per call using a persisted cursor. Orders without a valid deadline are skipped. At the deadline payment success requires review even if the worker has not run yet. A customer's status refresh also expires their due order. More than 50 pending orders can take several scheduled runs to scan; the job is not a precise per-order timer.
 - Stripe Checkout uses one saved request/idempotency key per order, server-calculated USD totals, card payments only, and test keys only. No client amount, Price ID, Customer ID, or account-specific catalog is trusted. Shipping and tax are not added. Stripe requires its Session expiration to be at least 30 minutes from creation; the independent order deadline is never extended. The worker closes remaining open Sessions and retries remote cleanup after stock release.
-- Signed raw-body webhooks verify the test account and canonical Session, then durably record normalized payment events. Payment and event identities include account and mode. Return-page parameters never mark an order paid. The old shared-secret confirmation endpoint cannot confirm a Stripe-bound order.
+- Signed raw-body webhooks verify the test account and canonical Session, then durably record normalized payment events. The private order page also retrieves its saved Session directly from Stripe on load/status refresh and before customer cancellation. A missed webhook can therefore recover through the same transactional payment handler. Direct verification has a stable `lookup_` receipt, labeled as a verification reference in staff history. Concurrent refreshes and webhooks share the account-scoped payment identity. Return-page parameters never mark an order paid. The old shared-secret confirmation endpoint cannot confirm a Stripe-bound order.
+- Processing, paid/review, expired checkout, and unavailable verification states hide the checkout button. Verification failure also blocks customer cancellation until status can be checked. Payments discovered after the deadline still require staff review; a refresh never silently reopens released stock. Manual status refresh retries verification; automatic polling is not implemented.
 - Super admins can accept a verified, unrefunded late payment on an unpaid closed order, atomically reserving currently available stock again. Insufficient stock rejects the entire resolution. Alternatively, complete the full refund in the matching Stripe test dashboard and verify its `re_...` ID in the app. The app does not issue refunds. Only failed-payment reviews can be dismissed. Resolutions require notes, expected revision and an idempotent request; flags clear only when all reviews are resolved.
 - Historical events without an account mapping, identity conflicts across orders, partial refunds, normal paid-order refunds/returns, ledger postings, taxes, shipping rates and notifications remain outside this workflow. Do not manually refund a payment while another administrator is accepting it.
 
@@ -32,6 +33,20 @@ Create a Stripe **test/sandbox** webhook destination:
 `https://sadboi-platform-web-app.vercel.app/api/stripe/webhook/acct_YOUR_ACCOUNT_ID`
 
 Subscribe to `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`, and `checkout.session.expired`. Use its signing secret, not a Stripe CLI listener's signing secret. Redeploy after configuring environment variables. Verify a real Stripe sandbox card checkout, webhook retry, expiry, and late-payment review before calling the account integration verified. See [Stripe signature verification](https://docs.stripe.com/webhooks/signature) and [Checkout expiration](https://docs.stripe.com/api/checkout/sessions/create).
+
+## Local Stripe testing
+
+Keep `SADBOI_APP_ORIGIN=http://127.0.0.1:3100` and the test account/secret in `web-app/.env.local`, with `SADBOI_STRIPE_ENABLED=1`. Install Stripe CLI, then run from the repository root:
+
+```powershell
+pnpm stripe:listen
+```
+
+The helper reads the ignored local file, passes the test key through the child process environment, saves the CLI's signing secret to `.env.local`, and forwards the four Checkout events to the account-specific local handler. It rejects a non-local origin or live key and redacts signing secrets from output. Keep the listener running in a separate terminal while testing; Ctrl+C stops it. Restart the dev server if it does not reload the changed environment automatically. Never upload this local signing secret as the Vercel endpoint secret.
+
+If payment completes but the private page is still pending, use **Refresh order status**. The server checks the saved Session, not the redirect query. A payment recovered within its hold becomes paid; one discovered after closure/deadline needs **Accept late payment and reserve stock** or verified refund in staff payment history. Webhooks are still necessary when customers do not return. See [Stripe fulfillment guidance](https://docs.stripe.com/checkout/fulfillment?payment-ui=stripe-hosted).
+
+September 25 diagnosis: a read-only check of the configured real Stripe test account found the reported Checkout Session complete/paid but no webhook endpoint targeting the Sadboi route. Local forwarding was connected successfully; the Vercel webhook destination remains a separate setup step. No real charges or refunds were created by the diagnostic script.
 
 ## Google Cloud Scheduler
 
@@ -63,6 +78,10 @@ Sources: [Cloud Scheduler HTTP jobs](https://docs.cloud.google.com/scheduler/doc
 4. Retire previous credentials only when its outstanding Sessions/events/reviews are drained. Keep historical source/account data. Live mode requires a separately reviewed launch change and shipping/tax/fulfillment readiness; replacing the test secret with `sk_live_...` is intentionally rejected.
 
 ## Validation
+
+Payment-return recovery validated September 28: the combined suite passed **66 integration checks**, including missing-webhook recovery, concurrent lookups/webhooks, private-token enforcement, processing status, mismatched canonical data, Stripe outages, and late discovery. An initial run lost its local Next connection before lifecycle checks; the rerun completed successfully. Chrome confirmed paid return without a webhook, no repeat checkout button, refresh/reload with retained access, and an unpaid order remaining pending despite `?checkout=returned`. At 390×844 the paid page had no horizontal overflow. Test tabs and viewport overrides were cleaned up. `pnpm check` passed for the recovery code (76 core, 7 credential, 2 runtime tests, lint, typecheck, production build).
+
+Real-account investigation confirmed the user's payment in Stripe and the local listener connected with a separately saved local signing secret. The original live-Firebase order has not been manually altered or marked resolved; its authorized private-page refresh will reconcile it under the existing deadline policy. A new real Stripe test checkout through the listener and the Vercel webhook deployment remain to be verified.
 
 The final combined authentication/checkout/fulfillment/payment/lifecycle emulator run passed **63 integration checks**, including payment-versus-cancellation contention and a verified refund before the expiry sweep. All fixtures are disposable; the suite made no actual Stripe calls or live Firebase changes.
 

@@ -1114,6 +1114,7 @@ export default async function Page() {
           <h2 id="store-payments-title">Review shop payment events</h2>
           <p>Super admins and accounting can inspect payment reports in Orders.
               Stripe test checkout is available once the administrator configures the test account and signed webhook. Live payments remain disabled.</p>
+            <p>The private order page checks payment directly with Stripe on load and when the customer chooses Refresh order status. If a webhook was missed, a matching paid checkout is recorded with a Verification reference in Payment history. A payment discovered after the hold deadline still needs review. For example, a customer who paid but still sees pending payment should refresh their private order instead of paying again. If verification is unavailable, retry the refresh or investigate the Stripe connection.</p>
           <ol>
             <li>Open Orders and choose View order or Open fulfillment.</li>
             <li>Under Payment history, choose Load payment history. Use Refresh

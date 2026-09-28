@@ -1327,6 +1327,18 @@ td small {
 .entrance-content {
   min-width: 0;
 }
+.entrance-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.entrance-login {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
 .entrance-logo {
   display: block;
   width: 100%;
@@ -1353,6 +1365,7 @@ td small {
 }
 .entrance footer {
   display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 20px;
   border-top: 1px solid #5c4248;
@@ -1363,6 +1376,12 @@ td small {
   letter-spacing: 0.6px;
 }
 @media (max-width: 760px) {
+  .entrance-login-prefix {
+    display: none;
+  }
+  .entrance footer {
+    gap: 12px;
+  }
   .entrance-hero {
     grid-template-columns: minmax(0, 1fr);
     gap: 40px;
@@ -1740,8 +1759,8 @@ td small {
     letter-spacing: -3px;
   }
   .entrance footer {
-    flex-direction: column;
-    gap: 10px;
+    flex-direction: row;
+    gap: 12px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

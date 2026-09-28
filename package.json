@@ -28,6 +28,7 @@
     "test:store-payments": "firebase emulators:exec --only auth,firestore --project demo-sadboi-platform \"node scripts/auth-integration.mjs --store-orders --fulfillment --store-payments\"",
     "test:order-lifecycle": "firebase emulators:exec --only auth,firestore --project demo-sadboi-platform \"node scripts/auth-integration.mjs --store-orders --fulfillment --store-payments --order-lifecycle\"",
     "staff:bootstrap": "node scripts/bootstrap-staff.cjs",
+    "stripe:listen": "node scripts/stripe-listen.mjs",
     "test:artwork": "firebase emulators:exec --only auth,firestore,storage --project demo-sadboi-platform \"node scripts/auth-integration.mjs --artworks\"",
     "test:inventory": "firebase emulators:exec --only auth,firestore,storage --project demo-sadboi-platform \"node scripts/auth-integration.mjs --artworks --inventory\"",
     "test:purchasing": "firebase emulators:exec --only auth,firestore,storage --project demo-sadboi-platform \"node scripts/auth-integration.mjs --artworks --inventory --purchasing\""

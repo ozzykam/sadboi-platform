@@ -33,6 +33,7 @@ export type StorePaymentEvent = {
   id: string; input: PaymentConfirmation; outcome: PaymentEventOutcome;
   reason: PaymentEventReason; receivedAt: string;
   revision?: number;
+  verification?: "stripe_lookup" | null;
   source?: { accountId: string; mode: "test" } | null;
   resolution?: { action: string; notes: string; reference: string; actorId: string; createdAt: string } | null;
 };

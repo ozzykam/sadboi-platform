@@ -10,6 +10,8 @@ Stripe setup remains deferred until the business/Stripe account is ready. Existi
 
 ## Continued work
 
+September 25 local Stripe return: diagnosed a successful test payment with no Sadboi webhook destination. Added canonical Session verification on private status access, stable verification receipts, guarded repeat-payment UI, and a local CLI forwarding helper. External Vercel webhook and scheduler activation remain separate tasks. See [current setup](35-order-lifecycle-stripe.md).
+
 Completed a coherent reliability pass on public order creation and the persisted cart. See [public customer orders](29-store-orders.md) for behavior and limitations. Added a dedicated checkout emulator suite and in-app customer/staff guidance. No live business records were seeded or changed.
 
 The initial `pnpm check` passed typecheck, lint, 55 domain tests, and the production build. After the changes, the final `pnpm check` passed typecheck, lint, 59 domain tests, and the production build; `pnpm test:store-orders` passed 35 authentication/checkout integration checks. Results are also recorded in [implementation status](07-implementation-status.md). Browser discovery returned no connected browsers, so visual/form interaction checks are not claimed.

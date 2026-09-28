@@ -29,7 +29,8 @@ export function StorePaymentHistory({ orderId, canEdit = false, onChanged }: { o
       <Badge>{event.resolution ? "Review resolved" : event.outcome === "review" ? "Review required" : event.outcome === "applied" ? "Payment confirmed" : event.outcome === "legacy" ? "Historical event" : "No order change"}</Badge>
       <p>{event.input.provider} reported {event.input.status} · ${(event.input.amountMinor / 100).toFixed(2)} {event.input.currency}</p>
       <p>{paymentEventReasons[event.reason] ?? "Review this provider report with the administrator."}</p>
-      <p>Payment: {event.input.paymentId}<br />Event: {event.input.eventId}<br />Received: {event.receivedAt}</p>
+      {event.verification === "stripe_lookup" && <p>Verified directly with Stripe when the private order was checked.</p>}
+      <p>Payment: {event.input.paymentId}<br />{event.verification === "stripe_lookup" ? "Verification reference" : "Event"}: {event.input.eventId}<br />Received: {event.receivedAt}</p>
       {event.source && <p>Test account: {event.source.accountId}</p>}
       {event.resolution && <p>Resolution: {event.resolution.action.replaceAll("_", " ")} · {event.resolution.createdAt}<br />{event.resolution.notes}{event.resolution.reference && <><br />Reference: {event.resolution.reference}</>}</p>}
       {canEdit && event.outcome === "review" && !event.resolution && <PaymentReviewForm event={event} onSaved={async () => { await load(); await onChanged?.(); }} />}

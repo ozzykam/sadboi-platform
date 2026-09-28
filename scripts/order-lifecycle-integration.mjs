@@ -60,7 +60,54 @@ export async function orderLifecycleChecks({ request, csrf, db, check, origin, o
   assert.equal((await post(`/api/store/orders/${pay.id}/payment-confirmation`, {eventId:"evt_fake_raw",orderId:pay.id,provider:"stripe",paymentId:"pi_fake",amountMinor:5000,currency:"USD",status:"succeeded"},{"x-sadboi-payment-secret":paymentSecret})).status,403);
   const evt = "evt_success_fixture"; assert.equal((await ok(webhook(s,evt))).outcome,"applied"); assert.equal((await ok(webhook(s,evt))).duplicate,true);
   assert.equal((await pay.order.get()).data().status,"paid"); assert.equal((await cancel(pay)).status,409); assert.equal((await pay.stock.get()).data().allocated,4);
-  check("Stripe session idempotency, server pricing, account binding, signatures, test mode and webhook-only payment confirmation");
+  check("Stripe session idempotency, server pricing, account binding, signatures, test mode and verified payment confirmation");
+  const recovered = await fixture("missing-webhook"); await ok(start(recovered));
+  const recoveredId = (await recovered.order.get()).data().stripeCheckout.sessionId;
+  assert.equal((await ok(access(recovered))).status, "pending_payment");
+  stripe.sessions.get(recoveredId).status = "complete";
+  const processing = await ok(access(recovered));
+  assert.equal(processing.status, "pending_payment"); assert.equal(processing.checkoutState, "processing");
+  assert.equal((await access(recovered, { action: "cancel", operationId: randomUUID() })).status, 409);
+  const recoveredSession = stripe.pay(recoveredId), readsBefore = stripe.reads();
+  assert.equal((await access(recovered, { token: "0".repeat(64) })).status, 404);
+  assert.equal(stripe.reads(), readsBefore);
+  const results = await Promise.all([ok(access(recovered)), ok(access(recovered))]);
+  for (const result of results) { assert.equal(result.status, "paid"); assert.equal(result.checkoutState, "paid"); }
+  const receipts = await c("storePaymentEvents").where("input.orderId", "==", recovered.id).get();
+  assert.equal(receipts.size, 1); assert.equal(receipts.docs[0].data().verification, "stripe_lookup");
+  assert.equal((await ok(webhook(recoveredSession, "evt_after_lookup"))).reason, "already_paid");
+  assert.equal((await recovered.stock.get()).data().allocated, 4); assert.equal((await recovered.stock.get()).data().onHand, 10);
+  assert.equal((await recovered.order.get()).data().paymentReviewRequired, undefined);
+  check("missed webhook recovers from canonical Stripe status; private access, duplicate refreshes and later webhooks preserve one stock outcome");
+  const lookupRace = await fixture("lookup-webhook-race"); await ok(start(lookupRace));
+  const raceSession = stripe.pay((await lookupRace.order.get()).data().stripeCheckout.sessionId);
+  await Promise.all([ok(access(lookupRace)), ok(webhook(raceSession, "evt_lookup_race"))]);
+  assert.equal((await lookupRace.order.get()).data().status, "paid");
+  assert.equal((await lookupRace.order.get()).data().paymentReviewRequired, undefined);
+  assert.equal((await lookupRace.stock.get()).data().allocated, 4);
+  const mismatch = await fixture("lookup-mismatch"); await ok(start(mismatch));
+  const mismatchSession = stripe.pay((await mismatch.order.get()).data().stripeCheckout.sessionId);
+  for (const [key, value] of [["amount_total", 1], ["client_reference_id", recovered.id], ["livemode", true], ["currency", "eur"], ["metadata", { ...mismatchSession.metadata, accountId: "acct_other" }]]) {
+    const previous = mismatchSession[key]; mismatchSession[key] = value;
+    assert.equal((await ok(access(mismatch))).checkoutState, "unavailable");
+    assert.equal((await mismatch.order.get()).data().status, "pending_payment");
+    mismatchSession[key] = previous;
+  }
+  stripe.setUnavailable(true);
+  try {
+    assert.equal((await ok(access(mismatch))).checkoutState, "unavailable");
+    assert.equal((await access(mismatch, { action: "cancel", operationId: randomUUID() })).status, 409);
+    assert.equal((await mismatch.stock.get()).data().allocated, 4);
+  } finally { stripe.setUnavailable(false); }
+  assert.equal((await ok(access(mismatch))).status, "paid");
+  check("webhook/lookup races are idempotent; mismatched Sessions and outages cannot confirm payment or cancel an uncertain payment");
+  const lookupLate = await fixture("lookup-late"); await ok(start(lookupLate));
+  stripe.pay((await lookupLate.order.get()).data().stripeCheckout.sessionId);
+  await lookupLate.order.update({ expiresAt: new Date(Date.now() - 1).toISOString() });
+  const lateLookup = await ok(access(lookupLate));
+  assert.equal(lateLookup.status, "expired"); assert.equal(lateLookup.paymentReviewRequired, true); assert.equal(lateLookup.checkoutState, "paid");
+  await ok(access(lookupLate)); assert.equal((await lookupLate.stock.get()).data().allocated, 2);
+  check("payment discovered after the deadline enters review, releases the expired hold once, and never reopens stock automatically");
   const late = await fixture("late"); await ok(start(late)); const lateId=(await late.order.get()).data().stripeCheckout.sessionId;
   await ok(cancel(late)); const lateSession=stripe.pay(lateId), lateEvent="evt_late_fixture";
   assert.equal((await ok(webhook(lateSession,lateEvent))).reason,"late_success");
@@ -112,11 +159,13 @@ export async function orderLifecycleChecks({ request, csrf, db, check, origin, o
   check("concurrent payment/cancellation has one stock outcome and deadline enforcement does not depend on the scheduled worker");
   if (process.argv.includes("--lifecycle-preview")) {
     const preview = await fixture("browser-pending"), browserLate = await fixture("browser-late");
+    const browserReturn = await fixture("browser-return"); await ok(start(browserReturn));
+    stripe.pay((await browserReturn.order.get()).data().stripeCheckout.sessionId);
     await ok(start(browserLate)); await ok(cancel(browserLate));
     await ok(webhook(stripe.pay((await browserLate.order.get()).data().stripeCheckout.sessionId), "evt_browser_late"));
     const marker = "web-app/.next-auth-test/lifecycle-preview.done";
     try { await unlink(marker); } catch {}
-    await writeFile("web-app/.next-auth-test/lifecycle-preview.ready", JSON.stringify({ url:origin+"/orders/"+preview.id+"#"+preview.token }));
+    await writeFile("web-app/.next-auth-test/lifecycle-preview.ready", JSON.stringify({ url:origin+"/orders/"+preview.id+"#"+preview.token, returnUrl:origin+"/orders/"+browserReturn.id+"?checkout=returned#"+browserReturn.token }));
     console.log("Lifecycle browser preview ready at " + origin + "/admin/orders");
     for (let i=0;i<1200;i++) { try { await fileAccess(marker); break; } catch {} await delay(500); }
   }

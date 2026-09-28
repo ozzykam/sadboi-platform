@@ -15,7 +15,7 @@ function fail(message: string, status = 409, code = "payment-conflict"): never {
   throw new AccessError(status, code, message);
 }
 
-export async function confirmStorePayment(raw: unknown, source?: StripeSource): Promise<StorePaymentResult> {
+export async function confirmStorePayment(raw: unknown, source?: StripeSource, verification?: "stripe_lookup"): Promise<StorePaymentResult> {
   const parsed = paymentConfirmationSchema.safeParse(raw);
   if (!parsed.success) fail("Invalid payment confirmation payload.", 400, "invalid-payment");
   const input = parsed.data, digest = fingerprint(source ? { input, source } : input);
@@ -69,7 +69,7 @@ export async function confirmStorePayment(raw: unknown, source?: StripeSource): 
     const orderStatus = decision.outcome === "applied" ? "paid" : String(data.status);
     const result: StorePaymentResult = { id: input.orderId, status: input.status, ...decision, orderStatus, duplicate: false };
     tx.create(eventRef, { businessId, schemaVersion: 1, input, fingerprint: digest, result,
-      outcome: decision.outcome, reason: decision.reason, createdAt: now, source: source ?? null, revision: 0, resolution: null });
+      outcome: decision.outcome, reason: decision.reason, createdAt: now, source: source ?? null, verification: verification ?? null, revision: 0, resolution: null });
     if (!identityConflict && data.totalMinor === input.amountMinor) {
       tx.set(identityRef, { ...owner, businessId, provider: input.provider, paymentId: input.paymentId, orderId: input.orderId,
         amountMinor: input.amountMinor, currency: input.currency,
@@ -98,7 +98,7 @@ export async function storePaymentHistory(rawId: unknown): Promise<{ events: Sto
     const saved = doc.data(), input = paymentConfirmationSchema.safeParse(saved.input);
     if (!input.success) fail("Historical payment data needs administrative review.", 503, "payment-history-invalid");
     return { id: doc.id, input: input.data, outcome: saved.outcome ?? "legacy", reason: saved.reason ?? "historical_event", receivedAt: String(saved.createdAt),
-      source: saved.source ?? null, revision: saved.revision ?? 0, resolution: saved.resolution ?? null } as StorePaymentEvent;
+      source: saved.source ?? null, verification: saved.verification ?? null, revision: saved.revision ?? 0, resolution: saved.resolution ?? null } as StorePaymentEvent;
   }).sort((a, b) => b.receivedAt.localeCompare(a.receivedAt) || b.id.localeCompare(a.id)) };
 }
 

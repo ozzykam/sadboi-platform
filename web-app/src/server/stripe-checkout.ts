@@ -8,6 +8,38 @@ import { stripeContext, type StripeSource } from "./stripe";
 import { requireOrderToken, closePendingOrder } from "./order-lifecycle";
 const collection = (name: string) => adminServices().db.collection(`businesses/${businessId}/${name}`);
 
+export type CheckoutState = "not_started" | "open" | "processing" | "paid" | "expired" | "unavailable";
+
+// Call only after authorizing access to the order. The saved account and Session
+// are the authority; return URLs and customer-supplied payment IDs are never used.
+export async function reconcileStripeCheckout(orderId: string): Promise<CheckoutState> {
+  const data = (await collection("storeOrders").doc(orderId).get()).data();
+  if (!data || data.businessId !== businessId) throw new AccessError(404, "order-not-found", "Order not found.");
+  if (["paid", "fulfilled"].includes(data.status)) return "paid";
+  if (!data.stripeSource && !data.stripeCheckout) return "not_started";
+  if (!data.stripeCheckout?.sessionId) return "unavailable";
+  const { client, source } = await stripeContext(data.stripeSource);
+  const session = await client.checkout.sessions.retrieve(data.stripeCheckout.sessionId);
+  if (session.id !== data.stripeCheckout.sessionId || session.livemode || session.mode !== "payment" ||
+      data.stripeSource?.accountId !== source.accountId || data.stripeSource?.mode !== "test" ||
+      session.metadata?.orderId !== orderId || session.metadata?.businessId !== businessId ||
+      session.metadata?.accountId !== source.accountId || session.client_reference_id !== orderId ||
+      session.currency !== "usd" || session.amount_total !== data.totalMinor)
+    throw new AccessError(409, "stripe-order", "Stripe session does not match its saved order.");
+  if (session.payment_status === "paid") {
+    const paymentId = typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id;
+    if (!paymentId) throw new AccessError(409, "stripe-payment", "The Stripe payment reference is missing.");
+    const { confirmStorePayment } = await import("./store-payments");
+    // One durable verification receipt, sharing the webhook's transactional
+    // payment identity and late-payment policy. Repeated refreshes are harmless.
+    const eventId = "lookup_" + createHash("sha256").update(session.id + ":paid").digest("hex");
+    await confirmStorePayment({ eventId, orderId, provider: "stripe", paymentId,
+      amountMinor: session.amount_total, currency: "USD", status: "succeeded" }, source, "stripe_lookup");
+    return "paid";
+  }
+  return session.status === "open" ? "open" : session.status === "expired" ? "expired" : "processing";
+}
+
 export async function startStripeCheckout(raw: Record<string, unknown>) {
   const parsed = storePaymentOrderId.safeParse(raw.orderId);
   if (!parsed.success || Object.keys(raw).some(key => !["orderId", "token"].includes(key))) throw new AccessError(400, "invalid-checkout", "Invalid order access.");
