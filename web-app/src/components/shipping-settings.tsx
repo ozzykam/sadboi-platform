@@ -29,7 +29,7 @@ export function ShippingSettingsEditor({ initial, canEdit }: { initial: Shipping
       setMessage(error instanceof Error ? error.message : "The save result is unknown. Retry the same save.");
     } finally { lock.current = false; setBusy(false); }
   }
-  return <section className="inv-panel">
+  return <section className="inv-panel shipping-settings">
     <h1>Shipping rates</h1>
     <p>Set a flat charge per order for US destinations. Studio pickup is always free. No live carrier prices, labels, delivery estimates or tax calculations are provided.</p>
     <p>These settings currently apply to test checkout. Shipping stays unavailable until a service and its destination states are enabled.</p>
@@ -52,11 +52,13 @@ export function ShippingSettingsEditor({ initial, canEdit }: { initial: Shipping
         </div>
       </fieldset>
       <p>Changes apply to new order requests. Disabling a service prevents new orders from selecting it; it does not cancel or reprice saved orders.</p>
-      {canEdit && <Button type="submit" loading={busy} disabled={conflict}>{uncertain ? "Retry same save" : "Save shipping rates"}</Button>}
+      <div className="inv-actions">
+        {canEdit && <Button type="submit" loading={busy} disabled={conflict}>{uncertain ? "Retry same save" : "Save shipping rates"}</Button>}
+        <Button type="button" variant="secondary" disabled={busy || uncertain} onClick={async () => {
+          setBusy(true); try { load(await inventoryRequest("/api/store/shipping")); setConflict(false); setMessage("Saved shipping rates loaded. Unsaved edits were replaced."); }
+          catch (error) { setMessage(error instanceof Error ? error.message : "Rates could not load."); } finally { setBusy(false); }
+        }}>Reload saved rates</Button>
+      </div>
     </form>
-    <Button variant="secondary" disabled={busy || uncertain} onClick={async () => {
-      setBusy(true); try { load(await inventoryRequest("/api/store/shipping")); setConflict(false); setMessage("Saved shipping rates loaded. Unsaved edits were replaced."); }
-      catch (error) { setMessage(error instanceof Error ? error.message : "Rates could not load."); } finally { setBusy(false); }
-    }}>Reload saved rates</Button>
   </section>;
 }

@@ -1990,6 +1990,12 @@ td small {
 .inv-form {
   margin-top: 22px;
 }
+.shipping-settings fieldset > .inv-actions {
+  margin-block: 20px;
+}
+.shipping-settings form > .inv-actions {
+  margin-top: 20px;
+}
 .store-payment-history {
   margin: 24px 0;
   padding: 20px 0;
