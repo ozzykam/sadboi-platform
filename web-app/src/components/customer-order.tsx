@@ -3,7 +3,10 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { inventoryRequest } from "@/lib/inventory-client";
 import { Button, Badge } from "./ui";
-type Order = { id: string; orderNumber: string; status: string; totalMinor: number; expiresAt: string | null; paymentReviewRequired: boolean; checkoutEnabled: boolean; checkoutState: "not_started" | "open" | "processing" | "paid" | "expired" | "unavailable" };
+import { CheckoutTotalSummary } from "./checkout-totals";
+import type { CheckoutTotals } from "@sadboi/core";
+type Order = { id: string; orderNumber: string; status: string; totalMinor: number; expiresAt: string | null; paymentReviewRequired: boolean; checkoutEnabled: boolean; checkoutState: "not_started" | "open" | "processing" | "paid" | "expired" | "unavailable";
+  fulfillment: { status: string; method: string; trackingNumber: string; updatedAt: string } | null; pricing: CheckoutTotals | null };
 export function CustomerOrder({ orderId }: { orderId: string }) {
   const [order, setOrder] = useState<Order | null>(null), [message, setMessage] = useState("Loading your order…"), [busy, setBusy] = useState(false);
   const token = useRef(""), operationId = useRef<string | null>(null), lock = useRef(false);
@@ -15,7 +18,7 @@ export function CustomerOrder({ orderId }: { orderId: string }) {
       try { sessionStorage.setItem(key, fragment); window.history.replaceState(null, "", window.location.pathname + window.location.search); } catch { /* Keep the access link if storage is blocked. */ }
     } else { try { token.current = sessionStorage.getItem(key) ?? ""; } catch { /* Report missing access below. */ } }
     if (!token.current) {
-      const timer = window.setTimeout(() => { if (active) setMessage("Open the private order link from your checkout confirmation in the same browser. Contact the studio if you no longer have it."); }, 0);
+      const timer = window.setTimeout(() => { if (active) setMessage("Open the private link saved at checkout or included in an order email from the studio. You can use that full link in another browser. Contact the studio if you no longer have it."); }, 0);
       return () => { active = false; window.clearTimeout(timer); };
     }
     inventoryRequest(`/api/store/order-access/${orderId}`, { method: "POST", body: JSON.stringify({ token: token.current, action: "status" }) })
@@ -53,15 +56,26 @@ export function CustomerOrder({ orderId }: { orderId: string }) {
   return <section className="inv-panel">
     <p className="eyebrow">YOUR STUDIO ORDER</p><h1>{order?.orderNumber ?? "Order details"}</h1>
     {message && <p className="notice" role="status">{message}</p>}
-    {order && <><Badge>{order.status.replaceAll("_", " ")}</Badge><p>Total: ${(order.totalMinor / 100).toFixed(2)}</p>
+    {order && <><Badge>{order.status.replaceAll("_", " ")}</Badge><CheckoutTotalSummary pricing={order.pricing} totalMinor={order.totalMinor} />
       {order.checkoutState === "unavailable" && <p className="notice">We couldn’t verify your payment with Stripe. Please do not pay again. Refresh the order status to retry, or contact the studio.</p>}
       {order.checkoutState === "processing" && <p className="notice">Stripe is still processing your checkout. Please do not pay again. Refresh the order status shortly.</p>}
       {order.status === "pending_payment" && <><p>Stock is held until {order.expiresAt ? new Date(order.expiresAt).toLocaleString() : "the studio closes this request"}. Payment is checked with Stripe when this page loads or you refresh the order status.</p>
-        {!order.paymentReviewRequired && ["not_started", "open"].includes(order.checkoutState) && (order.checkoutEnabled ? <><p className="notice">Test checkout only. No real payment is collected. Shipping and tax are not calculated.</p><Button disabled={busy} onClick={() => void act("pay")}>Continue to Stripe test checkout</Button></> : <p>Online payment is not available yet. Contact the studio before the hold expires.</p>)}
+        {!order.paymentReviewRequired && ["not_started", "open"].includes(order.checkoutState) && (order.checkoutEnabled ? <><p className="notice">Test checkout only. No real payment is collected. Tax is not calculated.</p><Button disabled={busy} onClick={() => void act("pay")}>Continue to Stripe test checkout</Button></> : <p>Online payment is not available yet. Contact the studio before the hold expires.</p>)}
         {order.checkoutState === "expired" && <p>Stripe checkout has closed. Contact the studio or cancel this unpaid order.</p>}
         {!order.paymentReviewRequired && ["not_started", "open", "expired"].includes(order.checkoutState) && <Button variant="secondary" disabled={busy} onClick={() => void act("cancel")}>Cancel unpaid order</Button>}</>}
       {order.paymentReviewRequired && <p className="notice">Your payment needs review by the studio. Please do not pay again.</p>}
-      {order.status === "paid" && <p>Payment is confirmed. The studio will arrange fulfillment.</p>}
+      {order.status === "paid" && <p>Payment is confirmed.{!order.fulfillment || order.fulfillment.status === "unfulfilled" ? " The studio will arrange fulfillment." : ""}</p>}
+      {order.fulfillment && <section aria-label="Fulfillment status">
+        <h2>{order.fulfillment.status === "packed" ? order.fulfillment.method === "pickup" ? "Ready for pickup" : "Packed for shipping"
+          : order.fulfillment.status === "shipped" ? "Shipped" : order.fulfillment.status === "delivered" ? order.fulfillment.method === "pickup" ? "Collected" : "Delivered"
+          : order.fulfillment.status === "cancelled" ? "Fulfillment cancelled" : "Preparing your order"}</h2>
+        {order.fulfillment.status === "packed" && order.fulfillment.method === "pickup" && <p>Confirm the pickup time and location with the studio before traveling.</p>}
+        {order.fulfillment.method !== "pickup" && ["shipped", "delivered"].includes(order.fulfillment.status) && <>
+          <p style={{ overflowWrap: "anywhere" }}>{order.fulfillment.trackingNumber ? `Tracking number: ${order.fulfillment.trackingNumber}` : "No tracking number is currently available. Contact the studio for shipping details."}</p>
+          <p>This status was recorded by the studio; it is not live carrier tracking.</p>
+        </>}
+        <p>Last updated: {new Date(order.fulfillment.updatedAt).toLocaleString()}</p>
+      </section>}
       {["cancelled", "expired"].includes(order.status) && <p>This order no longer holds stock. Contact the studio if a payment was completed.</p>}
     </>}
     <div className="inv-actions"><Button variant="secondary" disabled={busy} onClick={() => void act("status")}>Refresh order status</Button><Link className="inline-link" href="/shop">Back to shop</Link></div>

@@ -3,7 +3,6 @@ import { createHash, randomUUID, randomBytes } from "node:crypto";
 import {
   assertStock,
   stockAvailable,
-  stockVariantInputSchema,
   storeOrderRequestSchema,
   type StockBalance,
   orderHoldMinutes,
@@ -11,6 +10,8 @@ import {
 import { adminServices } from "./firebase";
 import { AccessError, businessId } from "./staff";
 import { inventoryBalanceRef } from "./inventory";
+import { queueOrderEmail } from "./order-email-queue";
+import { readCheckoutQuote } from "./checkout-quote";
 
 const collection = (name: string) =>
   adminServices().db.collection(`businesses/${businessId}/${name}`);
@@ -24,7 +25,7 @@ export async function createStoreOrder(raw: unknown) {
   const parsed = storeOrderRequestSchema.safeParse(raw);
   if (!parsed.success)
     fail(parsed.error.issues.map((issue) => issue.message).join(" "), 400);
-  const { input, operationId } = parsed.data;
+  const { input, operationId, quoteId } = parsed.data;
   const fingerprint = hash(JSON.stringify(input));
   const operationRef = collection("storeOrderOperations").doc(
     hash(operationId),
@@ -51,7 +52,8 @@ export async function createStoreOrder(raw: unknown) {
         expiresAt?: string;
       };
     }
-    const [counter, locations, variantDocs] = await Promise.all([
+    if (!quoteId) fail("Review the current checkout total before requesting an order.", 400);
+    const [counter, locations, quote] = await Promise.all([
       tx.get(counterRef),
       tx.get(
         collection("stockLocations")
@@ -59,43 +61,17 @@ export async function createStoreOrder(raw: unknown) {
           .where("input.status", "==", "active")
           .limit(101),
       ),
-      Promise.all(
-        input.lines.map((line) =>
-          tx.get(collection("productVariants").doc(line.variantId)),
-        ),
-      ),
+      readCheckoutQuote(tx, input),
     ]);
     if (locations.size > 100)
       fail("Online stock needs review before this order can be placed.", 503);
-    const variants = variantDocs.map((doc) => {
-      const variant = stockVariantInputSchema.safeParse(doc.data()?.input);
-      if (
-        !variant.success ||
-        variant.data.status !== "active" ||
-        variant.data.publication !== "public"
-      )
-        fail("A selected product is no longer available.");
-      return variant.data;
-    });
-    const products = await Promise.all(
-      variants.map((variant) =>
-        tx.get(collection("products").doc(variant.productId)),
-      ),
-    );
-    if (
-      products.some(
-        (doc) =>
-          doc.data()?.input.status !== "active" ||
-          doc.data()?.input.publication !== "public",
-      )
-    )
-      fail("A selected product is no longer available.");
+    if (quote.id !== quoteId) fail("Prices, shipping rates or order details changed. Review the updated total before requesting the order.");
 
     // Firestore requires every read to finish before the first write, including
     // balances for later cart lines. Missing balances never create stock.
     const balancesByLine = await Promise.all(
       input.lines.map((line, index) =>
-        variants[index].fulfillment === "made_to_order"
+        quote.lines[index].fulfillment === "made_to_order"
           ? Promise.resolve([])
           : Promise.all(
               locations.docs.map((location) =>
@@ -105,9 +81,9 @@ export async function createStoreOrder(raw: unknown) {
       ),
     );
     const now = new Date().toISOString();
-    let totalMinor = 0;
+    const totalMinor = quote.totals.totalMinor;
     const snapshots = input.lines.map((line, index) => {
-      const variant = variants[index];
+      const variant = quote.lines[index];
       const allocations: Array<{ locationId: string; quantity: number }> = [];
       let remaining = variant.fulfillment === "stocked" ? line.quantity : 0;
       for (const balance of balancesByLine[index]) {
@@ -126,13 +102,12 @@ export async function createStoreOrder(raw: unknown) {
       }
       if (remaining)
         fail("A selected product does not have enough available stock.");
-      totalMinor += line.quantity * variant.priceMinor;
       return {
         ...line,
         sku: variant.sku,
         name: variant.name,
         productId: variant.productId,
-        productTitle: products[index].data()!.input.title,
+        productTitle: variant.productTitle,
         unitCostMinor: variant.priceMinor,
         fulfillment: variant.fulfillment,
         allocations,
@@ -148,18 +123,21 @@ export async function createStoreOrder(raw: unknown) {
     const orderNumber = `SO-${String(count + 1).padStart(6, "0")}`;
     const managementToken = randomBytes(32).toString("hex");
     const expiresAt = new Date(Date.now() + orderHoldMinutes * 60_000).toISOString();
-    const result = { id: orderRef.id, orderNumber, totalMinor, managementToken, expiresAt };
-    tx.create(orderRef, {
+    const result = { id: orderRef.id, orderNumber, totalMinor, managementToken, expiresAt, pricing: quote.totals };
+    const orderData = {
       input,
       lines: snapshots,
       totalMinor,
+      pricing: quote.totals,
       orderNumber,
       status: "pending_payment",
       expiresAt, managementTokenHash: hash(managementToken), allocationState: "held", lifecycleRevision: 0,
-      businessId,
+      businessId, emailAccessOperationId: operationRef.id,
       createdAt: now,
       updatedAt: now,
-    });
+    };
+    tx.create(orderRef, orderData);
+    queueOrderEmail(tx, orderRef.id, "order_received", orderData, now);
     tx.set(counterRef, { orders: count + 1 }, { merge: true });
     tx.create(operationRef, { fingerprint, result, createdAt: now });
     return result;

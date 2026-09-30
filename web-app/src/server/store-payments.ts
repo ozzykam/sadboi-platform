@@ -8,6 +8,7 @@ import { adminServices } from "./firebase";
 import { AccessError, businessId } from "./staff";
 import { authResponse } from "./auth-http";
 import type { StripeSource } from "./stripe";
+import { queueOrderEmail } from "./order-email-queue";
 
 const collection = (name: string) => adminServices().db.collection(`businesses/${businessId}/${name}`);
 const fingerprint = (value: unknown) => createHash("sha256").update(JSON.stringify(value)).digest("hex");
@@ -76,10 +77,13 @@ export async function confirmStorePayment(raw: unknown, source?: StripeSource, v
         status: paymentSucceeded || input.status === "succeeded" ? "succeeded" : "failed",
         source: source ?? null, createdAt: owner?.createdAt ?? now, updatedAt: now });
     }
-    if (decision.outcome === "applied") tx.update(orderRef, {
+    if (decision.outcome === "applied") {
+      queueOrderEmail(tx, input.orderId, "payment_confirmed", data, now);
+      tx.update(orderRef, {
       status: "paid", paymentId: input.paymentId, paymentProvider: input.provider,
       paymentEventId: input.eventId, paymentSchemaVersion: 1, paidAt: now, updatedAt: now,
-    });
+      });
+    }
     else if (decision.outcome === "review") tx.update(orderRef, {
       paymentReviewRequired: true, updatedAt: now,
     });

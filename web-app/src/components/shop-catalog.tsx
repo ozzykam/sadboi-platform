@@ -8,7 +8,10 @@ import {
   useState,
   type CSSProperties,
 } from "react";
-import { restoreStoreCart, type StoreOrderInput } from "@sadboi/core";
+import { restoreStoreCart, type StoreOrderInput, type ShippingSettings, type CheckoutTotals } from "@sadboi/core";
+import type { checkoutQuote } from "@/server/checkout-quote";
+import { inventoryRequest } from "@/lib/inventory-client";
+import { CheckoutTotalSummary } from "./checkout-totals";
 import {
   pendingCheckout,
   savePendingCheckout,
@@ -22,7 +25,9 @@ import type { PublicCatalogItem } from "@/server/public-catalog";
 import { StoreOrderForm, type StoreCartLine } from "./store-order-form";
 import { Button, Input } from "./ui";
 
-export function ShopCatalog({ products }: { products: PublicCatalogItem[] }) {
+export function ShopCatalog({ products, shipping }: { products: PublicCatalogItem[]; shipping: ShippingSettings }) {
+  const [shippingService, setShippingService] = useState<"standard" | "express">(shipping.input.standard.enabled ? "standard" : "express");
+  const [review, setReview] = useState<{ input: StoreOrderInput; quote: Awaited<ReturnType<typeof checkoutQuote>> } | null>(null);
   const categories = useMemo(
     () => [
       "All",
@@ -46,6 +51,7 @@ export function ShopCatalog({ products }: { products: PublicCatalogItem[] }) {
     expiresAt?: string;
     orderNumber: string;
     totalMinor: number;
+    pricing?: CheckoutTotals;
   } | null>(null);
   const [checkoutMethod, setCheckoutMethod] = useState<"pickup" | "shipping">(
     "pickup",
@@ -105,6 +111,7 @@ export function ShopCatalog({ products }: { products: PublicCatalogItem[] }) {
     if (pending || checkoutLock.current || !cartReady) return;
     setOrderConfirmation(null);
     setCheckoutMessage("");
+    setReview(null);
     setCart((current) => restoreStoreCart([...current, ...lines], products));
   }
   function addAndCloseCart(lines: StoreCartLine[]) {
@@ -116,7 +123,7 @@ export function ShopCatalog({ products }: { products: PublicCatalogItem[] }) {
     (total, line) => total + line.priceMinor * line.quantity,
     0,
   );
-  async function sendCheckout(input?: StoreOrderInput) {
+  async function sendCheckout(input?: StoreOrderInput, quoteId?: string) {
     if (checkoutLock.current || !cartReady || (!pending && !input)) return;
     checkoutLock.current = true;
     setCheckoutBusy(true);
@@ -124,6 +131,7 @@ export function ShopCatalog({ products }: { products: PublicCatalogItem[] }) {
     const attempt = pending ?? {
       operationId: crypto.randomUUID(),
       input: input!,
+      quoteId,
     };
     setPending(attempt);
     savePendingCheckout(attempt);
@@ -137,6 +145,7 @@ export function ShopCatalog({ products }: { products: PublicCatalogItem[] }) {
       if (checkoutWasRejected(error)) {
         savePendingCheckout(null);
         setPending(null);
+        setReview(null);
       }
       setCheckoutMessage(
         error instanceof Error ? error.message : "Could not create order.",
@@ -149,11 +158,12 @@ export function ShopCatalog({ products }: { products: PublicCatalogItem[] }) {
   async function checkout(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    await sendCheckout({
+    const input: StoreOrderInput = {
       customerName: String(data.get("customerName") ?? ""),
       customerEmail: String(data.get("customerEmail") ?? ""),
       notes: String(data.get("notes") ?? ""),
       fulfillmentMethod: checkoutMethod,
+      ...(checkoutMethod === "shipping" ? { shippingService } : {}),
       shippingAddress:
         checkoutMethod === "shipping"
           ? {
@@ -169,7 +179,13 @@ export function ShopCatalog({ products }: { products: PublicCatalogItem[] }) {
         variantId,
         quantity,
       })),
-    });
+    };
+    if (review && JSON.stringify(review.input) === JSON.stringify(input)) { await sendCheckout(input, review.quote.id); return; }
+    if (checkoutLock.current || !cartReady) return;
+    checkoutLock.current = true; setCheckoutBusy(true); setCheckoutMessage("");
+    try { const quote = await inventoryRequest("/api/store/quote", { method: "POST", body: JSON.stringify(input) }); setReview({ input, quote }); }
+    catch (error) { setReview(null); setCheckoutMessage(error instanceof Error ? error.message : "The total could not be checked. Try again."); }
+    finally { checkoutLock.current = false; setCheckoutBusy(false); }
   }
   return (
     <>
@@ -419,9 +435,7 @@ export function ShopCatalog({ products }: { products: PublicCatalogItem[] }) {
                     <p>
                         Your request is saved. Stock is held for 30 minutes while awaiting payment.
                     </p>
-                      <strong>
-                        ${(orderConfirmation.totalMinor / 100).toFixed(2)}
-                      </strong>
+                      <CheckoutTotalSummary pricing={orderConfirmation.pricing} totalMinor={orderConfirmation.totalMinor} />
                       {orderConfirmation.managementToken && <a className="inline-link" href={`/orders/${orderConfirmation.id}#${orderConfirmation.managementToken}`}>View order and payment options</a>}
                     <button
                       type="button"
@@ -470,18 +484,19 @@ export function ShopCatalog({ products }: { products: PublicCatalogItem[] }) {
                         </div>
                         <span>
                           {line.quantity} × $
-                          {(line.priceMinor / 100).toFixed(2)}
+                          {((review?.quote.lines.find(item => item.variantId === line.variantId)?.priceMinor ?? line.priceMinor) / 100).toFixed(2)}
                         </span>
                         <button
                           type="button"
                           disabled={!!pending || checkoutBusy}
-                          onClick={() =>
+                          onClick={() => {
+                            setReview(null);
                             setCart((current) =>
                               current.filter(
                                 (item) => item.variantId !== line.variantId,
                               ),
-                            )
-                          }
+                            );
+                          }}
                         >
                           Remove
                         </button>
@@ -492,10 +507,10 @@ export function ShopCatalog({ products }: { products: PublicCatalogItem[] }) {
                 {!orderConfirmation && cart.length > 0 && (
                   <>
                     <div className="shop-cart-total">
-                      <span>Subtotal</span>
-                      <strong>${(cartTotal / 100).toFixed(2)}</strong>
+                      <span>{review ? "Item subtotal" : "Estimated item subtotal"}</span>
+                      <strong>${((review?.quote.totals.subtotalMinor ?? cartTotal) / 100).toFixed(2)}</strong>
                     </div>
-                    <form className="shop-cart-checkout" onSubmit={checkout}>
+                    <form className="shop-cart-checkout" onSubmit={checkout} onChange={() => setReview(null)}>
                       <fieldset
                         disabled={!!pending || checkoutBusy}
                         style={{ display: "contents" }}
@@ -524,12 +539,17 @@ export function ShopCatalog({ products }: { products: PublicCatalogItem[] }) {
                               )
                             }
                           >
-                            <option value="pickup">Studio pickup</option>
-                            <option value="shipping">Ship to me</option>
+                            <option value="pickup">Studio pickup (free)</option>
+                            <option value="shipping" disabled={!shipping.input.standard.enabled && !shipping.input.express.enabled}>Ship to me</option>
                           </select>
                         </label>
                         {checkoutMethod === "shipping" && (
                           <div className="shop-address-fields">
+                            <label className="shop-checkout-select">Shipping service<select value={shippingService} onChange={event => setShippingService(event.target.value as "standard" | "express")}>
+                              <option value="standard" disabled={!shipping.input.standard.enabled}>Standard shipping</option>
+                              <option value="express" disabled={!shipping.input.express.enabled}>Express shipping</option>
+                            </select></label>
+                            <p>Ships to: {shipping.input.regions.join(", ")}. Charges are per order; delivery dates are not guaranteed.</p>
                             <Input
                               label="Address"
                               name="line1"
@@ -548,7 +568,7 @@ export function ShopCatalog({ products }: { products: PublicCatalogItem[] }) {
                               maxLength={100}
                             />
                             <Input
-                              label="State / region"
+                              label="State code (for example IL)"
                               name="region"
                               required
                               maxLength={100}
@@ -566,12 +586,14 @@ export function ShopCatalog({ products }: { products: PublicCatalogItem[] }) {
                           name="notes"
                           maxLength={2000}
                         />
+                        {!shipping.input.standard.enabled && !shipping.input.express.enabled && <p>Shipping is not available yet. Studio pickup is free.</p>}
+                        {review && <div role="status"><h3>Review your test total</h3><CheckoutTotalSummary pricing={review.quote.totals} totalMinor={review.quote.totals.totalMinor} /><p>Current catalog prices and shipping charges are shown above. No real payment is collected. Requesting the order saves these amounts.</p></div>}
                         <Button
                           type="submit"
                           loading={checkoutBusy}
                           disabled={!cartReady}
                         >
-                          Request order
+                          {review ? "Request order" : "Review total"}
                         </Button>
                       </fieldset>
                       <details className="shop-order-note">
@@ -579,12 +601,12 @@ export function ShopCatalog({ products }: { products: PublicCatalogItem[] }) {
                         <p>
                           Choose your quantities, open Cart, enter your name and
                           email, then choose Studio pickup or Ship to me and
-                          enter a US address. Request order saves a request
+                          enter a supported US address. Choose Review total to see current prices and shipping, then Request order to save a request
                           awaiting payment; it does not charge you.
                         </p>
                         <p>
                           For example, two $25 prints have a $50 item subtotal.
-                          Shipping and tax are not calculated here. Stocked
+                          Shipping is added once per order at the configured rate; studio pickup is free. Tax is not calculated in test checkout. Stocked
                             items are held for 30 minutes when your request is saved. Adding
                           items to the cart alone does not hold them.
                         </p>

@@ -17,6 +17,7 @@ export const storeOrderInputSchema = z
     customerEmail: z.email().max(254),
     notes: text(2000),
     fulfillmentMethod: z.enum(["shipping", "pickup"]).default("pickup"),
+    shippingService: z.enum(["standard", "express"]).optional(),
     shippingAddress: addressSchema.nullable().optional(),
     lines: z
       .array(
@@ -52,6 +53,7 @@ export type StoreOrderInput = z.infer<typeof storeOrderInputSchema>;
 export const storeOrderRequestSchema = z
   .object({
     operationId: z.uuid(),
+    quoteId: z.string().regex(/^[a-f0-9]{64}$/).optional(),
     input: storeOrderInputSchema,
   })
   .strict();

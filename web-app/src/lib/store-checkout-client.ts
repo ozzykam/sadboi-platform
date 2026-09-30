@@ -1,10 +1,10 @@
 "use client";
 
-import { storeOrderRequestSchema, type StoreOrderInput } from "@sadboi/core";
+import { storeOrderRequestSchema, type StoreOrderInput, type CheckoutTotals } from "@sadboi/core";
 import { InventoryRequestError, inventoryRequest } from "./inventory-client";
 
 const key = "sadboi-pending-checkout";
-export type CheckoutAttempt = { operationId: string; input: StoreOrderInput };
+export type CheckoutAttempt = { operationId: string; input: StoreOrderInput; quoteId?: string };
 
 export function pendingCheckout(): CheckoutAttempt | null {
   try {
@@ -51,5 +51,5 @@ export async function submitCheckout(attempt: CheckoutAttempt) {
     throw new Error(
       "The order response was incomplete. Retry to recover your order number.",
     );
-  return result as { id: string; orderNumber: string; totalMinor: number; managementToken?: string; expiresAt?: string };
+  return result as { id: string; orderNumber: string; totalMinor: number; managementToken?: string; expiresAt?: string; pricing?: CheckoutTotals };
 }

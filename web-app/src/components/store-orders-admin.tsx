@@ -6,13 +6,15 @@ import { Button, Input, Badge, Textarea } from "./ui";
 import { inventoryRequest, InventoryRequestError } from "@/lib/inventory-client";
 import { StorePaymentHistory } from "./store-payment-history";
 import { PendingOrderCancel } from "./pending-order-cancel";
+import { OrderEmailHistory } from "./order-email-history";
+import { CheckoutTotalSummary } from "./checkout-totals";
 type Catalog = Awaited<ReturnType<typeof storeOrderCatalog>>;
 type Order = Catalog["orders"][number];
 function initialInput(order: Order): FulfillmentInput {
   const address = order.input.shippingAddress;
   return order.fulfillment?.input ?? { orderId: order.id, recipientName: order.input.customerName,
     address1: address?.line1 ?? "", address2: address?.line2 ?? "", city: address?.city ?? "", region: address?.region ?? "",
-    postalCode: address?.postalCode ?? "", country: "US", method: order.input.fulfillmentMethod === "pickup" ? "pickup" : "standard",
+    postalCode: address?.postalCode ?? "", country: "US", method: order.input.fulfillmentMethod === "pickup" ? "pickup" : order.input.shippingService ?? "standard",
     trackingNumber: "", status: "unfulfilled", notes: "" };
 }
 export function StoreOrdersAdmin({ initial, canEdit }: { initial: Catalog; canEdit: boolean }) {
@@ -105,6 +107,8 @@ function FulfillmentEditor({ order, canEdit, onClose, onSaved, onReload }: {
     <p>{order.lines.map(line => `${line.quantity} × ${line.sku}${line.fulfillment === "made_to_order" ? " (made to order)" : ""}`).join(", ")}</p>
     {order.input.notes && <p>Customer notes: {order.input.notes}</p>}
     <p>Order: {order.status.replaceAll("_", " ")} · Fulfillment: {previous}</p>
+    <CheckoutTotalSummary pricing={order.pricing} totalMinor={order.totalMinor} />
+    {order.pricing && <p>Fulfillment changes do not recalculate the saved shipping charge or collect or refund a difference. Arrange any change with the customer separately.</p>}
     {order.fulfillment && <p>Last saved: {order.fulfillment.updatedAt}</p>}
     {order.reviewReason && <p className="notice" role="status">{order.reviewReason}</p>}
     {order.paymentReviewRequired && <p className="notice" role="status">Payment review required. Compare the reports below with the provider before taking further action. No automatic refund has been issued.</p>}
@@ -115,6 +119,7 @@ function FulfillmentEditor({ order, canEdit, onClose, onSaved, onReload }: {
     }}>Reload saved order</Button>}
     {order.status === "pending_payment" && canEdit && <PendingOrderCancel orderId={order.id} onSaved={onReload} />}
     <StorePaymentHistory orderId={order.id} canEdit={canEdit} onChanged={onReload} />
+    <OrderEmailHistory orderId={order.id} canEdit={canEdit} />
     <form onSubmit={save} className="inv-form">
       <fieldset disabled={frozen} className="inv-form" style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
         <legend>Fulfillment details</legend>
@@ -134,6 +139,7 @@ function FulfillmentEditor({ order, canEdit, onClose, onSaved, onReload }: {
         <Textarea label="Fulfillment notes" maxLength={2000} value={input.notes} onChange={event => change("notes", event.target.value)} />
       </fieldset>
       {editable && <p>Pack every item before dispatch or collection. Made-to-order items must be ready; this does not schedule production. Shipping or collection consumes the order’s allocated stock once.</p>}
+      {editable && <p>Saving Packed for Studio pickup creates a ready-for-pickup email preview. Saving Shipped or changing tracking on a shipped order creates a shipping update. Sending follows the studio email setting; check Order emails after saving. Fulfillment notes stay private.</p>}
       {(input.status === "cancelled" || order.status === "cancelled") && <p className="notice">Cancellation releases this order’s stock allocation. It does not refund a payment. Arrange and record any refund separately.</p>}
       {editable && <Button type="submit" loading={busy} disabled={conflict}>{uncertain ? "Retry same save" : "Save fulfillment"}</Button>}
     </form>

@@ -145,7 +145,7 @@ export function StoreOrderForm({
         Add selected to cart
       </Button>
       <small className="shop-order-note">
-        Payment confirmation will be arranged after the order is reviewed.
+        Review your total in the cart, then use the private order page for test payment.
       </small>
     </form>
   );

@@ -1,10 +1,11 @@
 import "server-only";
-import { orderIsDue, storePaymentOrderId } from "@sadboi/core";
+import { orderIsDue, storePaymentOrderId, readCheckoutTotals } from "@sadboi/core";
 import { adminServices } from "./firebase";
 import { AccessError, businessId } from "./staff";
 import { closePendingOrder, requireOrderToken } from "./order-lifecycle";
 import { stripeEnabled } from "./stripe";
 import { reconcileStripeCheckout, type CheckoutState } from "./stripe-checkout";
+import { readFulfillment } from "./fulfillment";
 export async function accessOrder(id: string, body: Record<string, unknown>) {
   if (!storePaymentOrderId.safeParse(id).success || !["status", "cancel"].includes(String(body.action)))
     throw new AccessError(400, "order-access", "Invalid order request.");
@@ -29,8 +30,18 @@ export async function accessOrder(id: string, body: Record<string, unknown>) {
   } else if (orderIsDue(data as { status: string; expiresAt?: string })) {
     await closePendingOrder(id, "expired", "expiry:" + id + ":" + data.expiresAt, "expiry", "Payment deadline reached");
   }
-  data = (await ref.get()).data()!;
+  const snapshot = await adminServices().db.runTransaction(async tx => {
+    const [order, fulfillment] = await Promise.all([tx.get(ref), tx.get(adminServices().db.doc(`businesses/${businessId}/fulfillments/${id}`))]);
+    return { order: order.data()!, fulfillment: fulfillment.data() };
+  });
+  data = snapshot.order;
+  requireOrderToken(data, body.token);
+  let fulfillment: { status: string; method: string; trackingNumber: string; updatedAt: string } | null = null;
+  try {
+    const saved = readFulfillment(snapshot.fulfillment, id);
+    if (saved) fulfillment = { status: saved.input.status, method: saved.input.method, trackingNumber: saved.input.method === "pickup" ? "" : saved.input.trackingNumber, updatedAt: saved.updatedAt };
+  } catch { /* Historical records needing review do not expose unverified details. */ }
   return { id, orderNumber: String(data.orderNumber), status: String(data.status), totalMinor: Number(data.totalMinor),
     expiresAt: typeof data.expiresAt === "string" ? data.expiresAt : null, paymentReviewRequired: data.paymentReviewRequired === true,
-    checkoutEnabled: stripeEnabled(), checkoutState, testMode: true };
+    checkoutEnabled: stripeEnabled(), checkoutState, testMode: true, fulfillment, pricing: readCheckoutTotals(data.pricing, data.totalMinor) };
 }

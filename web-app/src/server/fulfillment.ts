@@ -4,6 +4,8 @@ import { assertStock, fulfillmentRequestSchema, fulfillmentInputSchema, fulfillm
 import { adminServices } from "./firebase";
 import { AccessError, businessId, type Staff } from "./staff";
 import { inventoryBalanceRef, readInventoryBalance, inventoryTotal } from "./inventory";
+import { fulfillmentEmailKind } from "@sadboi/core";
+import { queueOrderEmail } from "./order-email-queue";
 const collection = (name: string) => adminServices().db.collection("businesses/" + businessId + "/" + name);
 const hash = (value: string) => createHash("sha256").update(value).digest("hex");
 function fail(message: string, code = "fulfillment-conflict", status = 409): never { throw new AccessError(status, code, message); }
@@ -85,14 +87,19 @@ export async function saveFulfillment(raw: unknown, staff: Staff) {
     }
     if (effect === "consume") for (const total of totals) tx.update(total.ref, { onHandUnits: total.onHandUnits, updatedAt: now });
     const revision = expectedRevision + 1;
+    const emailKind = fulfillmentEmailKind(previous?.input ?? null, input);
     const orderStatus = input.status === "delivered" ? "fulfilled" : input.status === "cancelled" ? "cancelled" : "paid";
     const result = { id: ref.id, revision, status: input.status, orderStatus };
     tx.set(ref, { input, businessId, schemaVersion: 1, stockDisposition: fulfillmentDisposition(input.status), revision,
+      notificationRevision: emailKind ? revision : existing.data()?.notificationRevision ?? null,
       createdAt: existing.data()?.createdAt ?? now, updatedAt: now, updatedBy: staff.uid });
     tx.update(order.ref, { status: orderStatus, updatedAt: now });
     tx.create(collection("inventoryAudit").doc(operationRef.id), { resource: "fulfillments", recordId: ref.id,
       kind: "fulfillment_saved", actorId: staff.uid, createdAt: now, before: previous?.input ?? null, after: input, revision, effect });
     tx.create(operationRef, { businessId, actorId: staff.uid, fingerprint, result, createdAt: now });
+    if (emailKind) queueOrderEmail(tx, order.id, emailKind, data, now, {
+      revision, status: input.status, method: input.method, trackingNumber: input.trackingNumber,
+    });
     return result;
   });
 }

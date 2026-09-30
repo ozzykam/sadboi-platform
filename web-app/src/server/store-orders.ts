@@ -1,5 +1,5 @@
 import "server-only";
-import { storeOrderInputSchema } from "@sadboi/core";
+import { storeOrderInputSchema, readCheckoutTotals } from "@sadboi/core";
 import { adminServices } from "./firebase";
 import { businessId } from "./staff";
 import { AccessError } from "./staff";
@@ -33,6 +33,6 @@ export async function storeOrderCatalog() {
       lines: (Array.isArray(data.lines) ? data.lines : []).map((line: Record<string, unknown>) => ({ sku: String(line.sku), quantity: Number(line.quantity), fulfillment: String(line.fulfillment) })),
       expiresAt: typeof data.expiresAt === "string" ? data.expiresAt : null,
       stripeExpiryPending: data.stripeExpiryPending === true,
-      fulfillment, reviewReason, paymentReviewRequired: data.paymentReviewRequired === true };
+      fulfillment, reviewReason, pricing: readCheckoutTotals(data.pricing, data.totalMinor), paymentReviewRequired: data.paymentReviewRequired === true };
   }).sort((a, b) => b.createdAt.localeCompare(a.createdAt)) };
 }

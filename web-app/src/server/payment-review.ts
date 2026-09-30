@@ -6,6 +6,7 @@ import { AccessError, businessId, type Staff } from "./staff";
 import { stripeContext, type StripeSource } from "./stripe";
 import { closePendingOrder } from "./order-lifecycle";
 import { planOrderStock } from "./order-stock";
+import { queueOrderEmail } from "./order-email-queue";
 const collection = (name: string) => adminServices().db.collection(`businesses/${businessId}/${name}`);
 const hash = (value: unknown) => createHash("sha256").update(JSON.stringify(value)).digest("hex");
 function fail(message: string): never { throw new AccessError(409, "payment-review-conflict", message); }
@@ -79,6 +80,7 @@ export async function resolvePaymentReview(raw: unknown, staff: Staff) {
     const now = new Date().toISOString(), resolution = { action: input.action, notes: input.notes, reference: input.reference, actorId: staff.uid, createdAt: now };
     stock?.apply(now);
     const status = stock ? "paid" : String(d.status);
+    if (stock) queueOrderEmail(tx, order.id, "payment_confirmed", d, now);
     tx.update(orderRef, { ...(stock ? { status, lines: stock.lines, allocationState: "held", stripeExpiryPending: false, paymentId: e.input.paymentId, paymentProvider: "stripe", paymentEventId: e.input.eventId, paidAt: now } : {}),
       paymentReviewRequired: unresolved, lifecycleRevision: (d.lifecycleRevision ?? 0) + 1, updatedAt: now });
     for (const item of related) tx.update(item.ref, { resolution, revision: (item.data().revision ?? 0) + 1 });

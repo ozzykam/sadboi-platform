@@ -17,7 +17,7 @@ export async function stripeFixture() {
       else {
         const id = "cs_test_fixture" + ++creates;
         result = { id, object: "checkout.session", livemode: false, mode: "payment", status: "open", payment_status: "unpaid", payment_intent: null,
-          amount_total: Number(body.get("line_items[0][price_data][unit_amount]")), currency: "usd", client_reference_id: body.get("client_reference_id"),
+          amount_total: [...body.entries()].filter(([key]) => /^line_items\[\d+\]\[price_data\]\[unit_amount\]$/.test(key)).reduce((sum, [key, amount]) => sum + Number(amount) * Number(body.get(key.replace("[price_data][unit_amount]", "[quantity]"))), 0), currency: "usd", client_reference_id: body.get("client_reference_id"),
           metadata: Object.fromEntries(["orderId", "businessId", "accountId"].map(k => [k, body.get(`metadata[${k}]`)])),
           expires_at: Number(body.get("expires_at")), url: "https://checkout.stripe.com/c/pay/" + id };
         keys.set(key, id); sessions.set(id, result);

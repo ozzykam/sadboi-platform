@@ -24,3 +24,6 @@ export * from "./store-cart";
 export * from "./store-payments";
 export * from "./order-lifecycle";
 export * from "./fulfillment";
+export * from "./order-emails";
+export * from "./checkout-totals";
+export * from "./shipping";

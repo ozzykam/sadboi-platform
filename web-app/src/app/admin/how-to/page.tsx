@@ -24,6 +24,8 @@ const topics = [
   ["store-orders", "Review shop order requests"],
   ["fulfillment", "Pack, ship, collect, or cancel an order"],
   ["store-payments", "Review shop payment events"],
+  ["order-emails", "Review order emails"],
+  ["shipping-rates", "Set shipping rates and review totals"],
   ["production", "Track supplier production"],
   ["deliveries", "Inspect & receive deliveries"],
   ["examples", "Everyday examples"],
@@ -52,6 +54,44 @@ export default async function Page() {
         ))}
       </nav>
       <div className="howto-content">
+        <section className="howto-section" id="shipping-rates" aria-labelledby="shipping-rates-title">
+          <p className="eyebrow">SHOP / SHIPPING</p>
+          <h2 id="shipping-rates-title">Set shipping rates and review checkout totals</h2>
+          <p>Set a flat charge for each shipping service and choose supported US destination states. Studio pickup is always free. A super admin changes settings; accounting can review them. Before enabling shipping, agree on the rates and destinations the studio can support. All payments remain test-only, and tax is not calculated.</p>
+          <ol>
+            <li>Open <Link href="/admin/shipping">Shipping</Link> from the studio navigation.</li>
+            <li>Check <strong>Enable standard shipping</strong> or <strong>Enable express shipping</strong> and enter its <strong>rate (USD per order)</strong>. Zero is allowed only when you intend free shipping.</li>
+            <li>Choose destination state codes. <strong>Select all destinations</strong> includes all 50 states and Washington, DC. Territories and military destinations are not supported.</li>
+            <li>Choose <strong>Save shipping rates</strong>. Disabling a service or removing a destination affects new requests; it does not cancel saved orders. Existing orders retain their original amounts.</li>
+            <li>In the public shop, add items to Cart, enter customer details, and choose Studio pickup or Ship to me. For shipping, choose a service and enter a supported state code and ZIP code.</li>
+            <li>Choose <strong>Review total</strong>, check Items, shipping, Tax and Total, then <strong>Request order</strong>. Changing details requires another review. If prices or rates changed during review, review the updated total before submitting again.</li>
+          </ol>
+          <p><strong>Example:</strong> fictional rates of $7.50 standard and $15 express mean two $25 prints total $57.50 with standard shipping, $65 with express, or $50 for pickup. Shipping is charged once per order. Tax remains labeled not calculated; these are test totals, not a decision about tax obligations.</p>
+          <p><strong>Connections:</strong> reviewing a total does not hold stock. Requesting an order saves the item prices, shipping charge and total and starts the existing 30-minute stock hold. Stripe test checkout uses that saved total. The private order page, staff order details and new email previews show the same breakdown. Email sending remains disabled until separately configured.</p>
+          <p><strong>Recovery:</strong> after a rate conflict, choose <strong>Reload saved rates</strong> before making further edits; it replaces unsaved changes. If a save result is uncertain, keep the page open and use <strong>Retry same save</strong>. If you closed it, inspect saved settings first. Customers use <strong>Retry order request</strong> to recover an uncertain order without repricing or reserving stock twice, even after a rate is disabled. For a definite quote rejection, review the total again. Refresh the shop if its displayed service choices are outdated.</p>
+          <p><strong>Order changes:</strong> changing fulfillment method or address after an order is saved does not recalculate its shipping charge or collect/refund a difference. Arrange changes with the customer separately; do not assume a fulfillment edit changes payment. Historical orders show their original total without inventing an itemized shipping or tax amount.</p>
+          <p><strong>Limits:</strong> US state and ZIP format checks are not address verification. Live carrier quotes are deferred on the build list. Package sizing, weight-based rates, carrier labels/scans, delivery promises, international shipping, discounts, tax calculation and live launch remain separate work. No default shipping prices are enabled automatically.</p>
+        </section>
+        <section className="howto-section" id="order-emails" aria-labelledby="order-emails-help-title">
+          <p className="eyebrow">ORDERS / CUSTOMER EMAILS</p>
+          <h2 id="order-emails-help-title">Keep customers connected to their order</h2>
+          <p>New orders have an order-received email preview. Confirmed payments have a separate payment-confirmed preview, including payments accepted after staff review. Each email includes the customer&apos;s private order link. This link works in another browser; keep it private.</p>
+          <p>For paid orders, save <strong>Packed</strong> with <strong>Studio pickup</strong> to create a <strong>Ready for pickup</strong> preview. For shipping, save <strong>Shipped</strong> when handing the parcel to the carrier. Changing or removing the <strong>Tracking number</strong> while Shipped creates a <strong>Tracking updated</strong> preview. Notes-only edits and retrying the same save do not create another message. Fulfillment notes and addresses are not included in these emails.</p>
+          <p>Before sending: an administrator must configure Resend, a verified sender, and approved test recipients. Until then, sending is disabled. Current messages are labeled TEST and can only go to approved test addresses. Google Workspace can provide the inbox used for replies; it does not process this delivery queue.</p>
+          <ol>
+            <li>Open <Link href="/admin/orders">Orders</Link>, then <strong>View order</strong> or <strong>Open fulfillment</strong>.</li>
+            <li>Under <strong>Order emails</strong>, choose <strong>Load email history</strong>. Accounting can view this history; only super admins can process or retry deliveries.</li>
+            <li>Expand <strong>Preview email</strong> to read the message. The private link is hidden in staff previews.</li>
+            <li>Once sending is configured, the scheduled stock-release job also checks due emails. A super admin can choose <strong>Process due emails</strong> for this order.</li>
+            <li>For <strong>Delivery blocked</strong>, fix the provider configuration or approved recipient list, then choose <strong>Retry delivery</strong>. For an uncertain save, use <strong>Refresh email history</strong> before doing anything else.</li>
+          </ol>
+          <p><strong>Example:</strong> a fictional $30 test print order queues one order-received message. Confirming payment queues one payment-confirmed message. Repeated payment reports do not queue another copy. Payment still holds stock; packing and collection follow the normal fulfillment workflow.</p>
+          <p><strong>Pickup example:</strong> after preparing that paid print, save Packed with Studio pickup. Reopen the order and choose Load email history, then expand Preview email under Ready for pickup. The message asks the customer to confirm a pickup time and location with the studio. The private order page shows Ready for pickup; recording Collected by customer changes it to Collected and consumes stock once.</p>
+          <p><strong>Shipping corrections:</strong> correct the Tracking number and save while the order is Shipped. Reopen the order to inspect Tracking updated. Removing a wrong number explicitly tells the customer no tracking number is available. Tracking is plain text; carrier links and automatic carrier scans are not provided. Delivered orders cannot be edited here; contact the administrator to reconcile a mistake.</p>
+          <p><strong>Outdated notices:</strong> Not sent: order changed means a pickup or shipping message became outdated before any sending attempt, for example after collection, cancellation, a method change or a newer tracking update. It is not sent or retried. A message already attempted may have reached the provider, so recovery retains its original content; it cannot be recalled. The private order page always shows the latest saved fulfillment details. History shows the 50 most recent messages; older records require administrator review.</p>
+          <p><strong>Recovery:</strong> temporary provider failures retry with increasing delays. <strong>Needs review</strong> stops sending when the outcome is uncertain for too long; ask the administrator to compare provider records before any new message. Accepted messages are not resent from this screen. A sender change does not rewrite an already-attempted message. To correct a customer email address, contact the administrator; this screen does not redirect private links to another address.</p>
+          <p><strong>Limits:</strong> disabled previews and older orders are not sent automatically when email is enabled. These messages record an event; the private order page shows the latest status if the order later expires or changes. Provider acceptance is not proof of inbox delivery. Bounce tracking, self-service requests for a replacement link, delivery/collection confirmation emails, and live customer sending are not enabled in this version. Email failures never reverse payment or stock changes. Domain, inbox and email-provider setup are deferred; keep sending disabled until activation is arranged.</p>
+        </section>
         <section
           className="howto-section"
           id="gallery"
@@ -1186,8 +1226,8 @@ export default async function Page() {
             the studio administrator. Do not create replacement orders or guess stock
             adjustments to bypass the warning. Historical migration is not automatic.</p>
           <p>Orders already delivered or cancelled cannot be reopened. Partial
-            shipments, post-dispatch returns, refunds, shipping rates/labels, and
-            automatic customer notifications are separate unfinished workflows.</p>
+            shipments, post-dispatch returns, refunds, carrier labels, and
+            delivery/collection confirmation emails are separate unfinished workflows. Pickup-ready, shipment and tracking-update previews are described in <Link href="#order-emails">Order emails</Link>; delivery remains disabled until configured.</p>
           <Link className="button secondary" href="/admin/orders">Open orders</Link>
         </section>
 
@@ -1213,8 +1253,7 @@ export default async function Page() {
             </li>
             <li>
               Enter Your Name and Email. Choose Studio pickup or Ship to me
-              under Fulfillment. Shipping requires a US address. Choose Request
-              order once.
+              under Fulfillment. Shipping requires a supported US address and service. Choose Review total, check the amounts, then Request order once.
             </li>
             <li>
               Wait for Order received and save the order number. The request
@@ -1237,7 +1276,7 @@ export default async function Page() {
             Example (fictional): two $25 prints and one $30 print produce an $80
             item subtotal. Three stocked units become allocated while physical
             stock remains unchanged. Merely adding them to the cart holds
-            nothing. Shipping and taxes are not calculated by this request form.
+            nothing. Review total shows configured shipping charges before Request order. Tax remains uncalculated in test checkout. See <Link href="#shipping-rates">Shipping rates</Link> for setup and examples.
           </p>
           <p>
             If availability or publication has changed, a rejected request
@@ -1251,7 +1290,7 @@ export default async function Page() {
             Made-to-order lines do not allocate physical stock or schedule
               production. New orders hold stock for 30 minutes. A super admin can open the pending order, enter Cancellation reason, and choose Cancel unpaid order to release it sooner. This does not refund a payment; late payments require review. On Orders, Run pending-order expiry check is the manual fallback if the scheduled check is delayed. Existing orders without a deadline are not expired automatically.
             </p>
-            <p>Automatic checks must be activated by the administrator. At the deadline the order stops accepting normal payment even if a stock-release check is delayed. Stripe checkout closure may wait for the next check. A failed cancellation can be retried with Retry same cancellation; check the saved order before starting a different request. Automated follow-up, live payments, shipping rates and tax remain unfinished.</p>
+            <p>Automatic checks must be activated by the administrator. At the deadline the order stops accepting normal payment even if a stock-release check is delayed. Stripe checkout closure may wait for the next check. A failed cancellation can be retried with Retry same cancellation; check the saved order before starting a different request. Live payments, live carrier quotes and tax calculation remain unfinished; email delivery remains deferred.</p>
           <div className="inv-actions">
             <Link className="button secondary" href="/admin/orders">
               Open Orders

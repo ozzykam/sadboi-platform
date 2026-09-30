@@ -32,6 +32,7 @@ export function StaffShell({
         )}
         <Link href="/admin/contacts">Contacts</Link>
         {staff.role !== "legal" && <Link href="/admin/orders">Orders</Link>}
+        {staff.role !== "legal" && <Link href="/admin/shipping">Shipping</Link>}
         {staff.role !== "legal" && <Link href="/admin/how-to">How-to</Link>}
         {staff.role === "super_admin" && (
           <Link href="/admin/settings">Workspace</Link>

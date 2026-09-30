@@ -1,7 +1,7 @@
 import "server-only";
 import { createHash } from "node:crypto";
 import Stripe from "stripe";
-import { orderIsDue, storePaymentOrderId } from "@sadboi/core";
+import { orderIsDue, storePaymentOrderId, readCheckoutTotals } from "@sadboi/core";
 import { adminServices, authConfig } from "./firebase";
 import { AccessError, businessId } from "./staff";
 import { stripeContext, type StripeSource } from "./stripe";
@@ -58,12 +58,16 @@ export async function startStripeCheckout(raw: Record<string, unknown>) {
     if (d.stripeCheckout) return d.stripeCheckout as { key: string; params: Stripe.Checkout.SessionCreateParams; sessionId?: string; url?: string };
     if (!Number.isSafeInteger(d.totalMinor) || d.totalMinor < 50 || d.totalMinor > 99_999_999)
       throw new AccessError(409, "stripe-amount", "This amount is outside the supported test checkout range.");
+    const pricing = readCheckoutTotals(d.pricing, d.totalMinor);
     const origin = authConfig().origin;
     const params: Stripe.Checkout.SessionCreateParams = {
       mode: "payment", payment_method_types: ["card"], customer_email: d.input.customerEmail,
       client_reference_id: order.id, metadata: { orderId: order.id, businessId, accountId: source.accountId },
       payment_intent_data: { metadata: { orderId: order.id, businessId, accountId: source.accountId } },
-      line_items: [{ quantity: 1, price_data: { currency: "usd", unit_amount: d.totalMinor, product_data: { name: `Sadboi order ${d.orderNumber}` } } }],
+      line_items: pricing ? [
+        { quantity: 1, price_data: { currency: "usd", unit_amount: pricing.subtotalMinor, product_data: { name: `Sadboi items · ${d.orderNumber}` } } },
+        ...(pricing.shippingMinor ? [{ quantity: 1, price_data: { currency: "usd", unit_amount: pricing.shippingMinor, product_data: { name: pricing.deliveryLabel } } }] : []),
+      ] : [{ quantity: 1, price_data: { currency: "usd", unit_amount: d.totalMinor, product_data: { name: `Sadboi order ${d.orderNumber}` } } }],
       // Stripe requires >=30 minutes from Session creation; our order deadline is
       // independent and never extended. The expiry worker closes the Session too.
       expires_at: Math.ceil(Date.now() / 1000) + 31 * 60,

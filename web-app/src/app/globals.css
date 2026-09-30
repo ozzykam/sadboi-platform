@@ -4403,3 +4403,6 @@ td small {
     font-size: 12px;
   }
 }
+/* Shared saved/quoted order totals: readable in the cart and staff/customer views. */
+.checkout-totals { display: grid; gap: .45rem; margin: 1rem 0; }
+.checkout-totals p { margin: 0; }
