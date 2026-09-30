@@ -15,6 +15,10 @@ September 25, 2026. The selected policy is a **30-minute stock hold** and **test
 
 ## Vercel configuration
 
+September 28–29 deployment status: created test endpoint `we_1UKkFdFYZnZRR1WFm2B7ww8S` at `https://sadboi-platform-web-app.vercel.app/api/stripe/webhook/acct_1SEhNMFYZnZRR1WF`, subscribed to the four events below. The unrelated existing account webhook was not changed. Saved the new signing secret in ignored `.env.vercel` and `.secrets/stripe-vercel-webhook.json`, updated Vercel's existing secret variable, and redeployed commit `80ba2b9` as deployment `GJzufT2bSt8iNmWQX3rtZNyjcK3r`. A signed ignored-event probe confirmed the deployed secret matches; no order effects were caused by that probe. Local CLI forwarding was stopped before the real sandbox payment.
+
+`node scripts/stripe-vercel-webhook.mjs` inspects the endpoint and checks the deployed signature configuration; `--apply` creates a missing test destination and saves its one-time secret without printing it. Existing destinations are not duplicated or modified. `node --env-file=web-app/.env.vercel scripts/stripe-diagnostics.mjs --order ORDER_ID` adds read-only Firebase receipt/stock verification for an order bound to the configured Stripe test account. Keep all credential files ignored.
+
 Use server-only Production environment variables. Never commit credentials or prefix them with `NEXT_PUBLIC_`.
 
 | Variable | Value |
@@ -50,6 +54,8 @@ September 25 diagnosis: a read-only check of the configured real Stripe test acc
 
 ## Google Cloud Scheduler
 
+September 28 status: the user confirmed the deployed scheduler works after following the force-run, execution-log, and Firestore status verification instructions. Activation is checked off based on that user confirmation, not an independent agent inspection of cloud logs. This does not complete Stripe webhook verification or the full purchase/fulfillment test. Failure/stale-run alerting remains a separate operational task. This update supersedes the earlier scheduler-pending notes in this document.
+
 Recommended: Cloud Scheduler calls the existing Vercel endpoint; a separate Cloud Function would add a second deployment without adding business logic. Use the existing Google Cloud project, enable Cloud Scheduler and billing if needed, and create this job through the Cloud Console:
 
 | Setting | Value |
@@ -78,6 +84,17 @@ Sources: [Cloud Scheduler HTTP jobs](https://docs.cloud.google.com/scheduler/doc
 4. Retire previous credentials only when its outstanding Sessions/events/reviews are drained. Keep historical source/account data. Live mode requires a separately reviewed launch change and shipping/tax/fulfillment readiness; replacing the test secret with `sk_live_...` is intentionally rejected.
 
 ## Validation
+
+Real hosted webhook verified September 28–29: SO-000004 (`0f1f9910a68742cd875dbdccdcc57d92`) used the dedicated $1 test SKU `STRIPE-VERIFY-20260928`. Its hold expired at `2026-09-28T20:05:36.003Z`; Stripe's completed event was created at `20:05:47Z` and the native webhook receipt `evt_1UKko4FYZnZRR1WFunB0ToBy` was saved at `20:05:49.195Z`. The return-page lookup followed at `20:05:52.579Z`. Both correctly recorded `late_success`, rather than silently reopening stock. A September 29 read-only Firebase check confirmed status expired, review required, allocation released, test stock on hand 1 / allocated 0 / reserved 0. No actual funds or physical goods changed hands, and existing artwork product balances were not used.
+
+Deployed verification completed September 29 (America/Chicago; September 30 UTC), after browser reconnection and user staff sign-in:
+
+- SO-000004: staff accepted the verified late payment through the review UI. Both the webhook and lookup receipts became resolved, the review flag cleared, and the order reopened as paid. Packing retained on-hand 1 / allocated 1; simulated pickup at `2026-09-30T02:50:15.823Z` produced fulfilled/delivered, on-hand 0 / allocated 0, exactly one `order_dispatch` movement of -1, and read-only fulfillment controls.
+- Received one further explicitly labeled virtual test unit through the normal inventory UI. Fresh $1 sandbox SO-000005 (`f3cf621ef5344e049ac79a9aa092f7d1`) was created at approximately `02:52:12Z`, with deadline `03:22:12.375Z`. Stripe Session `cs_test_a1JQXrfXFknpgAwWHL9BKg91Hakq9UlLjpV3CSviZAGJggLlHckPsK99YV` completed/paid; native webhook `evt_1ULDdbFYZnZRR1WFHEXJGQFZ` was applied with `payment_confirmed` at `02:52:56.047Z`. No review was required, and the customer returned directly to Paid with no repeat-checkout button. The saved native event anchored payment; this was not solely return-page recovery.
+- Before fulfillment, read-only diagnostics confirmed SO-000005 paid with on-hand 1 / allocated 1. Staff packed and simulated pickup, with the saved movement at `2026-09-30T02:59:04Z`. Staff and refreshed customer pages showed fulfilled. Inventory history showed one -1 dispatch for each test order, with final on-hand, available, reserved, and allocated all zero.
+- Archived both the dedicated product and variant and set both to Private through the staff UI. A fresh public shop view showed only the pre-existing art print; the temporary product is no longer public. Orders and inventory/payment audit history were preserved. All units were virtual test fixtures; no real payment or goods changed hands.
+
+The previously blocked deployed purchase/fulfillment checks are complete. The separate fresh checkout through the local CLI listener is still unverified; broader live launch, tax/shipping, notifications, refund execution, and returns remain outside this verification. No application code changed in this pass; the checks were against deployed UI, actual Stripe sandbox events, and read-only saved-state diagnostics. The following older pending-webhook/deployed-test notes are historical.
 
 Payment-return recovery validated September 28: the combined suite passed **66 integration checks**, including missing-webhook recovery, concurrent lookups/webhooks, private-token enforcement, processing status, mismatched canonical data, Stripe outages, and late discovery. An initial run lost its local Next connection before lifecycle checks; the rerun completed successfully. Chrome confirmed paid return without a webhook, no repeat checkout button, refresh/reload with retained access, and an unpaid order remaining pending despite `?checkout=returned`. At 390×844 the paid page had no horizontal overflow. Test tabs and viewport overrides were cleaned up. `pnpm check` passed for the recovery code (76 core, 7 credential, 2 runtime tests, lint, typecheck, production build).
 

@@ -10,7 +10,7 @@ The first application/catalog slice is recorded in [implementation status](07-im
 
 September 25 payment-return recovery: canonical Stripe lookup on authorized private order access, idempotent verification receipts, unavailable/processing UI, and local CLI webhook forwarding are implemented. Missed confirmations after the stock deadline still require review. See [payment setup](35-order-lifecycle-stripe.md); Vercel webhook activation remains outstanding.
 
-September 25 pending-order/Stripe slice: 30-minute holds, customer/staff cancellation, a protected scheduled expiry endpoint, Stripe test Checkout and signed webhooks, private order access, and verified late-payment acceptance/refund resolution are implemented. See [setup and limitations](35-order-lifecycle-stripe.md). External scheduler activation and real Stripe sandbox verification remain pending. Broad reservation, live-payment, refunds, financial and customer-account groups remain unchecked.
+September 25 pending-order/Stripe slice: 30-minute holds, customer/staff cancellation, a protected scheduled expiry endpoint, Stripe test Checkout and signed webhooks, private order access, and verified late-payment acceptance/refund resolution are implemented. See [setup and limitations](35-order-lifecycle-stripe.md). The user confirmed deployed scheduler operation on September 28; full Stripe sandbox verification remains pending. Broad reservation, live-payment, refunds, financial and customer-account groups remain unchecked.
 
 September 25 fulfillment slice: exact paid-order allocations, dispatch/collection and pre-dispatch cancellation, revision/retry safety, location rollups and history, staff/accounting UI, and linked how-to are implemented. See [fulfillment scope and verification](31-shipping-fulfillment.md). Broader commerce/fulfillment groups remain open for payments, partial shipments, shipping labels/rates, notifications, and returns.
 
@@ -104,7 +104,7 @@ Manual per-SKU supplier progress, revised delivery forecasts, an outstanding pro
 
 ## 5. Shop, checkout, fulfillment, and after-sales
 
-Stripe test-mode implementation status, September 28: the application integration is built and verified with 66 combined emulator integration checks plus browser checks. Hosted Stripe Checkout is the implemented payment UI. Production-hosted test checkout still needs its external webhook setup and end-to-end verification; live payments remain intentionally disabled. See [Stripe setup and validation](35-order-lifecycle-stripe.md).
+Stripe test-mode implementation status, September 29 (America/Chicago): the application integration is built and verified with 66 combined emulator integration checks plus browser checks. Hosted Stripe Checkout is the implemented payment UI. The deployed flow now passes real sandbox webhook delivery, late-payment review resolution, on-time payment confirmation, packing, pickup, and stock-history verification. SO-000004 and SO-000005 are fulfilled; the temporary product and variant are archived/private with zero stock or allocations and are absent from the public shop. Live payments remain intentionally disabled. See [Stripe setup and validation](35-order-lifecycle-stripe.md).
 
 - [x] **E/N** Implement hosted Stripe test Checkout with server-owned totals, saved account bindings, and idempotent Session creation.
 - [x] **N** Verify signed webhooks and canonical Stripe Sessions; deduplicate payment confirmations and protect stock/order state.
@@ -112,8 +112,9 @@ Stripe test-mode implementation status, September 28: the application integratio
 - [x] **N** Implement 30-minute holds, customer/staff cancellation, the expiry worker endpoint, and late-payment acceptance/verified-refund review.
 - [x] **N** Provide local Stripe CLI forwarding and environment setup instructions, with credentials excluded from Git.
 - [ ] **N** Verify a fresh real Stripe test checkout through the local listener, including the saved paid order and unchanged physical stock until fulfillment.
-- [ ] **N** Deploy the latest changes, configure Vercel's account-specific Stripe test webhook and signing secret, and verify a hosted checkout through payment confirmation and fulfillment.
-- [ ] **N** Activate and verify the automatic stock-release schedule (Google Cloud Scheduler).
+- [x] **N** Deploy the latest changes, configure Vercel's account-specific Stripe test webhook and signing secret, and verify real signed payment-event delivery independently of the local listener. Verified with SO-000004 and its native Stripe event receipt.
+- [x] **N** Resolve SO-000004's late-payment review, verify pickup stock deduction, run a fresh on-time deployed test checkout (SO-000005), and archive the dedicated test product. Both orders completed pickup with exactly one deduction each; the test product and variant are archived/private and no longer public.
+- [x] **N** Activate and verify the automatic stock-release schedule (Google Cloud Scheduler). User confirmed it works on September 28 after following the Scheduler execution/Firestore verification instructions.
 - [ ] **N** Future live launch: transition to Sadboi's account, implement live-mode enablement, and complete shipping/tax/operational readiness. This is outside the current test-only scope.
 
 September 23 continuation: persisted cart validation and retry-safe multi-line order requests are implemented, including transactional stock protection, parent-product publication checks, immutable line/allocation snapshots, and customer/staff recovery guidance. See [public customer orders](29-store-orders.md) and [build resumption findings](32-build-resume.md). Payment/fulfillment foundations still require lifecycle fixes and integration coverage; these broader tasks remain unchecked.
