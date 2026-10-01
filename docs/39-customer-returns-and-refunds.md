@@ -1,0 +1,41 @@
+# Customer returns and Stripe test refunds
+
+September 30, 2026. The user chose staff-managed returns/refunds first; customer self-service and exchanges remain later work. This is separate from supplier-payment refund records in guide 25. Stripe remains test-only. No live refund, external email, deployment or production configuration is part of this build.
+
+## Workflow
+
+Orders → View order/Open fulfillment → Load returns and refunds. Super admins can write; accounting reads; legal and guests are denied. The contextual tutorial is `/admin/how-to#returns-refunds`.
+
+Cancel paid, unshipped fulfillment before refunding it so its allocation is released. Dispatched/collected orders can be refunded without changing inventory. Unresolved payment reviews block new refunds; late/additional payments continue through the existing payment-review workflow. Staff enter a USD amount and internal reason, then choose Issue Stripe test refund. The provider balance is checked first. Full/partial refunds preserve the original payment, order amount and fulfillment state. Original shipping charges can be included in the entered amount; no automatic refund policy or tax allocation is inferred.
+
+Returns record physical receipt, one variant per receipt. The sum received cannot exceed that variant's dispatched quantity. Sellable returns increase on-hand stock and location totals; quarantine increases on-hand and unavailable quantities; discard records receipt without retained stock. Refund amounts and return quantities remain independent. Made-to-order items do not have tracked checkout stock: only discarded returns are recorded by this first version; retained items need administrator inventory reconciliation. Return receipts cannot be edited/deleted; Inventory corrections preserve stock history, while mistaken receipt quantities need administrator reconciliation.
+
+## Money-command recovery
+
+`storeOrderRefunds/{sha256(staffUid:operationId)}` stores immutable provider parameters, a stable idempotency key, amount, reason, order/payment/account identity, actor and fingerprint before contacting Stripe. A single active request per order prevents overlapping commands. The order's `refundState.revision` protects stale edits and observations; provider lookups cannot overwrite newer snapshots. Exact retries recover the original command. Network errors preserve prepared requests. Explicit provider amount rejections are recorded without pretending a refund succeeded.
+
+Recovery searches matching provider metadata first. If no matching refund exists, a prepared request is resubmitted only within 23 hours. Older uncertain requests become needs_review and remain blocked; staff must not delete them or create replacements. A later matching provider record can be recovered by refresh. No unsafe abandon/force-success control is provided. Provider IDs, amounts, USD currency, metadata and the saved test account/payment are verified. The provider PaymentIntent must be succeeded, test-only, match the original total and business/order/account metadata, and have a non-disputed charge.
+
+Pending/requires_action refunds block new refunds. Succeeded amounts count toward confirmed refunds; failed/canceled amounts stop reserving funds. Explicit status refresh includes refunds made in Stripe's dashboard. Provider snapshots are limited to 100 refunds, and each order supports 100 local requests and 100 return receipts; larger cases stop for administrator export/reconciliation. `requires_action` needs staff review in Stripe; this version does not collect additional customer banking information.
+
+The UI retains uncertain commands in session storage where available and offers Retry same refund/return. A verified request can recover after a page reload without repeating money or stock effects. Customer private pages show only confirmed/pending amounts, a processing indicator, last-check time and total units received; internal notes, stock locations and request keys are not exposed.
+
+## Storage, reconciliation and deployment
+
+- Refund jobs: `businesses/sadboi/storeOrderRefunds`. Order summary: `storeOrders/{id}.refundState`.
+- Return receipts/operation recovery: `storeOrderReturns`. Cumulative quantities/revision: `storeOrders/{id}.returnState`.
+- Retained returns also update `stockBalances`, `stockLocations` and append `inventoryMovements`. Every command appends `inventoryAudit`. Historical SKU names/prices stay tied to checkout snapshots; no guessed inventory cost or journal reversal is posted.
+- The authenticated expiry scheduler processes up to five active refund jobs per invocation with a saved cursor at `inventoryState/orderRefunds`. Inspect `refunds.results`; HTTP success alone does not guarantee each request reconciled. Provider failures do not undo stock expiry or order state.
+- Signed `refund.created`, `refund.updated` and `refund.failed` webhooks retrieve canonical provider status. Duplicate/outdated deliveries do not apply their payload directly. Refunds for late/additional payments remain in payment review.
+- Before provider testing, deploy the app and add these three event types to the existing Stripe **test** webhook subscription, preserving checkout events. The local listener/helper lists are updated, but the existing remote subscription is not changed by editing the script. No new environment variables or composite indexes are needed for this slice. Normal Firestore client access remains denied; all commands are server-authorized and CSRF-protected.
+- Emails remain disabled/deferred. This slice does not queue refund/return notifications, send mail, calculate tax, create labels, implement exchanges, create a customer self-service portal or issue live refunds.
+
+## Validation
+
+- `pnpm check` passed: typecheck, lint, 91 domain tests, 7 Firebase credential tests, 2 runtime tests and the production build.
+- The combined authentication/order/fulfillment/payment/lifecycle/email/shipping/after-sales emulator suite passed 100 checks. Coverage includes concurrent/lost-response recovery, pending/failed/canceled refunds, stale webhooks, wrong payment ownership, provider outages, old uncertain commands, refunds made directly in the provider fixture, exact stock/location effects, cumulative return bounds and private-access/role/CSRF enforcement.
+- Chrome verified the staff workflow with disposable records: $5 via keyboard and $1 via the visible refund button, one received quarantined unit, success feedback and history. The private customer page showed $21 confirmed refunds (including the fixture's original $15), one received unit and the unchanged $75 original total, without staff notes. Both staff and customer pages fit a 390px viewport without horizontal overflow and reported no captured console errors. Browser tabs and viewport overrides were cleaned up.
+- Initial synthetic locator clicks did not submit forms; direct accessibility button clicks and keyboard submission verified normal behavior. An earlier focused integration attempt hit a local keep-alive connection reset before feature assertions; the harness now closes request connections, and subsequent focused/combined runs passed without weakening assertions.
+- After adding the final saved-command parameter/key guard, the focused suite passed 36 checks, including mismatched saved amounts and changed idempotency keys being rejected before provider submission. Final typecheck and lint both passed. Actual Stripe sandbox refund delivery, real-device and full accessibility verification remain separate deployment checks. All provider/email effects in these tests used local fixtures.
+
+Provider references checked during implementation: [refund creation](https://docs.stripe.com/api/refunds/create), [refund listing](https://docs.stripe.com/api/refunds/list), [refund object/status](https://docs.stripe.com/api/refunds/object), [idempotent requests](https://docs.stripe.com/api/idempotent_requests).

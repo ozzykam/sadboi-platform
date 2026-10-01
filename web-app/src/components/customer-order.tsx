@@ -6,7 +6,8 @@ import { Button, Badge } from "./ui";
 import { CheckoutTotalSummary } from "./checkout-totals";
 import type { CheckoutTotals } from "@sadboi/core";
 type Order = { id: string; orderNumber: string; status: string; totalMinor: number; expiresAt: string | null; paymentReviewRequired: boolean; checkoutEnabled: boolean; checkoutState: "not_started" | "open" | "processing" | "paid" | "expired" | "unavailable";
-  fulfillment: { status: string; method: string; trackingNumber: string; updatedAt: string } | null; pricing: CheckoutTotals | null };
+  fulfillment: { status: string; method: string; trackingNumber: string; updatedAt: string } | null; pricing: CheckoutTotals | null;
+  afterSales: { refundedMinor: number; pendingMinor: number; processing: boolean; returnedUnits: number; checkedAt: string | null } };
 export function CustomerOrder({ orderId }: { orderId: string }) {
   const [order, setOrder] = useState<Order | null>(null), [message, setMessage] = useState("Loading your order…"), [busy, setBusy] = useState(false);
   const token = useRef(""), operationId = useRef<string | null>(null), lock = useRef(false);
@@ -64,6 +65,15 @@ export function CustomerOrder({ orderId }: { orderId: string }) {
         {order.checkoutState === "expired" && <p>Stripe checkout has closed. Contact the studio or cancel this unpaid order.</p>}
         {!order.paymentReviewRequired && ["not_started", "open", "expired"].includes(order.checkoutState) && <Button variant="secondary" disabled={busy} onClick={() => void act("cancel")}>Cancel unpaid order</Button>}</>}
       {order.paymentReviewRequired && <p className="notice">Your payment needs review by the studio. Please do not pay again.</p>}
+      {order.afterSales && (order.afterSales.refundedMinor > 0 || order.afterSales.pendingMinor > 0 || order.afterSales.processing || order.afterSales.returnedUnits > 0) && <section aria-label="Returns and refunds">
+        <h2>Returns and refunds</h2>
+        <p>Confirmed test refunds: ${(order.afterSales.refundedMinor / 100).toFixed(2)}</p>
+        {order.afterSales.pendingMinor > 0 && <p>Pending test refunds: ${(order.afterSales.pendingMinor / 100).toFixed(2)}</p>}
+        {order.afterSales.processing && <p>A refund request is being processed or reviewed by the studio.</p>}
+        {order.afterSales.returnedUnits > 0 && <p>Items received back by the studio: {order.afterSales.returnedUnits}</p>}
+        {order.afterSales.checkedAt && <p>Refunds last checked: {new Date(order.afterSales.checkedAt).toLocaleString()}</p>}
+        <p>Your original order total is preserved. Contact the studio to discuss a return or refund.</p>
+      </section>}
       {order.status === "paid" && <p>Payment is confirmed.{!order.fulfillment || order.fulfillment.status === "unfulfilled" ? " The studio will arrange fulfillment." : ""}</p>}
       {order.fulfillment && <section aria-label="Fulfillment status">
         <h2>{order.fulfillment.status === "packed" ? order.fulfillment.method === "pickup" ? "Ready for pickup" : "Packed for shipping"

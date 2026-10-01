@@ -8,7 +8,7 @@ import {
   useState,
   type CSSProperties,
 } from "react";
-import { restoreStoreCart, type StoreOrderInput, type ShippingSettings, type CheckoutTotals } from "@sadboi/core";
+import { restoreStoreCart, usShippingRegions, type StoreOrderInput, type ShippingSettings, type CheckoutTotals } from "@sadboi/core";
 import type { checkoutQuote } from "@/server/checkout-quote";
 import { inventoryRequest } from "@/lib/inventory-client";
 import { CheckoutTotalSummary } from "./checkout-totals";
@@ -549,7 +549,7 @@ export function ShopCatalog({ products, shipping }: { products: PublicCatalogIte
                               <option value="standard" disabled={!shipping.input.standard.enabled}>Standard shipping</option>
                               <option value="express" disabled={!shipping.input.express.enabled}>Express shipping</option>
                             </select></label>
-                            <p>Ships to: {shipping.input.regions.join(", ")}. Charges are per order; delivery dates are not guaranteed.</p>
+                            {/* <p>Ships to: {shipping.input.regions.join(", ")}. Charges are per order; delivery dates are not guaranteed.</p> */}
                             <Input
                               label="Address"
                               name="line1"
@@ -567,12 +567,15 @@ export function ShopCatalog({ products, shipping }: { products: PublicCatalogIte
                               required
                               maxLength={100}
                             />
-                            <Input
-                              label="State code (for example IL)"
-                              name="region"
-                              required
-                              maxLength={100}
-                            />
+                              <label className="shop-checkout-select">
+                                State code
+                                <select name="region" required defaultValue="" autoComplete="address-level1">
+                                  <option value="" disabled>Select a state</option>
+                                  {usShippingRegions.filter(region => shipping.input.regions.includes(region)).map(region => (
+                                    <option key={region} value={region}>{region}</option>
+                                  ))}
+                                </select>
+                              </label>
                             <Input
                               label="Postal code"
                               name="postalCode"

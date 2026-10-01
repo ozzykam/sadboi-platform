@@ -1,5 +1,13 @@
 # Build resumption — September 23, 2026
 
+## Latest continuation — September 30: staff-managed returns and refunds
+
+The user chose staff-managed returns/refunds first. Implemented full/partial Stripe test refunds, durable retry/recovery, canonical provider status (including dashboard refunds), signed refund webhooks, scheduler reconciliation, received-return history and sellable/quarantine/discard stock handling. Staff access is through Orders → View order/Open fulfillment → Load returns and refunds; accounting is read-only. Customer private pages expose only safe summary information. In-app help is `/admin/how-to#returns-refunds`.
+
+The combined commerce suite passed 100 checks. Chrome used disposable emulator records to issue $5 and $1 partial refunds, receive one quarantined print and verify the resulting $21 refund/one returned unit on the private order page. Both staff/customer pages fit a 390px viewport and had no captured console errors. Temporary tabs, viewport override and emulators were cleaned up. `pnpm check` passed with 91 domain tests and the production build; see [the feature guide](39-customer-returns-and-refunds.md) for final guard checks and complete limitations.
+
+Before deployed provider testing: deploy this code, add `refund.created`, `refund.updated`, `refund.failed` to the existing Stripe test webhook subscription, then verify an actual sandbox refund and scheduler status. No new environment variables or indexes are needed. No production records, real funds or external email changed during this build. Keep live payments and email sending disabled. Exchanges/customer self-service remain later work; damaged/lost shipment handling is another open commerce slice. Domain, Google Workspace, Resend and live carrier quotes remain explicitly deferred. The notes below are historical and do not override this latest state.
+
 ## Recovered context
 
 Reviewed the project source, feature guides, checklist, and the local Codex session titled **Resume Next project build**, including its final September 22 messages. No Git repository existed at the start of this review, consistent with the original project direction. The user subsequently requested Git initialization and a private GitHub repository on September 23; the current repository is linked from the README.

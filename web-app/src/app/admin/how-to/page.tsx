@@ -26,6 +26,7 @@ const topics = [
   ["store-payments", "Review shop payment events"],
   ["order-emails", "Review order emails"],
   ["shipping-rates", "Set shipping rates and review totals"],
+  ["returns-refunds", "Receive returns and issue test refunds"],
   ["production", "Track supplier production"],
   ["deliveries", "Inspect & receive deliveries"],
   ["examples", "Everyday examples"],
@@ -54,6 +55,22 @@ export default async function Page() {
         ))}
       </nav>
       <div className="howto-content">
+        <section className="howto-section" id="returns-refunds" aria-labelledby="returns-refunds-title">
+          <h2 id="returns-refunds-title">Receive returns and issue test refunds</h2>
+          <p>Use this staff-managed workflow after a customer contacts the studio. A super admin records returns and issues refunds; accounting can read the history. Refunding money and receiving items are separate actions. All provider commands use Stripe test mode.</p>
+          <ol>
+            <li>Open <Link href="/admin/orders">Orders</Link>, choose <strong>View order</strong> or <strong>Open fulfillment</strong>, and select <strong>Load returns and refunds</strong>.</li>
+            <li>For a paid order that has not shipped or been collected, first set fulfillment <strong>Status</strong> to <strong>Cancelled</strong> and choose <strong>Save fulfillment</strong>. This releases its stock allocation. Refunds are also available for dispatched or collected orders. Resolve payment review warnings first; late or additional payments use the existing payment review workflow.</li>
+            <li>Choose <strong>Refresh Stripe refund status</strong> to check the original payment and refunds issued in Stripe. Enter a full remaining or partial <strong>Refund amount (USD)</strong> and a <strong>Refund reason (staff only)</strong>. Include any shipping you intend to refund. Choose <strong>Issue Stripe test refund</strong>; this submits the amount to Stripe.</li>
+            <li>Review the saved status. Pending refunds reserve that amount and block another request. Failed or canceled provider refunds release their pending amount. Refresh again or let the scheduled worker check it. A successful refund leaves inventory and the original order total unchanged.</li>
+            <li>Once dispatched or collected items physically return, select the <strong>Returned item</strong>, <strong>Received quantity</strong> and <strong>Return disposition</strong>. Choose a <strong>Receiving location</strong> for retained stock, enter <strong>Return inspection notes (staff only)</strong>, then choose <strong>Record received return</strong>.</li>
+          </ol>
+          <p><strong>Example:</strong> three $25 prints total $75. Refunding $25 leaves $50 unrefunded and changes no stock. Receiving one print into sellable stock adds one on-hand unit; quarantine adds one on-hand and one unavailable unit. Discarding it records the return without adding inventory. Total returned quantities cannot exceed the three dispatched prints.</p>
+          <p><strong>Recovery:</strong> after an uncertain result, use <strong>Retry same refund</strong> or <strong>Retry same return</strong>. Keep the original request; browser storage restores it when possible. For a stale edit, use <strong>Reload returns and refunds</strong> before submitting again. Old uncertain refunds are looked up at the provider before retrying. Requests too old to retry safely remain blocked for administrator reconciliation; do not delete them or start replacement refunds.</p>
+          <p><strong>Connections:</strong> retained returns update the selected location, stock balance and inventory history atomically. Quarantine stays unavailable until released through Inventory. Refunds preserve the original payment, fulfillment and order amount. Customers see confirmed/pending refund totals and received-return counts on their private page, without staff notes. No refund or return email is sent by this slice.</p>
+          <p><strong>Limits:</strong> no customer return-request portal, exchanges, return labels, automatic journal reversals or policy-based shipping/tax refund calculation. Only stocked variants can be restocked; retained made-to-order returns need administrator inventory reconciliation. Return receipts are immutable: correct stock mistakes through reasoned Inventory adjustments, and ask the administrator to reconcile incorrect return quantities. Each order supports up to 100 refund requests and 100 return receipts; larger histories need administrator export/reconciliation.</p>
+          <p><strong>Setup:</strong> deploy the code and add refund.created, refund.updated and refund.failed to the Stripe test webhook subscriptions. The existing authenticated expiry scheduler also checks saved active refund requests. No live account, email sender or carrier service is enabled by this workflow.</p>
+        </section>
         <section className="howto-section" id="shipping-rates" aria-labelledby="shipping-rates-title">
           <p className="eyebrow">SHOP / SHIPPING</p>
           <h2 id="shipping-rates-title">Set shipping rates and review checkout totals</h2>

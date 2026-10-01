@@ -1,5 +1,5 @@
 import "server-only";
-import { storeOrderInputSchema, readCheckoutTotals } from "@sadboi/core";
+import { storeOrderInputSchema, readCheckoutTotals, readOrderRefundState } from "@sadboi/core";
 import { adminServices } from "./firebase";
 import { businessId } from "./staff";
 import { AccessError } from "./staff";
@@ -28,7 +28,9 @@ export async function storeOrderCatalog() {
       const historical = fulfillmentInputSchema.safeParse(saved?.input);
       if (historical.success) fulfillment = { input: historical.data, revision: Number(saved?.revision) || 0, updatedAt: String(saved?.updatedAt ?? "") };
     }
+    const refunds = readOrderRefundState(data.refundState);
     return { id: doc.id, input: storeOrderInputSchema.parse(data.input),
+      refundedMinor: refunds.refundedMinor, refundPending: !!refunds.activeId || refunds.pendingMinor > 0,
       orderNumber: String(data.orderNumber), status: String(data.status), totalMinor: Number(data.totalMinor), createdAt: String(data.createdAt),
       lines: (Array.isArray(data.lines) ? data.lines : []).map((line: Record<string, unknown>) => ({ sku: String(line.sku), quantity: Number(line.quantity), fulfillment: String(line.fulfillment) })),
       expiresAt: typeof data.expiresAt === "string" ? data.expiresAt : null,

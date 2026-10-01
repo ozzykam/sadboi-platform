@@ -18,7 +18,7 @@ try {
   const windowsCli = path.join(process.env.ProgramFiles ?? "C:/Program Files", "Stripe/stripe.exe");
   const cli = process.platform === "win32" && existsSync(windowsCli) ? windowsCli : "stripe";
   const env = { ...process.env, STRIPE_API_KEY: config.STRIPE_SECRET_KEY };
-  const args = ["listen", "--skip-update", "--events", "checkout.session.completed,checkout.session.async_payment_succeeded,checkout.session.async_payment_failed,checkout.session.expired",
+  const args = ["listen", "--skip-update", "--events", "checkout.session.completed,checkout.session.async_payment_succeeded,checkout.session.async_payment_failed,checkout.session.expired,refund.created,refund.updated,refund.failed",
     "--forward-to", `${origin.origin}/api/stripe/webhook/${config.STRIPE_ACCOUNT_ID}`];
   const output = execFileSync(cli, [...args, "--print-secret"], { env, windowsHide: true, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], timeout: 30000 });
   const secret = output.match(/\bwhsec_[a-zA-Z0-9]+\b/)?.[0];

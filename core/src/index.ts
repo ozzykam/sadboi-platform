@@ -27,3 +27,4 @@ export * from "./fulfillment";
 export * from "./order-emails";
 export * from "./checkout-totals";
 export * from "./shipping";
+export * from "./store-after-sales";

@@ -8,6 +8,7 @@ import { StorePaymentHistory } from "./store-payment-history";
 import { PendingOrderCancel } from "./pending-order-cancel";
 import { OrderEmailHistory } from "./order-email-history";
 import { CheckoutTotalSummary } from "./checkout-totals";
+import { OrderAfterSales } from "./order-after-sales";
 type Catalog = Awaited<ReturnType<typeof storeOrderCatalog>>;
 type Order = Catalog["orders"][number];
 function initialInput(order: Order): FulfillmentInput {
@@ -61,6 +62,8 @@ export function StoreOrdersAdmin({ initial, canEdit }: { initial: Catalog; canEd
       {order.status === "pending_payment" && order.expiresAt && <p>Payment deadline: {order.expiresAt}</p>}
       {order.stripeExpiryPending && <p className="notice">Stripe checkout closure awaits the next expiry check.</p>}
       {order.paymentReviewRequired && <p className="notice">Payment review required. Open the order’s payment history.</p>}
+      {order.refundedMinor > 0 && <p>Confirmed refunded: ${(order.refundedMinor / 100).toFixed(2)}</p>}
+      {order.refundPending && <p className="notice">Refund processing or review required. Open Returns and refunds for the saved request.</p>}
       <Button onClick={() => { setSelected(order); setMessage(""); }}>{canEdit && order.status === "paid" && !order.reviewReason ? "Open fulfillment" : "View order"}</Button>
     </article>)}</div>
   </section>;
@@ -120,6 +123,7 @@ function FulfillmentEditor({ order, canEdit, onClose, onSaved, onReload }: {
     {order.status === "pending_payment" && canEdit && <PendingOrderCancel orderId={order.id} onSaved={onReload} />}
     <StorePaymentHistory orderId={order.id} canEdit={canEdit} onChanged={onReload} />
     <OrderEmailHistory orderId={order.id} canEdit={canEdit} />
+    <OrderAfterSales orderId={order.id} canEdit={canEdit} />
     <form onSubmit={save} className="inv-form">
       <fieldset disabled={frozen} className="inv-form" style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
         <legend>Fulfillment details</legend>

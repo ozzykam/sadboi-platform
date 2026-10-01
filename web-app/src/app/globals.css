@@ -1996,6 +1996,10 @@ td small {
 .shipping-settings form > .inv-actions {
   margin-top: 20px;
 }
+.order-after-sales { margin-block: 24px; }
+.order-after-sales > section { margin-top: 24px; }
+.order-after-sales p { margin-block: 12px; line-height: 1.5; }
+.order-after-sales .inv-actions { margin-block: 16px; }
 .store-payment-history {
   margin: 24px 0;
   padding: 20px 0;
@@ -3568,7 +3572,7 @@ td small {
   display: grid;
   gap: 8px;
   margin-bottom: 14px;
-  color: #675d60;
+  color: #e0dcd5;
   font-size: 10px;
 }
 .shop-checkout-select select {

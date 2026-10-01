@@ -1,5 +1,5 @@
 import "server-only";
-import { orderIsDue, storePaymentOrderId, readCheckoutTotals } from "@sadboi/core";
+import { orderIsDue, storePaymentOrderId, readCheckoutTotals, readOrderRefundState, readReturnState } from "@sadboi/core";
 import { adminServices } from "./firebase";
 import { AccessError, businessId } from "./staff";
 import { closePendingOrder, requireOrderToken } from "./order-lifecycle";
@@ -41,7 +41,10 @@ export async function accessOrder(id: string, body: Record<string, unknown>) {
     const saved = readFulfillment(snapshot.fulfillment, id);
     if (saved) fulfillment = { status: saved.input.status, method: saved.input.method, trackingNumber: saved.input.method === "pickup" ? "" : saved.input.trackingNumber, updatedAt: saved.updatedAt };
   } catch { /* Historical records needing review do not expose unverified details. */ }
+  const refunds = readOrderRefundState(data.refundState), returns = readReturnState(data.returnState);
   return { id, orderNumber: String(data.orderNumber), status: String(data.status), totalMinor: Number(data.totalMinor),
+    afterSales: { refundedMinor: refunds.refundedMinor, pendingMinor: refunds.pendingMinor, processing: !!refunds.activeId, checkedAt: refunds.checkedAt,
+      returnedUnits: Object.values(returns.quantities).reduce((sum, value) => sum + value, 0) },
     expiresAt: typeof data.expiresAt === "string" ? data.expiresAt : null, paymentReviewRequired: data.paymentReviewRequired === true,
     checkoutEnabled: stripeEnabled(), checkoutState, testMode: true, fulfillment, pricing: readCheckoutTotals(data.pricing, data.totalMinor) };
 }

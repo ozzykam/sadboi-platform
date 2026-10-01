@@ -30,6 +30,7 @@
     "test:order-emails": "firebase emulators:exec --only auth,firestore --project demo-sadboi-platform \"node scripts/auth-integration.mjs --store-orders --fulfillment --store-payments --order-lifecycle --order-emails\"",
     "test:order-emails-disabled": "firebase emulators:exec --only auth,firestore --project demo-sadboi-platform \"node scripts/auth-integration.mjs --order-emails-disabled\"",
     "test:shipping": "firebase emulators:exec --only auth,firestore --project demo-sadboi-platform \"node scripts/auth-integration.mjs --store-orders --fulfillment --store-payments --order-lifecycle --order-emails --shipping\"",
+    "test:after-sales": "firebase emulators:exec --only auth,firestore --project demo-sadboi-platform \"node scripts/auth-integration.mjs --store-orders --fulfillment --store-payments --order-lifecycle --order-emails --shipping --after-sales\"",
     "staff:bootstrap": "node scripts/bootstrap-staff.cjs",
     "stripe:listen": "node scripts/stripe-listen.mjs",
     "test:artwork": "firebase emulators:exec --only auth,firestore,storage --project demo-sadboi-platform \"node scripts/auth-integration.mjs --artworks\"",
