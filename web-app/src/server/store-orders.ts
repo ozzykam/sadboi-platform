@@ -31,6 +31,8 @@ export async function storeOrderCatalog() {
     const refunds = readOrderRefundState(data.refundState);
     return { id: doc.id, input: storeOrderInputSchema.parse(data.input),
       refundedMinor: refunds.refundedMinor, refundPending: !!refunds.activeId || refunds.pendingMinor > 0,
+      shipmentIssueStatus: typeof data.shipmentIssueStatus === "string" ? data.shipmentIssueStatus : null,
+      shipmentIssueKind: typeof data.shipmentIssueKind === "string" ? data.shipmentIssueKind : null,
       orderNumber: String(data.orderNumber), status: String(data.status), totalMinor: Number(data.totalMinor), createdAt: String(data.createdAt),
       lines: (Array.isArray(data.lines) ? data.lines : []).map((line: Record<string, unknown>) => ({ sku: String(line.sku), quantity: Number(line.quantity), fulfillment: String(line.fulfillment) })),
       expiresAt: typeof data.expiresAt === "string" ? data.expiresAt : null,

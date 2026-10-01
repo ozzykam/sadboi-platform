@@ -7,7 +7,8 @@ import { CheckoutTotalSummary } from "./checkout-totals";
 import type { CheckoutTotals } from "@sadboi/core";
 type Order = { id: string; orderNumber: string; status: string; totalMinor: number; expiresAt: string | null; paymentReviewRequired: boolean; checkoutEnabled: boolean; checkoutState: "not_started" | "open" | "processing" | "paid" | "expired" | "unavailable";
   fulfillment: { status: string; method: string; trackingNumber: string; updatedAt: string } | null; pricing: CheckoutTotals | null;
-  afterSales: { refundedMinor: number; pendingMinor: number; processing: boolean; returnedUnits: number; checkedAt: string | null } };
+  afterSales: { refundedMinor: number; pendingMinor: number; processing: boolean; returnedUnits: number; checkedAt: string | null };
+  replacement: { status: string; trackingNumber: string; updatedAt: string } | null };
 export function CustomerOrder({ orderId }: { orderId: string }) {
   const [order, setOrder] = useState<Order | null>(null), [message, setMessage] = useState("Loading your order…"), [busy, setBusy] = useState(false);
   const token = useRef(""), operationId = useRef<string | null>(null), lock = useRef(false);
@@ -85,6 +86,11 @@ export function CustomerOrder({ orderId }: { orderId: string }) {
           <p>This status was recorded by the studio; it is not live carrier tracking.</p>
         </>}
         <p>Last updated: {new Date(order.fulfillment.updatedAt).toLocaleString()}</p>
+      </section>}
+      {order.replacement && <section aria-label="Replacement shipment"><h2>Replacement shipment</h2>
+        <p>{order.replacement.status === "prepared" ? "The studio is preparing your replacement." : `Replacement ${order.replacement.status}.`}</p>
+        {["shipped", "delivered"].includes(order.replacement.status) && <p style={{ overflowWrap: "anywhere" }}>Replacement tracking number: {order.replacement.trackingNumber}</p>}
+        <p>Last updated: {new Date(order.replacement.updatedAt).toLocaleString()}</p><p>This is a separate shipment at no additional charge. Status is recorded by the studio, not live carrier tracking.</p>
       </section>}
       {["cancelled", "expired"].includes(order.status) && <p>This order no longer holds stock. Contact the studio if a payment was completed.</p>}
     </>}

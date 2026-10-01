@@ -1,5 +1,5 @@
 import "server-only";
-import { orderIsDue, storePaymentOrderId, readCheckoutTotals, readOrderRefundState, readReturnState } from "@sadboi/core";
+import { orderIsDue, storePaymentOrderId, readCheckoutTotals, readOrderRefundState, readReturnState, replacementStatusSchema } from "@sadboi/core";
 import { adminServices } from "./firebase";
 import { AccessError, businessId } from "./staff";
 import { closePendingOrder, requireOrderToken } from "./order-lifecycle";
@@ -44,7 +44,9 @@ export async function accessOrder(id: string, body: Record<string, unknown>) {
   const refunds = readOrderRefundState(data.refundState), returns = readReturnState(data.returnState);
   return { id, orderNumber: String(data.orderNumber), status: String(data.status), totalMinor: Number(data.totalMinor),
     afterSales: { refundedMinor: refunds.refundedMinor, pendingMinor: refunds.pendingMinor, processing: !!refunds.activeId, checkedAt: refunds.checkedAt,
-      returnedUnits: Object.values(returns.quantities).reduce((sum, value) => sum + value, 0) },
+        returnedUnits: Object.values(returns.quantities).reduce((sum, value) => sum + value, 0) },
+    replacement: replacementStatusSchema.safeParse(data.replacement?.status).success && typeof data.replacement?.trackingNumber === "string" && typeof data.replacement?.updatedAt === "string"
+      ? { status: data.replacement.status as string, trackingNumber: data.replacement.trackingNumber as string, updatedAt: data.replacement.updatedAt as string } : null,
     expiresAt: typeof data.expiresAt === "string" ? data.expiresAt : null, paymentReviewRequired: data.paymentReviewRequired === true,
     checkoutEnabled: stripeEnabled(), checkoutState, testMode: true, fulfillment, pricing: readCheckoutTotals(data.pricing, data.totalMinor) };
 }

@@ -27,6 +27,7 @@ const topics = [
   ["order-emails", "Review order emails"],
   ["shipping-rates", "Set shipping rates and review totals"],
   ["returns-refunds", "Receive returns and issue test refunds"],
+  ["shipment-cases", "Resolve damaged or lost shipments"],
   ["production", "Track supplier production"],
   ["deliveries", "Inspect & receive deliveries"],
   ["examples", "Everyday examples"],
@@ -55,6 +56,22 @@ export default async function Page() {
         ))}
       </nav>
       <div className="howto-content">
+        <section className="howto-section" id="shipment-cases" aria-labelledby="shipment-cases-title">
+          <h2 id="shipment-cases-title">Resolve damaged or lost shipments</h2>
+          <p>Use a shipment case when a customer reports damage or loss after dispatch. Super admins manage cases and replacements; accounting reads their history. The original order must be a dispatched shipping order, with trustworthy fulfillment and stock records. Pickup and unshipped orders use returns or cancellation instead.</p>
+          <ol>
+            <li>Open <Link href="/admin/orders">Orders</Link>, select the order, and choose <strong>Load shipment case</strong>. Choose <strong>Problem</strong>, enter affected quantities, carrier/claim references and evidence references. Keep photos and messages in existing secure storage; this form stores references, not uploads. Add <strong>Case update / resolution notes</strong> and choose <strong>Save shipment case</strong> with status Open.</li>
+            <li>Use Investigating while following up with the customer or carrier. Each save retains the previous details. Claim references are notes only: the platform does not submit insurance claims.</li>
+            <li>For a refund, use <strong>Returns and refunds</strong> on the same order and wait for a confirmed successful refund. Record any physically received item there, with its inspected stock disposition. Then <strong>Reload shipment case</strong> to select those saved records. Lost items are not received returns and must not be restocked.</li>
+            <li>For a replacement, save the affected quantities first. Verify the original address shown, choose a stock location for each stocked item, add <strong>Replacement notes</strong>, and choose <strong>Prepare replacement shipment</strong>. This reserves new sellable stock and collects no additional payment. Made-to-order items require manual production before dispatch.</li>
+            <li>After packing, select replacement status Shipped, enter its own tracking number and choose <strong>Save replacement status</strong>. This consumes the reserved replacement stock once. Update tracking or mark Delivered later. Cancel a prepared replacement to release its allocation; cancellation is unavailable after dispatch.</li>
+            <li>Resolve the case as Refund issued (link a confirmed refund), Replacement sent (requires dispatch), Shipment located (lost cases only), or Closed without refund or replacement. Explain the decision and any partial refund in the notes. Ship or cancel any prepared replacement before closing the case.</li>
+          </ol>
+          <p><strong>Example:</strong> one of three prints arrives damaged. Record one affected unit. Receiving that damaged print into quarantine adds one on-hand and one unavailable unit. Preparing its replacement allocates one separate sellable unit; shipping consumes that unit. A lost print never adds stock. Refunding $25 changes money only. Case closure changes neither money nor stock.</p>
+          <p><strong>Recovery and corrections:</strong> use <strong>Retry same shipment save</strong> after an uncertain result; session storage restores it where available. Reload shipment case replaces unsaved edits with saved records. Stale saves require reload. Reopen a resolved case as Investigating with an explanatory note; previous resolutions remain in history. A prepared replacement locks affected quantities until cancelled. A dispatched replacement cannot be undone, and its affected quantities remain fixed.</p>
+          <p><strong>Connections:</strong> Orders shows the case status. Case and replacement histories retain notes and references. Replacement inventory movements preserve original SKU snapshots, with location totals updated at dispatch. The original order total, payment, shipping charge, fulfillment tracking and status remain unchanged. Customers see replacement status/tracking separately on their private page; case evidence, carrier claims, stock locations and staff notes stay private.</p>
+          <p><strong>Limits:</strong> one case and one non-cancelled replacement per order, with up to 100 case updates, 100 replacement attempts and 100 updates per replacement. The replacement covers all affected items in one shipment to the original address; no substitute SKUs, split replacements, address changes, replacement-of-replacement or automatic return receipts for replacement units. Cancelled preparations may be replaced with a new preparation. Evidence uploads, carrier claims/labels, insurance reimbursement, payment disputes, customer self-service, journal postings and replacement emails remain later work. No new carrier or email service is activated.</p>
+        </section>
         <section className="howto-section" id="returns-refunds" aria-labelledby="returns-refunds-title">
           <h2 id="returns-refunds-title">Receive returns and issue test refunds</h2>
           <p>Use this staff-managed workflow after a customer contacts the studio. A super admin records returns and issues refunds; accounting can read the history. Refunding money and receiving items are separate actions. All provider commands use Stripe test mode.</p>

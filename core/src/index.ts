@@ -28,3 +28,4 @@ export * from "./order-emails";
 export * from "./checkout-totals";
 export * from "./shipping";
 export * from "./store-after-sales";
+export * from "./shipment-cases";

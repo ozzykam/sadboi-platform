@@ -4416,3 +4416,8 @@ td small {
 /* Shared saved/quoted order totals: readable in the cart and staff/customer views. */
 .checkout-totals { display: grid; gap: .45rem; margin: 1rem 0; }
 .checkout-totals p { margin: 0; }
+.shipment-case { margin-top: 24px; overflow-wrap: anywhere; }
+.shipment-case p { margin: 12px 0; line-height: 1.5; }
+.shipment-case .inv-actions { margin: 16px 0; }
+.shipment-fields { border: 0; padding: 0; margin: 0; min-width: 0; }
+.shipment-evidence { white-space: pre-wrap; }

@@ -1,6 +1,16 @@
 # Build resumption — September 23, 2026
 
-## Latest continuation — September 30: staff-managed returns and refunds
+## Latest continuation — October 1: shipment cases and replacements
+
+Recovered local session `01a0cea1-254f-7b50-926a-b88e8875eab2` after interruption at the combined regression run. The user explicitly requested replacement shipments in the first damaged/lost shipment workflow. That feature is now complete locally: Orders → View order/Open fulfillment → Load shipment case, with private notes/evidence references, affected quantities, confirmed refund/receipt links, audited resolution/reopening, replacement stock allocation/cancellation/dispatch and separate customer tracking. In-app help is `/admin/how-to#shipment-cases`.
+
+Verification: the recovered session records `pnpm check` passing with 94 domain tests and the production build, plus 32 shipment-only integration checks and Chrome staff/customer workflow and phone-width checks. Recovery completed `pnpm test:shipment-cases` with **109 combined integration checks**; the emulators exited successfully. A final `pnpm typecheck` regenerated normal route types and passed; `git diff --check` also passed. No application code fixes were needed during recovery. See [the feature guide](40-shipment-cases-and-replacements.md) for scope, evidence and limits.
+
+Next handoff: deploy the application and verify a shipment case/replacement with dedicated test records. No new variables, indexes or provider subscriptions are required for this slice. Payment disputes and broader commerce work remain open; deployed refund webhook/reconciliation verification also remains separate. Keep live payments and email sending disabled. Domain, Google Workspace, Resend activation and live carrier quotes remain explicitly deferred. No production records, provider settings or external communications changed during this feature build. The notes below are historical and do not override this latest state.
+
+## Previous continuation — September 30: staff-managed returns and refunds
+
+Latest user verification: after asking how to refund a paid, unfulfilled order on the deployed site, the user confirmed "refunding works (in test environment)". The deployed staff refund flow is now user-verified; no amount, order ID or Stripe refund ID was provided. Independent refund webhook delivery/replay, scheduled refund reconciliation and deployed physical-return stock effects remain unverified. This supersedes the refund-flow deployment-pending note below. Live payments remain disabled.
 
 The user chose staff-managed returns/refunds first. Implemented full/partial Stripe test refunds, durable retry/recovery, canonical provider status (including dashboard refunds), signed refund webhooks, scheduler reconciliation, received-return history and sellable/quarantine/discard stock handling. Staff access is through Orders → View order/Open fulfillment → Load returns and refunds; accounting is read-only. Customer private pages expose only safe summary information. In-app help is `/admin/how-to#returns-refunds`.
 

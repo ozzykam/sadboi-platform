@@ -17,7 +17,7 @@ const app = initializeApp({projectId: "demo-sadboi-platform"});
 const auth = getAuth(app); const db = getFirestore(app);
 // Browser previews use a separate hostname so their cookies cannot replace a
 // live developer session on 127.0.0.1:3100 (cookies are not scoped to ports).
-const browserPreview = process.argv.includes("--after-sales-preview") || process.argv.includes("--shipping-preview") || process.argv.includes("--gallery-preview") || process.argv.includes("--fulfillment-preview") || process.argv.includes("--payment-preview") || process.argv.includes("--lifecycle-preview") || process.argv.includes("--email-preview");
+const browserPreview = process.argv.includes("--shipment-preview") || process.argv.includes("--after-sales-preview") || process.argv.includes("--shipping-preview") || process.argv.includes("--gallery-preview") || process.argv.includes("--fulfillment-preview") || process.argv.includes("--payment-preview") || process.argv.includes("--lifecycle-preview") || process.argv.includes("--email-preview");
 const paymentSecret = "emulator-only-" + randomUUID();
 const expirySecret = "emulator-only-expiry-" + randomUUID();
 const stripe = (process.argv.includes("--after-sales") || process.argv.includes("--order-lifecycle") || process.argv.includes("--shipping")) ? await (await import("./stripe-fixture.mjs")).stripeFixture() : null;
@@ -127,7 +127,8 @@ try {
  if(process.argv.includes("--order-lifecycle")) { const {orderLifecycleChecks}=await import("./order-lifecycle-integration.mjs"); await orderLifecycleChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin,paymentSecret,expirySecret,stripe}); }
  if(process.argv.includes("--order-emails") || process.argv.includes("--order-emails-disabled")) { const {orderEmailChecks}=await import("./order-emails-integration.mjs"); await orderEmailChecks({request:checkoutRequest,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin,paymentSecret,expirySecret,email,stripe}); }
  if(process.argv.includes("--shipping")) { const {shippingChecks}=await import("./shipping-integration.mjs"); await shippingChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin,stripe}); }
- if(process.argv.includes("--after-sales")) { const {afterSalesChecks}=await import("./after-sales-integration.mjs"); await afterSalesChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin,stripe,expirySecret}); }
+  if(process.argv.includes("--after-sales")) { const {afterSalesChecks}=await import("./after-sales-integration.mjs"); await afterSalesChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin,stripe,expirySecret}); }
+  if(process.argv.includes("--shipment-cases")) { const {shipmentCaseChecks}=await import("./shipment-case-integration.mjs"); await shipmentCaseChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin}); }
  await db.doc("businesses/sadboi/memberships/"+legal.uid).update({status:"revoked"});
  assert.equal((await status(legalCookie)).status,401);
  assert.equal((await signIn(legal)).status,403);check("revoked membership blocks sessions and re-entry");
