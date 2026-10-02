@@ -32,3 +32,4 @@ export * from "./shipment-cases";
 export * from "./store-disputes";
 export * from "./commissions";
 export * from "./proposals";
+export * from "./public-inquiries";

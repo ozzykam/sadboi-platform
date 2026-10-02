@@ -1,0 +1,20 @@
+import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
+export async function publicInquiryChecks({ request, ownerCookie, legalCookie, identity, signIn, session, db, check, origin }) {
+  const accounting = await identity("public-inquiry-accounting@example.test", true, "accounting"), accountingCookie = session(await signIn(accounting));
+  const c = name => db.collection(`businesses/sadboi/${name}`), id = randomUUID(), input = { name: "Public visitor", email: "visitor@example.test", purpose: "commission", subject: "Custom cover", message: "I would like to discuss an original cover illustration.", reference: "Album project", consent: true, website: "", operationId: id };
+  const post = (body, headers = {}) => request("/api/public-inquiries", { method: "POST", headers: { Origin: origin, "Content-Type": "application/json", ...headers }, body: JSON.stringify(body) });
+  const ok = async (promise, status = 200) => { const response = await promise; assert.equal(response.status, status, await response.clone().text()); return response.json(); };
+  assert.equal((await request("/api/public-inquiries")).status, 401); assert.equal((await request("/admin/inquiries", { headers: { Cookie: legalCookie } })).status, 307); assert.equal((await request("/api/public-inquiries", { headers: { Cookie: accountingCookie } })).status, 200);
+  check("public inquiry inbox is not exposed anonymously and legal cannot access the staff page");
+  assert.equal((await post({ ...input, consent: false })).status, 400); assert.equal((await post({ ...input, website: "bot" })).status, 400); assert.equal((await post(input, { Origin: "https://attacker.example" })).status, 403);
+  check("public validation requires consent, an empty honeypot and the same-origin request");
+  const first = await ok(post(input), 201), replay = await ok(post(input), 201); assert.deepEqual(replay, first); assert.equal((await c("publicInquiries").doc(id).get()).data().status, "new"); assert.equal((await c("publicInquiries").doc(id).get()).data().archived, false); assert.equal((await c("publicInquiryState").doc("counts").get()).data().total, 1);
+  assert.equal((await post({ ...input, subject: "Different", operationId: id })).status, 409); check("anonymous submissions are idempotent and conflicting request IDs cannot overwrite a message");
+  const inbox = await ok(request("/api/public-inquiries", { headers: { Cookie: ownerCookie } })); assert.equal(inbox.inquiries[0].email, input.email); assert.equal(inbox.inquiries[0].purpose, input.purpose);
+  const row = inbox.inquiries[0]; const update = await request("/api/public-inquiries", { method: "PATCH", headers: { Origin: origin, Cookie: ownerCookie, "Content-Type": "application/json" }, body: JSON.stringify({ id: row.id, revision: row.revision, status: "reviewing", note: "Route to commission review" }) }); assert.equal(update.status, 403);
+  const proofResponse = await request("/api/auth/csrf", { headers: { Cookie: ownerCookie } }); const proof = await proofResponse.json(); const csrfCookie = proofResponse.headers.get("set-cookie").split(";")[0]; await ok(request("/api/public-inquiries", { method: "PATCH", headers: { Origin: origin, Cookie: ownerCookie + "; " + csrfCookie, "X-CSRF-Token": proof.token, "Content-Type": "application/json" }, body: JSON.stringify({ id: row.id, revision: row.revision, status: "reviewing", archived: true, note: "Route to commission review" }) }));
+  const archived = await ok(request("/api/public-inquiries", { headers: { Cookie: ownerCookie } })); assert.equal(archived.inquiries[0].archived, true); assert.equal(archived.inquiries[0].lastNote, "Route to commission review");
+  check("staff can read the private inbox while mutation protections remain active");
+  const page = await request("/contact"); assert.equal(page.status, 200); assert.match(await page.text(), /Commission or custom artwork/); const help = await request("/admin/how-to", { headers: { Cookie: accountingCookie } }); assert.match(await help.text(), /id="public-inquiries"/); check("the public guide and staff help describe all inquiry purposes");
+}

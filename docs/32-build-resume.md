@@ -1,6 +1,10 @@
 # Build resumption — September 23, 2026
 
-## Latest continuation — October 1: estimates and proposals
+## Latest continuation — October 1: public contact and inquiry intake
+
+Added `/contact` with purpose guidance for commissions, shop/order help, wholesale/stockist, press/collaboration and general questions. Submissions go to the private **Inquiries** inbox for super-admin/accounting review; statuses and private notes are revision-protected. No automatic email, CRM contact, project, order, payment or agreement is created. See [scope and verification](44-public-contact-and-inquiries.md). The focused emulator suite passed 29 checks; `pnpm check` passed with the production build. Next follow-up is deploy when authorized, then stronger abuse controls if public volume requires them.
+
+## Previous continuation — October 1: estimates and proposals
 
 Implemented the approved next slice in Projects: itemized estimate drafts, client-facing scope/timing/revision policy, resolved manual tax, validity dates, atomic issue numbers, immutable proposal versions, revised/withdrawn offers and staff-recorded client responses with evidence. Inquiry-to-project conversion shares one proposal series. A client document can be printed/saved as PDF without private notes. In-app tutorial: `/admin/how-to#proposals`. See [scope and verification](43-estimates-and-proposals.md). `pnpm check` passed with 105 domain tests and the production build; `pnpm test:proposals` passed 50 combined integration checks. Chrome verified draft/issue/revise/accept, client-document privacy and 390px layout. Browser tabs/viewport/emulators were cleaned up. Manual PDF output verification remains pending because the native print dialog blocked automation; deployment has not been requested. No new provider settings, environment variables or indexes are needed. Next build slice is agreements linked to accepted proposals, followed by deposits/invoices and client proof/delivery. Keep deferred dispute testing, domain/Workspace/Resend activation and live carrier quotes pending.
 

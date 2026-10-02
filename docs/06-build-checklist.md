@@ -164,6 +164,9 @@ September 23 continuation: persisted cart validation and retry-safe multi-line o
 
 ## 7. Projects and commissions
 
+- [x] **N** Add a broad public contact/inquiry form with purpose guidance, strict validation, consent/honeypot, private staff inbox, review statuses and idempotent retry. See [public contact intake](44-public-contact-and-inquiries.md). No automatic email or CRM/project creation occurs.
+- [ ] **N** Deploy and smoke-test public contact intake, then add stronger abuse controls if needed.
+
 - [x] **N** Build staff-managed estimates/proposals with itemized USD prices, manual tax treatment, validity, atomic issue numbering, immutable versions, client-response evidence, print/PDF view and shared inquiry/project linkage. See [scope](43-estimates-and-proposals.md). Agreements, electronic signatures, deposits/invoices and accepted change orders remain open.
 - [ ] **N** Deploy and smoke-test estimates/proposals with dedicated records; no provider setup, new environment variables or indexes required.
 
