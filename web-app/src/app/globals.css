@@ -4431,6 +4431,52 @@ td small {
 .commissions details { margin: 16px 0; }
 .commissions .inv-actions { margin: 16px 0; }
 .proposal-document { margin-top: 32px; padding: clamp(20px, 4vw, 48px); background: #fff; color: #171717; border: 1px solid #ddd; overflow-wrap: anywhere; }
+.contact-page { max-width: 1180px; margin: 0 auto; padding: clamp(32px, 7vw, 88px) 24px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 520px); gap: clamp(32px, 7vw, 90px); }
+.contact-intro h1 { max-width: 680px; font-size: clamp(40px, 7vw, 76px); line-height: .98; margin: 18px 0 24px; }
+.contact-intro > p { max-width: 600px; font-size: 18px; line-height: 1.6; }
+.contact-guide { margin-top: 48px; border-top: 1px solid var(--line); }
+.contact-guide h2 { margin-top: 20px; }
+.contact-guide dl { display: grid; gap: 18px; }
+.contact-guide dl div { border-bottom: 1px solid var(--line); padding-bottom: 16px; }
+.contact-guide dt { font-weight: 700; }
+.contact-guide dd { margin: 5px 0 0; color: var(--muted); line-height: 1.5; }
+.contact-form { background: var(--panel); border: 1px solid var(--line); padding: clamp(20px, 4vw, 36px); display: grid; gap: 16px; align-self: start; }
+.contact-form h2 { margin: 0; }
+.contact-form .field { display: grid; gap: 6px; }
+.contact-form .optional { color: var(--muted); font-size: 12px; font-weight: 400; }
+.contact-consent { display: flex; gap: 10px; align-items: flex-start; line-height: 1.45; font-size: 14px; }
+.contact-consent input { margin-top: 4px; }
+.contact-honeypot { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+.public-inquiry-card { overflow-wrap: anywhere; }
+.inbox-toolbar { display: flex; align-items: end; gap: 20px; flex-wrap: wrap; margin: 24px 0; }
+.inbox-toolbar .field { min-width: 220px; }
+.inbox-check { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; }
+.inbox-count { color: var(--muted); padding-bottom: 12px; }
+.inbox-table-wrap { overflow-x: auto; border: 1px solid var(--line); background: var(--panel); }
+.inbox-table { min-width: 780px; }
+.inbox-table th, .inbox-table td { padding: 14px 16px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.inbox-table thead th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; white-space: nowrap; }
+.inbox-table tbody tr { cursor: pointer; transition: background .15s ease; }
+.inbox-table tbody tr:hover, .inbox-table tbody tr:focus-visible { background: color-mix(in srgb, var(--accent) 10%, transparent); outline: none; }
+.inbox-table tbody tr:last-child th, .inbox-table tbody tr:last-child td { border-bottom: 0; }
+.inbox-row-new th, .inbox-row-new td { font-weight: 650; }
+.inbox-table small { display: block; color: var(--muted); font-weight: 400; margin-top: 4px; overflow-wrap: anywhere; }
+.inbox-row-link { appearance: none; background: none; border: 0; color: var(--ink); cursor: pointer; font: inherit; padding: 0; text-align: left; }
+.inbox-row-link:hover { text-decoration: underline; }
+.inbox-status { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 4px 9px; font-size: 12px; white-space: nowrap; }
+.status-new { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 50%, var(--line)); }
+.status-spam { color: #cc7882; }
+.inbox-row-actions { display: flex; gap: 6px; justify-content: flex-end; }
+.icon-button { display: inline-grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 1px solid var(--line); border-radius: 6px; color: var(--ink); background: transparent; cursor: pointer; }
+.icon-button:hover, .icon-button:focus-visible { background: var(--accent); color: white; }
+.icon-button.danger:hover, .icon-button.danger:focus-visible { background: #7d2838; }
+.inquiry-dialog { width: min(680px, calc(100vw - 28px)); max-height: calc(100dvh - 28px); overflow-y: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--ink); padding: clamp(24px, 5vw, 42px); box-shadow: 0 24px 80px #0009; }
+.inquiry-dialog::backdrop { background: #080809b8; }
+.inquiry-dialog h2 { margin: 8px 0 12px; }
+.inquiry-dialog-close { position: absolute; right: 14px; top: 14px; }
+.inquiry-message { margin: 28px 0; padding: 18px; background: color-mix(in srgb, var(--canvas) 70%, transparent); border-left: 3px solid var(--accent); line-height: 1.65; }
+.public-inquiry-card .field { margin-top: 16px; }
+.inbox-filter { max-width: 280px; margin: 20px 0; }
 .proposal-document h2 { font-size: clamp(24px, 4vw, 36px); margin-bottom: 16px; }
 .proposal-document h3 { margin-top: 24px; }
 .proposal-document .eyebrow { color: #555; }
@@ -4440,6 +4486,8 @@ td small {
 .proposal-totals dd { margin: 0; }
 .proposals .proposal-controls { overflow-wrap: anywhere; }
 @media (max-width: 540px) { .proposal-lines > div { grid-template-columns: 1fr auto; } .proposal-lines strong { grid-column: 1 / -1; } }
+@media (max-width: 800px) { .contact-page { grid-template-columns: 1fr; } .contact-intro h1 { font-size: clamp(42px, 13vw, 64px); } }
+@media (max-width: 600px) { .inbox-toolbar { align-items: stretch; flex-direction: column; gap: 10px; } .inbox-toolbar .field { min-width: 0; } .inbox-count { padding: 0; } .inquiry-dialog { padding: 26px 20px; } }
 @media print {
   body:has(.proposals) { background: white !important; color: black !important; }
   body:has(.proposals) .staff-header, body:has(.proposals) .staff-nav, body:has(.proposals) .staff-footer, body:has(.proposals) .skip-link, .proposals .proposal-controls { display: none !important; }

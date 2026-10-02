@@ -11,6 +11,7 @@ const topics = [
   ["editing", "Edit or archive"],
   ["workspace", "Manage staff access"],
   ["contacts", "Manage contacts"],
+  ["public-inquiries", "Review public inquiries"],
   ["commissions", "Manage commission inquiries and projects"],
   ["proposals", "Prepare estimates and proposals"],
   ["stock", "Set up & count stock"],
@@ -59,6 +60,14 @@ export default async function Page() {
         ))}
       </nav>
       <div className="howto-content">
+        <section className="howto-section" id="public-inquiries" aria-labelledby="public-inquiries-title">
+          <h2 id="public-inquiries-title">Review public inquiries</h2>
+          <p>Visitors use the public <Link href="/contact">Contact</Link> form to choose a purpose and send a message. Super admins and accounting can read the private inbox; only super admins change statuses.</p>
+          <ol><li>Open <Link href="/admin/inquiries">Inquiries</Link> and filter by New, Reviewing, Replied, Closed, or Spam.</li><li>Use the purpose label and message to decide where the request belongs. The form does not create a Contact, project, order, agreement, or payment automatically.</li><li>Add a private update note, then set the status. Use Replied only after you have responded through your chosen channel. The platform does not send email from this inbox.</li></ol>
+          <p><strong>What visitors see:</strong> a short guide explains commission, shop/order, wholesale/stockist, press/collaboration, and general questions. They provide name, email, subject, message, and optional reference. A consent checkbox and hidden honeypot reduce accidental or automated submissions. Do not request passwords or payment details through the form.</p>
+          <p><strong>Inbox actions:</strong> click a table row to open its full message and review dialog. Leave it New when it still needs attention, use Mark read to move it to Reviewing, and add a private note when context should stay with the record. Archive removes it from the active table; Show archived and Restore bring it back. The row icons provide Archive, Mark read, and Spam and archive shortcuts. Spam is archived automatically.</p>
+          <p><strong>Limits and recovery:</strong> Messages are capped at 4,000 characters and the inbox at 10,000 records. Duplicate retries return the original result; conflicting request IDs are rejected. Reload the inbox before updating a stale row. Archived/closed business records are not changed by public submissions.</p>
+        </section>
         <section className="howto-section" id="proposals" aria-labelledby="proposals-title">
           <h2 id="proposals-title">Prepare estimates and proposals</h2>
           <p>Use a proposal to set the client-facing scope, price, timing and revision allowance before an agreement or deposit. Start with a saved inquiry or project and an active contact. Super admins prepare and record responses; accounting can read and print. Converted inquiries and their projects share one proposal series.</p>
