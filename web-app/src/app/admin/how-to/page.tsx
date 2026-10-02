@@ -381,13 +381,16 @@ export default async function Page() {
               organization.
             </li>
             <li>
-              Add up to three relationship labels, such as Printer â€” Primary
-              shop, Gallery â€” Booth contact, or Client â€” Commission inquiry.
-              The same record can have more than one relationship.
+              Add relationship labels, such as Printer â€” Primary shop, Gallery
+              â€” Booth contact, or Client â€” Commission inquiry. Use Add
+              relationship when the same record has more than one role.
             </li>
             <li>
-              Add internal notes, an optional next follow-up date, and a
-              follow-up note. Choose <strong>Save contact</strong>.
+              Add internal notes, then use Log activity to record emails, calls,
+              meetings, messages, or notes. Each activity can include an open
+              follow-up with details and a completion checkbox. The directory
+              shows the newest activity as Last contact and keeps completed
+              follow-ups in the contact history. Choose <strong>Save contact</strong>.
             </li>
             <li>
               Search by name, email, organization, or relationship. Use the

@@ -14,7 +14,9 @@ Contacts at [Contacts](http://127.0.0.1:3100/admin/contacts) provide the shared 
 
 Contacts are an internal relationship directory. Notes and follow-ups do not send messages, create invoices, alter supplier purchase orders, change artwork rights, or create commission records. Staff can now select an active contact when creating an inquiry in Projects; see [commission inquiries and projects](42-commission-inquiries-and-projects.md). Commission records preserve contact snapshots at intake or reassignment, so later directory edits do not rewrite their history. Supplier order details remain in Purchasing, while a supplier relationship can also be represented here.
 
-The directory supports 1,000 contacts and organizations, including archived records, until pagination is added. Each record supports up to 20 relationship entries in the domain schema; the current UI presents three practical relationship rows. Email, dates, names, labels, notes, and websites have bounded validation. An organization must be active before a new person can link to it.
+The directory supports 1,000 contacts and organizations, including archived records, until pagination is added. Each record supports up to 20 relationship entries; the editor starts with one row and adds more as needed. Email, dates, names, labels, notes, websites, and activity details have bounded validation. An organization must be active before a new person can link to it.
+
+Each contact can also carry up to 100 private activity entries. An entry records a date, communication type, summary, optional follow-up date and details, and whether that follow-up was completed. The directory derives Last contact from the newest activity and promotes the earliest open activity follow-up to the contact's current follow-up fields. Completed follow-ups remain in the history.
 
 ## Consistency and history
 

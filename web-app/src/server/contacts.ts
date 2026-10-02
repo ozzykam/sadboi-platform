@@ -13,7 +13,10 @@ function fail(message: string, status = 409): never { throw new AccessError(stat
 function operationId(value: unknown) { if (typeof value !== "string" || !/^[a-f0-9-]{36}$/i.test(value)) fail("A valid request ID is required.", 400); return value; }
 function parse(value: unknown) { const result = contactInputSchema.safeParse(value); if (!result.success) fail(result.error.issues.map(issue => issue.message).join(" "), 400); return result.data; }
 function keys(body: Record<string, unknown>, editing: boolean) { const allowed = editing ? ["input", "id", "revision", "operationId"] : ["input", "operationId"]; if (Object.keys(body).some(key => !allowed.includes(key))) fail("Unexpected contact fields.", 400); }
-function project(doc: FirebaseFirestore.QueryDocumentSnapshot): ContactRecord { const data = doc.data(); return { ...contactInputSchema.parse(data.input), id: doc.id, revision: data.revision, createdAt: data.createdAt, updatedAt: data.updatedAt }; }
+function project(doc: FirebaseFirestore.QueryDocumentSnapshot): ContactRecord {
+  const data = doc.data(), input = contactInputSchema.parse(data.input), lastContactDate = input.activities.reduce((latest, activity) => activity.date > latest ? activity.date : latest, "");
+  return { ...input, id: doc.id, revision: data.revision, createdAt: data.createdAt, updatedAt: data.updatedAt, lastContactDate };
+}
 export async function contactsStaff(write = false): Promise<Staff> {
   ensureStaffMode(); const staff = await staffForCookie((await cookies()).get(cookieName("session"))?.value); if (!staff) throw new AccessError(401, "sign-in", "Your session has ended. Sign in again before continuing.");
   if (write && staff.role !== "super_admin") throw new AccessError(403, "forbidden", "Only super admins can edit contacts.");
