@@ -47,6 +47,6 @@ Chrome used disposable emulator records to create an accepted $650.25 inquiry vi
 
 ## Deferred
 
-Public inquiry intake, standalone internal-art projects, assignments/time tracking, formal estimates/proposals, client acceptance, agreements, deposits/installment invoices, client messages/proof review, revision allowances/change orders, protected final delivery and artwork links remain later slices. This workflow creates staff planning records only.
+Formal estimates/proposals and staff-recorded client responses are now available as a [linked workflow](43-estimates-and-proposals.md). Public intake, standalone internal-art projects, assignments/time tracking, agreements, deposits/installment invoices, client messages/proof review, revision tracking/change orders, protected final delivery and artwork links remain later slices. The inquiry/project workflow itself creates staff planning records only.
 
 Deployed dispute testing remains deferred by the user. Domain/Google Workspace/Resend activation and live carrier quotes remain deferred; live payments and email sending remain disabled.

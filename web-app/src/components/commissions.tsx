@@ -134,7 +134,7 @@ export function Commissions({ initial, canEdit }: { initial: Directory; canEdit:
   return <div className="commissions">
     <PageHeading eyebrow="PROJECTS / COMMISSIONS" title="From an inquiry to finished work." description="Plan commissions, track milestones, and keep the studio's working history together." action={<Button variant="secondary" disabled={frozen} onClick={() => void refresh()}>Refresh projects</Button>} />
     <p><Link className="inline-link" href="/admin/how-to#commissions">How to manage inquiries and projects</Link> · <Link className="inline-link" href="/admin/contacts">Manage contacts</Link></p>
-    <p>Internal planning only. Acceptance records the studio’s decision; client agreements, estimates, invoices, payments and approvals are separate future steps. Dates do not send reminders.</p>
+    <p>Acceptance of an inquiry records the studio’s decision. Open Estimates and proposals on a saved record to prepare client pricing. Agreements, invoices, payments and client proof approvals are separate steps. Dates do not send reminders.</p>
     {!canEdit && <p className="notice">Accounting has read-only access. Super admins manage inquiries and projects.</p>}
     {message && <p className="notice" role="status">{message}</p>}
     {canEdit && <div className="inv-actions"><Button variant="ghost" disabled={frozen} onClick={() => {
@@ -153,6 +153,7 @@ export function Commissions({ initial, canEdit }: { initial: Directory; canEdit:
         {selected.inquiryId && <Button variant="secondary" disabled={frozen} onClick={() => void open("inquiry", selected.inquiryId!)}>Open source inquiry</Button>}</div>
         {selected.acceptedBrief && <details><summary>Accepted inquiry snapshot</summary><Snapshot input={selected.acceptedBrief} /></details>}
         <Snapshot input={selected.input} />
+        <p><Link className="button secondary" href={`/admin/projects/proposal?kind=${selected.kind}&id=${selected.id}`}>Estimates and proposals</Link></p>
       </>}
       {canEdit && !selected?.projectId && <Editor key={selected ? selected.kind + selected.id + selected.revision : "new"} record={selected} contacts={directory.contacts} frozen={frozen} onSave={command => void save(command)} />}
       {canEdit && selected?.kind === "inquiry" && selected.revision < 200 && !selected.projectId && "stage" in selected.input && selected.input.stage === "accepted" && !selected.input.archived && <form className="inv-form" onSubmit={event => {

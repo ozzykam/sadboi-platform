@@ -164,6 +164,9 @@ September 23 continuation: persisted cart validation and retry-safe multi-line o
 
 ## 7. Projects and commissions
 
+- [x] **N** Build staff-managed estimates/proposals with itemized USD prices, manual tax treatment, validity, atomic issue numbering, immutable versions, client-response evidence, print/PDF view and shared inquiry/project linkage. See [scope](43-estimates-and-proposals.md). Agreements, electronic signatures, deposits/invoices and accepted change orders remain open.
+- [ ] **N** Deploy and smoke-test estimates/proposals with dedicated records; no provider setup, new environment variables or indexes required.
+
 - [x] **N** Implement staff-recorded contact-linked inquiries, internal qualification/stages, accepted-inquiry conversion, project tasks/milestones/status, private notes, immutable history, archive/restore and retry/concurrency protection. Accounting reads; super admins manage. See [first commission workflow](42-commission-inquiries-and-projects.md). Formal estimates, proposals, client approval and payments remain separate.
 - [ ] **N** Deploy commission inquiries/projects and verify the workflow with dedicated test records. No new provider configuration, environment variables or indexes are required.
 

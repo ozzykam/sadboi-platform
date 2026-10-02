@@ -1,6 +1,10 @@
 # Build resumption — September 23, 2026
 
-## Latest continuation — October 1: commission inquiries and projects
+## Latest continuation — October 1: estimates and proposals
+
+Implemented the approved next slice in Projects: itemized estimate drafts, client-facing scope/timing/revision policy, resolved manual tax, validity dates, atomic issue numbers, immutable proposal versions, revised/withdrawn offers and staff-recorded client responses with evidence. Inquiry-to-project conversion shares one proposal series. A client document can be printed/saved as PDF without private notes. In-app tutorial: `/admin/how-to#proposals`. See [scope and verification](43-estimates-and-proposals.md). `pnpm check` passed with 105 domain tests and the production build; `pnpm test:proposals` passed 50 combined integration checks. Chrome verified draft/issue/revise/accept, client-document privacy and 390px layout. Browser tabs/viewport/emulators were cleaned up. Manual PDF output verification remains pending because the native print dialog blocked automation; deployment has not been requested. No new provider settings, environment variables or indexes are needed. Next build slice is agreements linked to accepted proposals, followed by deposits/invoices and client proof/delivery. Keep deferred dispute testing, domain/Workspace/Resend activation and live carrier quotes pending.
+
+## Previous continuation — October 1: commission inquiries and projects
 
 The user approved moving from disputes to the proposed commission-inquiry/internal-project workflow. Implemented **Projects** in staff navigation: contact-linked briefs, optional USD planning budget and dates, qualification/stages, atomic conversion of a saved accepted inquiry into one project, tasks/milestones, internal status/private notes, immutable history and archive/restore. Accepted briefs and contact snapshots remain preserved; super admins manage and accounting reads. Help: `/admin/how-to#commissions`. See [scope and verification](42-commission-inquiries-and-projects.md).
 

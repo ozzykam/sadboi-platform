@@ -4430,3 +4430,21 @@ td small {
 .commissions p { margin: 12px 0; line-height: 1.55; }
 .commissions details { margin: 16px 0; }
 .commissions .inv-actions { margin: 16px 0; }
+.proposal-document { margin-top: 32px; padding: clamp(20px, 4vw, 48px); background: #fff; color: #171717; border: 1px solid #ddd; overflow-wrap: anywhere; }
+.proposal-document h2 { font-size: clamp(24px, 4vw, 36px); margin-bottom: 16px; }
+.proposal-document h3 { margin-top: 24px; }
+.proposal-document .eyebrow { color: #555; }
+.proposal-lines > div { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 16px; border-bottom: 1px solid #ddd; padding: 12px 0; }
+.proposal-totals { margin: 24px 0; }
+.proposal-totals > div { display: flex; justify-content: space-between; gap: 20px; margin: 8px 0; }
+.proposal-totals dd { margin: 0; }
+.proposals .proposal-controls { overflow-wrap: anywhere; }
+@media (max-width: 540px) { .proposal-lines > div { grid-template-columns: 1fr auto; } .proposal-lines strong { grid-column: 1 / -1; } }
+@media print {
+  body:has(.proposals) { background: white !important; color: black !important; }
+  body:has(.proposals) .staff-header, body:has(.proposals) .staff-nav, body:has(.proposals) .staff-footer, body:has(.proposals) .skip-link, .proposals .proposal-controls { display: none !important; }
+  body:has(.proposals) .staff-shell, body:has(.proposals) .staff-content { display: block; margin: 0; padding: 0; max-width: none; min-height: 0; }
+  .proposal-document { border: 0; margin: 0; padding: 0; font-size: 11pt; }
+  .proposal-document h3 { break-after: avoid; }
+  .proposal-lines > div, .proposal-totals { break-inside: avoid; }
+}

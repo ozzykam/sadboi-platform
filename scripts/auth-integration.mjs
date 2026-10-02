@@ -22,8 +22,8 @@ const paymentSecret = "emulator-only-" + randomUUID();
 const expirySecret = "emulator-only-expiry-" + randomUUID();
 const stripe = (process.argv.includes("--disputes") || process.argv.includes("--after-sales") || process.argv.includes("--order-lifecycle") || process.argv.includes("--shipping")) ? await (await import("./stripe-fixture.mjs")).stripeFixture() : null;
 const email = process.argv.includes("--order-emails") ? await (await import("./email-fixture.mjs")).emailFixture() : null;
-const origin = browserPreview ? "http://localhost:3102" : "http://127.0.0.1:3102";
-const aliasOrigin = browserPreview ? "http://127.0.0.1:3102" : "http://localhost:3102";
+const origin = browserPreview || process.argv.includes("--proposal-preview") ? "http://localhost:3102" : "http://127.0.0.1:3102";
+const aliasOrigin = browserPreview || process.argv.includes("--proposal-preview") ? "http://127.0.0.1:3102" : "http://localhost:3102";
 const server = spawn(process.execPath, [fromWeb.resolve("next/dist/bin/next"), "dev", "--hostname", "127.0.0.1", "--port", "3102"], {
  cwd: path.join(root, "web-app"),
  env: {...process.env, SADBOI_MODE:"staff", SADBOI_AUTH_ENV:"emulator", SADBOI_APP_ORIGIN:origin, SADBOI_AUTH_TEST:"1", NEXT_TELEMETRY_DISABLED:"1", SADBOI_PAYMENT_WEBHOOK_SECRET:paymentSecret, SADBOI_EXPIRY_SECRET:expirySecret, SADBOI_STRIPE_ENABLED:"0", SADBOI_ORDER_EMAIL_MODE:"disabled", ...(stripe?.env ?? {}), ...(email?.env ?? {})},
@@ -118,6 +118,7 @@ try {
  if(process.argv.includes("--workspace")) { const {workspaceChecks}=await import("./workspace-integration.mjs"); await workspaceChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin}); }
  if(process.argv.includes("--contacts")) { const {contactsChecks}=await import("./contacts-integration.mjs"); await contactsChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin}); }
  if(process.argv.includes("--commissions")) { const {commissionChecks}=await import("./commission-integration.mjs"); await commissionChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin}); }
+ if(process.argv.includes("--proposals")) { const {proposalChecks}=await import("./proposal-integration.mjs"); await proposalChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin}); }
  if(process.argv.includes("--artworks")) { const {artworkChecks}=await import("./artwork-integration.mjs"); await artworkChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin}); }
  if(process.argv.includes("--inventory")) { const {inventoryChecks}=await import("./inventory-integration.mjs"); await inventoryChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin}); }
  if(process.argv.includes("--purchasing")) { const {purchasingChecks}=await import("./purchasing-integration.mjs"); await purchasingChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin}); }
