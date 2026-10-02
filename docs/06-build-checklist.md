@@ -6,6 +6,8 @@ Firebase project initialization and 10 passing baseline rules checks are recorde
 
 The first application/catalog slice is recorded in [implementation status](07-implementation-status.md). Partially implemented task groups remain unchecked. Phases express dependencies, not deadline priorities. A module is complete only when its operational flow, permissions, error/retry behavior, mobile UI, acceptance scenario, and in-app how-to work together.
 
+October 1 payment disputes: the first staff-managed Stripe test workflow includes canonical status/deadline synchronization, private response plans and evidence references, immutable histories, retry safety, and fulfillment/refund/replacement holds. Bank evidence submission and acceptance remain in Stripe. See [scope, validation and deployment](41-payment-disputes.md).
+
 ## Completion criteria for every feature
 
 September 25 payment-return recovery: canonical Stripe lookup on authorized private order access, idempotent verification receipts, unavailable/processing UI, and local CLI webhook forwarding are implemented. Missed confirmations after the stock deadline still require review. See [payment setup](35-order-lifecycle-stripe.md); Vercel webhook activation remains outstanding.
@@ -136,7 +138,9 @@ September 23 continuation: persisted cart validation and retry-safe multi-line o
 - [x] **N** Verify the deployed staff refund flow against Stripe's test environment. User confirmed refunding works after the paid, unfulfilled-order cancellation/refund walkthrough on September 30. This is user-reported verification; refund amount and provider identifiers were not supplied.
 - [ ] **N** Independently verify deployed refund webhook subscriptions/delivery, duplicate-event handling and scheduled refund reconciliation. A successful staff refund alone does not establish these paths. Live refunds, refund notifications, exchanges and financial journal reversals are outside the completed slice.
 - [ ] **N** Build damaged/lost shipment and payment dispute workflows with evidence and resolution history.
-- [x] **N** Implement staff-managed damaged/lost shipment cases and replacement shipments, with private evidence references, audited resolutions, refund/receipt links, safe stock allocation/cancellation/dispatch and customer tracking. Combined commerce regression passed 109 checks; see [scope and verification](40-shipment-cases-and-replacements.md). The broader group remains open for payment disputes.
+- [x] **N** Implement staff-managed damaged/lost shipment cases and replacement shipments, with private evidence references, audited resolutions, refund/receipt links, safe stock allocation/cancellation/dispatch and customer tracking. Combined commerce regression passed 109 checks; see [scope and verification](40-shipment-cases-and-replacements.md).
+- [x] **N** Implement the first staff-managed Stripe test dispute workflow: canonical amount/reason/status/deadline, signed webhooks and reconciliation, private evidence references/response plans, note and provider histories, retry safety and stock/refund holds. See [payment disputes](41-payment-disputes.md). The broader group remains open for evidence uploads, in-app provider submission/acceptance, notifications and live-mode support.
+- [ ] **N** Deploy payment disputes, add the five Stripe test dispute webhook event subscriptions, and verify an actual sandbox dispute and scheduled reconciliation. Fees/accounting journals and additional/unaccepted payment mapping remain separate work.
 - [ ] **N** Deploy shipment cases/replacements and verify the deployed workflow with dedicated test records. Evidence uploads, carrier claims/labels, replacement emails and customer self-service remain separate work.
 - [ ] **E/N** Adapt wishlist/restock notifications where enabled, with consent and variant-aware availability.
 - [ ] **N** Configure shipping/returns/privacy terms and customer support contact content.
@@ -159,6 +163,9 @@ September 23 continuation: persisted cart validation and retry-safe multi-line o
 **Acceptance:** A convention sale updates the same stock as the website and is attributed to the event; a gallery shipment generates no sale until reported sold; a settlement clears its receivable once; actual reader and connectivity failure tests pass before live use.
 
 ## 7. Projects and commissions
+
+- [x] **N** Implement staff-recorded contact-linked inquiries, internal qualification/stages, accepted-inquiry conversion, project tasks/milestones/status, private notes, immutable history, archive/restore and retry/concurrency protection. Accounting reads; super admins manage. See [first commission workflow](42-commission-inquiries-and-projects.md). Formal estimates, proposals, client approval and payments remain separate.
+- [ ] **N** Deploy commission inquiries/projects and verify the workflow with dedicated test records. No new provider configuration, environment variables or indexes are required.
 
 - [ ] **B/N** Adapt project, task, time, prospect, and proposal screens for commission/internal art workflows.
 - [ ] **N** Build inquiry brief, qualification, deliverables, revision policy, estimates, milestones, budget, and optional deadlines.

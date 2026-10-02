@@ -10,6 +10,7 @@ import { OrderEmailHistory } from "./order-email-history";
 import { CheckoutTotalSummary } from "./checkout-totals";
 import { OrderAfterSales } from "./order-after-sales";
 import { ShipmentCase } from "./shipment-case";
+import { OrderDisputes } from "./order-disputes";
 type Catalog = Awaited<ReturnType<typeof storeOrderCatalog>>;
 type Order = Catalog["orders"][number];
 function initialInput(order: Order): FulfillmentInput {
@@ -66,6 +67,7 @@ export function StoreOrdersAdmin({ initial, canEdit }: { initial: Catalog; canEd
       {order.refundedMinor > 0 && <p>Confirmed refunded: ${(order.refundedMinor / 100).toFixed(2)}</p>}
       {order.refundPending && <p className="notice">Refund processing or review required. Open Returns and refunds for the saved request.</p>}
       {order.shipmentIssueStatus && <p className={order.shipmentIssueStatus === "resolved" ? "" : "notice"}>Shipment case: {order.shipmentIssueKind} · {order.shipmentIssueStatus}</p>}
+      {order.disputeCount > 0 && <p className={order.disputeHold ? "notice" : ""}>Payment disputes: {order.disputeCount}{order.disputeHold ? " · Dispatch on hold" : " · Closed"}</p>}
       <Button onClick={() => { setSelected(order); setMessage(""); }}>{canEdit && order.status === "paid" && !order.reviewReason ? "Open fulfillment" : "View order"}</Button>
     </article>)}</div>
   </section>;
@@ -116,7 +118,7 @@ function FulfillmentEditor({ order, canEdit, onClose, onSaved, onReload }: {
     {order.pricing && <p>Fulfillment changes do not recalculate the saved shipping charge or collect or refund a difference. Arrange any change with the customer separately.</p>}
     {order.fulfillment && <p>Last saved: {order.fulfillment.updatedAt}</p>}
     {order.reviewReason && <p className="notice" role="status">{order.reviewReason}</p>}
-    {order.paymentReviewRequired && <p className="notice" role="status">Payment review required. Compare the reports below with the provider before taking further action. No automatic refund has been issued.</p>}
+    {order.paymentReviewRequired && <p className="notice" role="status">Payment review required. Compare the reports below with Stripe and load Returns and refunds to check any existing refund. This warning does not issue a refund or establish whether one has already completed.</p>}
     {order.status === "pending_payment" && <p className="notice">Fulfillment opens after payment is confirmed.</p>}
     {message && <p className="notice" role="status">{message}</p>}
     {conflict && <Button variant="secondary" disabled={busy} onClick={async () => {
@@ -127,6 +129,7 @@ function FulfillmentEditor({ order, canEdit, onClose, onSaved, onReload }: {
     <OrderEmailHistory orderId={order.id} canEdit={canEdit} />
     <OrderAfterSales orderId={order.id} canEdit={canEdit} />
     <ShipmentCase orderId={order.id} canEdit={canEdit} />
+    <OrderDisputes orderId={order.id} canEdit={canEdit} />
     <form onSubmit={save} className="inv-form">
       <fieldset disabled={frozen} className="inv-form" style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
         <legend>Fulfillment details</legend>

@@ -1,7 +1,7 @@
 import "server-only";
 import { createHash } from "node:crypto";
 import type Stripe from "stripe";
-import { orderRefundRequestSchema, readOrderRefundState, storePaymentOrderId, summarizeRefunds, type ProviderRefund } from "@sadboi/core";
+import { orderRefundRequestSchema, readOrderRefundState, storePaymentOrderId, summarizeRefunds, orderHasDisputeHold, type ProviderRefund } from "@sadboi/core";
 import { adminServices } from "./firebase";
 import { AccessError, businessId, type Staff } from "./staff";
 import { stripeContext, type StripeSource } from "./stripe";
@@ -125,6 +125,7 @@ export async function requestOrderRefund(raw: unknown, staff: Staff) {
     if (prior.exists) { if (prior.data()!.fingerprint !== fingerprint) fail("This request ID was used for a different refund."); return; }
     if (history.size >= 100) fail("This order has reached the supported refund request limit. Administrator reconciliation is required.");
     const data = validOrder(order.data()), state = readOrderRefundState(data.refundState), savedFulfillment = readFulfillment(fulfillment.data(), input.orderId);
+    if (orderHasDisputeHold(data.disputeState)) fail("Review the open or lost payment dispute in Stripe before issuing a refund.");
     if (state.revision !== input.expectedRevision || state.activeId) fail("Another refund changed this order. Reload history before issuing a new refund.");
     if (data.paymentId !== initial.paymentId || data.stripeSource.accountId !== initial.stripeSource.accountId || data.paymentReviewRequired)
       fail("Resolve the order's payment review before issuing a refund.");

@@ -5,6 +5,7 @@ import { paymentFailure } from "@/server/store-payments";
 import { AccessError } from "@/server/staff";
 import { processOrderEmails } from "@/server/order-emails";
 import { processOrderRefunds } from "@/server/store-refunds";
+import { processOrderDisputes } from "@/server/store-disputes";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 export async function POST(request: Request) {
@@ -20,6 +21,9 @@ export async function POST(request: Request) {
     let refunds;
     try { refunds = await processOrderRefunds(); }
     catch { refunds = { status: "unavailable", processed: 0 }; }
-    return authResponse({ ...expiry, email, refunds });
+    let disputes;
+    try { disputes = await processOrderDisputes(); }
+    catch { disputes = { status: "unavailable", processed: 0 }; }
+    return authResponse({ ...expiry, email, refunds, disputes });
   } catch (error) { return paymentFailure(error); }
 }

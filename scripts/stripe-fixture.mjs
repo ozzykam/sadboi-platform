@@ -1,10 +1,11 @@
 // Local Stripe HTTP fixture; the application allows it only with Firebase emulators.
 import { createServer } from "node:http";
 export async function stripeFixture() {
-  const sessions = new Map(), payments = new Map(), refunds = new Map(), keys = new Map();
+  const sessions = new Map(), payments = new Map(), refunds = new Map(), disputes = new Map(), keys = new Map();
   const accountId = "acct_fixtureCurrent", secret = "whsec_disposable_fixture";
   let creates = 0, unavailable = false, reads = 0, refundCreates = 0, refundStatus = "succeeded", droppedRefundResponses = 0;
   const refundKeys = new Map();
+  let disputeWrites = 0, disputeListLimit = false;
   function updateRefundTotals(id) {
     const payment = payments.get(id);
     if (payment) payment.latest_charge.amount_refunded = [...refunds.values()].filter(row => row.payment_intent === id && row.status === "succeeded").reduce((sum, row) => sum + row.amount, 0);
@@ -32,6 +33,9 @@ export async function stripeFixture() {
       const id = url.pathname.split("/")[4]; result = sessions.get(id);
       if (result && req.method === "POST" && url.pathname.endsWith("/expire")) { result.status = "expired"; result.url = null; }
     } else if (url.pathname.startsWith("/v1/payment_intents/")) result = payments.get(url.pathname.split("/")[3]);
+    else if (url.pathname === "/v1/disputes" && req.method === "GET") result = { object: "list", has_more: disputeListLimit, data: [...disputes.values()].filter(row => row.payment_intent === url.searchParams.get("payment_intent")) };
+    else if (url.pathname.startsWith("/v1/disputes/") && req.method === "GET") result = disputes.get(url.pathname.split("/")[3]);
+    else if (url.pathname.startsWith("/v1/disputes") && req.method === "POST") { disputeWrites++; }
     else if (url.pathname === "/v1/refunds" && req.method === "GET") result = { object: "list", has_more: false, data: [...refunds.values()].filter(row => row.payment_intent === url.searchParams.get("payment_intent")) };
     else if (url.pathname === "/v1/refunds" && req.method === "POST") {
       const key = req.headers["idempotency-key"], prior = refundKeys.get(key);
@@ -54,7 +58,7 @@ export async function stripeFixture() {
     res.end(JSON.stringify(result ?? { error: { type: "invalid_request_error", message: "Fixture not found", code: "resource_missing" } }));
   });
   await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
-  return { server, sessions, payments, refunds, accountId, secret, creates: () => creates, reads: () => reads, setUnavailable: value => { unavailable = value; },
+  return { server, sessions, payments, refunds, disputes, disputeWrites: () => disputeWrites, setDisputeListLimit: value => { disputeListLimit = value; }, accountId, secret, creates: () => creates, reads: () => reads, setUnavailable: value => { unavailable = value; },
     refundCreates: () => refundCreates, setRefundStatus: value => { refundStatus = value; }, dropRefundResponses: count => { droppedRefundResponses = count; },
     resolveRefund: (id, status) => { const row = refunds.get(id); row.status = status; updateRefundTotals(row.payment_intent); },
     env: { SADBOI_STRIPE_ENABLED: "1", STRIPE_ACCOUNT_ID: accountId, STRIPE_SECRET_KEY: "sk_test_disposable_fixture", STRIPE_WEBHOOK_SECRET: secret, SADBOI_STRIPE_TEST_PORT: String(server.address().port) },

@@ -119,6 +119,10 @@ export async function handleStripeWebhook(accountId: string, bytes: Buffer, sign
   try { event = client.webhooks.constructEvent(bytes, signature ?? "", webhookSecret); }
   catch { throw new AccessError(400, "stripe-signature", "Invalid Stripe signature."); }
   if (event.livemode || (event.account && event.account !== accountId)) throw new AccessError(400, "stripe-mode", "Unexpected Stripe account or live mode.");
+  if (["charge.dispute.created", "charge.dispute.updated", "charge.dispute.closed", "charge.dispute.funds_reinstated", "charge.dispute.funds_withdrawn"].includes(event.type)) {
+    const { handleDisputeWebhook } = await import("./store-disputes");
+    return handleDisputeWebhook(event.data.object as Stripe.Dispute, source);
+  }
   if (["refund.created", "refund.updated", "refund.failed"].includes(event.type)) {
     const { handleRefundWebhook } = await import("./store-refunds");
     return handleRefundWebhook(event.data.object as Stripe.Refund, source);

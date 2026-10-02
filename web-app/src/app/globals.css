@@ -4421,3 +4421,12 @@ td small {
 .shipment-case .inv-actions { margin: 16px 0; }
 .shipment-fields { border: 0; padding: 0; margin: 0; min-width: 0; }
 .shipment-evidence { white-space: pre-wrap; }
+.commission-fields { display: grid; gap: 16px; border: 0; padding: 0; margin: 0; min-width: 0; }
+.commission-fields.inv-panel { border: 1px solid var(--line); padding: 16px; }
+.commission-editor { margin: 24px 0; }
+.commission-snapshot { overflow-wrap: anywhere; }
+.commission-snapshot p { margin: 12px 0; line-height: 1.5; }
+.commission-snapshot h4 { margin-top: 20px; }
+.commissions p { margin: 12px 0; line-height: 1.55; }
+.commissions details { margin: 16px 0; }
+.commissions .inv-actions { margin: 16px 0; }

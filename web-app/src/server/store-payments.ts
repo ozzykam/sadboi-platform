@@ -63,9 +63,22 @@ export async function confirmStorePayment(raw: unknown, source?: StripeSource, v
     }
     // A successfully bound payment with a pending order indicates inconsistent history.
     if (paymentSucceeded && data.status === "pending_payment" && !owner?.resolution && !orderIsDue(data as { status: string; expiresAt?: string })) identityConflict = true;
+    let previouslyApplied = false;
+    if (!identityConflict && paymentSucceeded && input.status === "succeeded" && ["cancelled", "expired"].includes(data.status) &&
+        data.paymentId === input.paymentId && data.paymentProvider === input.provider &&
+        typeof data.paymentEventId === "string" && /^[a-zA-Z0-9_-]{8,200}$/.test(data.paymentEventId)) {
+      const original = (await tx.get(collection("storePaymentEvents").doc(`${scope}:${data.paymentEventId}`))).data();
+      const originalInput = paymentConfirmationSchema.safeParse(original?.input);
+      previouslyApplied = !!original && original.businessId === businessId && originalInput.success &&
+        originalInput.data.status === "succeeded" && originalInput.data.orderId === input.orderId &&
+        originalInput.data.provider === input.provider && originalInput.data.paymentId === input.paymentId &&
+        originalInput.data.amountMinor === input.amountMinor && originalInput.data.currency === input.currency &&
+        fingerprint(original.source ?? null) === fingerprint(source ?? null) &&
+        (original.outcome === "applied" || (original.outcome === "review" && original.reason === "late_success" && original.resolution?.action === "accept_payment"));
+    }
     const decision = owner?.resolution?.action === "record_refund" && !identityConflict
       ? { outcome: "ignored" as const, reason: "refunded_payment" as const }
-      : decideStorePayment(data as PaymentOrderState, input, identityConflict);
+      : decideStorePayment(data as PaymentOrderState, input, identityConflict, previouslyApplied);
     const now = new Date().toISOString();
     const orderStatus = decision.outcome === "applied" ? "paid" : String(data.status);
     const result: StorePaymentResult = { id: input.orderId, status: input.status, ...decision, orderStatus, duplicate: false };

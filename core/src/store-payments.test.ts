@@ -29,6 +29,17 @@ it("requires amount and identity agreement regardless of event status", () => {
     expect(decideStorePayment(pending, { ...event, status }, true).reason).toBe("payment_identity_conflict");
   }
 });
+it("ignores a proven original payment after cancellation without suppressing genuine late payments or conflicts", () => {
+  for (const status of ["cancelled", "expired"]) {
+    const closed = { ...paid, status };
+    expect(decideStorePayment(closed, event, false, true)).toEqual({ outcome: "ignored", reason: "already_paid" });
+    expect(decideStorePayment(closed, event).reason).toBe("late_success");
+    expect(decideStorePayment({ ...pending, status }, event, false, true).reason).toBe("late_success");
+    expect(decideStorePayment(closed, { ...event, paymentId: "pi_other" }, false, true).reason).toBe("late_success");
+    expect(decideStorePayment(closed, { ...event, amountMinor: 4999 }, false, true).reason).toBe("amount_mismatch");
+    expect(decideStorePayment(closed, event, true, true).reason).toBe("payment_identity_conflict");
+  }
+});
 it("does not guess past successful effects from inconsistent historical orders", () => {
   expect(decideStorePayment({ ...pending, paymentId: "pi_legacy_failed" }, event).reason).toBe("legacy_payment");
   expect(decideStorePayment({ ...pending, status: "fulfilled" }, event).reason).toBe("legacy_payment");

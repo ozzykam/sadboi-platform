@@ -17,10 +17,10 @@ const app = initializeApp({projectId: "demo-sadboi-platform"});
 const auth = getAuth(app); const db = getFirestore(app);
 // Browser previews use a separate hostname so their cookies cannot replace a
 // live developer session on 127.0.0.1:3100 (cookies are not scoped to ports).
-const browserPreview = process.argv.includes("--shipment-preview") || process.argv.includes("--after-sales-preview") || process.argv.includes("--shipping-preview") || process.argv.includes("--gallery-preview") || process.argv.includes("--fulfillment-preview") || process.argv.includes("--payment-preview") || process.argv.includes("--lifecycle-preview") || process.argv.includes("--email-preview");
+const browserPreview = process.argv.includes("--commission-preview") || process.argv.includes("--dispute-preview") || process.argv.includes("--shipment-preview") || process.argv.includes("--after-sales-preview") || process.argv.includes("--shipping-preview") || process.argv.includes("--gallery-preview") || process.argv.includes("--fulfillment-preview") || process.argv.includes("--payment-preview") || process.argv.includes("--lifecycle-preview") || process.argv.includes("--email-preview");
 const paymentSecret = "emulator-only-" + randomUUID();
 const expirySecret = "emulator-only-expiry-" + randomUUID();
-const stripe = (process.argv.includes("--after-sales") || process.argv.includes("--order-lifecycle") || process.argv.includes("--shipping")) ? await (await import("./stripe-fixture.mjs")).stripeFixture() : null;
+const stripe = (process.argv.includes("--disputes") || process.argv.includes("--after-sales") || process.argv.includes("--order-lifecycle") || process.argv.includes("--shipping")) ? await (await import("./stripe-fixture.mjs")).stripeFixture() : null;
 const email = process.argv.includes("--order-emails") ? await (await import("./email-fixture.mjs")).emailFixture() : null;
 const origin = browserPreview ? "http://localhost:3102" : "http://127.0.0.1:3102";
 const aliasOrigin = browserPreview ? "http://127.0.0.1:3102" : "http://localhost:3102";
@@ -117,6 +117,7 @@ try {
  redirected(await request("/admin/artworks/new",{headers:{Cookie:legalCookie}}),"/admin");check("legal cannot create artwork");
  if(process.argv.includes("--workspace")) { const {workspaceChecks}=await import("./workspace-integration.mjs"); await workspaceChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin}); }
  if(process.argv.includes("--contacts")) { const {contactsChecks}=await import("./contacts-integration.mjs"); await contactsChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin}); }
+ if(process.argv.includes("--commissions")) { const {commissionChecks}=await import("./commission-integration.mjs"); await commissionChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin}); }
  if(process.argv.includes("--artworks")) { const {artworkChecks}=await import("./artwork-integration.mjs"); await artworkChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin}); }
  if(process.argv.includes("--inventory")) { const {inventoryChecks}=await import("./inventory-integration.mjs"); await inventoryChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin}); }
  if(process.argv.includes("--purchasing")) { const {purchasingChecks}=await import("./purchasing-integration.mjs"); await purchasingChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin}); }
@@ -129,6 +130,7 @@ try {
  if(process.argv.includes("--shipping")) { const {shippingChecks}=await import("./shipping-integration.mjs"); await shippingChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin,stripe}); }
   if(process.argv.includes("--after-sales")) { const {afterSalesChecks}=await import("./after-sales-integration.mjs"); await afterSalesChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin,stripe,expirySecret}); }
   if(process.argv.includes("--shipment-cases")) { const {shipmentCaseChecks}=await import("./shipment-case-integration.mjs"); await shipmentCaseChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin}); }
+  if(process.argv.includes("--disputes")) { const {disputeChecks}=await import("./dispute-integration.mjs"); await disputeChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin,stripe,expirySecret}); }
  await db.doc("businesses/sadboi/memberships/"+legal.uid).update({status:"revoked"});
  assert.equal((await status(legalCookie)).status,401);
  assert.equal((await signIn(legal)).status,403);check("revoked membership blocks sessions and re-entry");

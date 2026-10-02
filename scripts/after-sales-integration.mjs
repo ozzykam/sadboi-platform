@@ -11,7 +11,12 @@ export async function afterSalesChecks({ request, csrf, db, check, origin, owner
   const post = (body, extra = {}) => request("/api/store/after-sales", { method: "POST", headers: { ...headers, ...extra }, body: JSON.stringify(body) });
   const ok = async (response, status = 200) => { const r = await response; assert.equal(r.status, status, await r.clone().text()); return r.json(); };
   const history = id => ok(request(`/api/store/after-sales?orderId=${id}`, { headers: { Cookie: ownerCookie } }));
-  async function fixture(label, dispatched = true) {
+  const paymentWebhook = (sessionId, eventId) => {
+    const payload = JSON.stringify({ id: eventId, object: "event", type: "checkout.session.completed", livemode: false, data: { object: stripe.sessions.get(sessionId) } });
+    const signature = Stripe.webhooks.generateTestHeaderString({ payload, secret: stripe.secret });
+    return request(`/api/stripe/webhook/${stripe.accountId}`, { method: "POST", headers: { "Content-Type": "application/json", "stripe-signature": signature }, body: payload });
+  };
+  async function fixture(label, dispatched = true, webhookFirst = false) {
     const id = hash("after-sales-" + label).slice(0, 32), variantId = hash(label + "return-variant"), locationId = hash(label + "return-location"), token = hash(label + "return-token");
     const stock = c("stockBalances").doc(hash(variantId + ":" + locationId)), order = c("storeOrders").doc(id);
     await c("stockLocations").doc(locationId).set({ businessId: "sadboi", input: { name: "Returns studio " + label, kind: "studio", status: "active", onlineEligible: true }, revision: 1, onHandUnits: 10 });
@@ -24,14 +29,15 @@ export async function afterSalesChecks({ request, csrf, db, check, origin, owner
     const sessionId = (await order.get()).data().stripeCheckout.sessionId;
     stripe.pay(sessionId);
     const customer = () => ok(request(`/api/store/order-access/${id}`, { method: "POST", headers, body: JSON.stringify({ action: "status", token }) }));
-    assert.equal((await customer()).status, "paid");
+    if (webhookFirst) assert.equal((await ok(paymentWebhook(sessionId, "evt_after_sales_" + label))).outcome, "applied");
+    else assert.equal((await customer()).status, "paid");
     let revision = 0;
     async function fulfill(status) {
       const input = { orderId: id, recipientName: "Returns Test Buyer", address1: "", address2: "", city: "", region: "", postalCode: "", country: "US", method: "pickup", trackingNumber: "", status, notes: "Private fulfillment notes" };
       const result = await ok(request("/api/store/fulfillment", { method: "POST", headers, body: JSON.stringify({ input, expectedRevision: revision, operationId: randomUUID() }) }), 201); revision = result.revision;
     }
     if (dispatched) { await fulfill("packed"); await fulfill("delivered"); }
-    return { id, variantId, locationId, token, stock, order, customer, fulfill, paymentId: (await order.get()).data().paymentId };
+    return { id, variantId, locationId, token, stock, order, customer, fulfill, sessionId, paymentId: (await order.get()).data().paymentId };
   }
   const f = await fixture("main"), accountant = await identity("returns-accounting@example.test", true, "accounting"), accountingCookie = session(await signIn(accountant));
   for (const [cookie, expected] of [["", 401], [legalCookie, 403], [accountingCookie, 200]]) assert.equal((await request(`/api/store/after-sales?orderId=${f.id}`, { headers: { Cookie: cookie } })).status, expected);
@@ -88,13 +94,46 @@ export async function afterSalesChecks({ request, csrf, db, check, origin, owner
   const payment = stripe.payments.get(wrong.paymentId), metadata = { ...payment.metadata };
   payment.metadata.orderId = f.id; assert.equal((await post(await refundInput(wrong, 100))).status, 409); payment.metadata = metadata;
   payment.livemode = true; assert.equal((await post(await refundInput(wrong, 100))).status, 409); payment.livemode = false;
-  const unshipped = await fixture("unshipped", false);
+  const unshipped = await fixture("unshipped", false, true);
   assert.equal((await post(await refundInput(unshipped, 7500))).status, 409);
   await unshipped.fulfill("cancelled");
   assert.equal((await ok(post(await refundInput(unshipped, 7500)), 201)).status, "succeeded");
   assert.equal((await unshipped.stock.get()).data().onHand, 10); assert.equal((await unshipped.stock.get()).data().allocated, 0);
   assert.equal((await unshipped.order.get()).data().status, "cancelled");
   check("refunds reject wrong order/live payment mappings and require unshipped cancellation before a full refund");
+
+  // Reproduce webhook confirmation -> staff cancellation/refund -> first private
+  // status lookup. A lookup-first fixture reuses its old receipt and misses this.
+  const cancelledStock = (await unshipped.stock.get()).data(), refundsBeforeLookup = stripe.refundCreates();
+  const lookups = await Promise.all([unshipped.customer(), unshipped.customer()]);
+  for (const result of lookups) {
+    assert.equal(result.status, "cancelled"); assert.equal(result.paymentReviewRequired, false);
+    assert.equal(result.afterSales.refundedMinor, 7500);
+  }
+  assert.equal((await ok(paymentWebhook(unshipped.sessionId, "evt_after_sales_refunded_repeat"))).reason, "already_paid");
+  assert.deepEqual((await unshipped.stock.get()).data(), cancelledStock);
+  assert.equal(stripe.refundCreates(), refundsBeforeLookup);
+  const lookupId = `stripe:${stripe.accountId}:test:lookup_${hash(unshipped.sessionId + ":paid")}`;
+  assert.equal((await c("storePaymentEvents").doc(lookupId).get()).data().reason, "already_paid");
+  check("first private lookup and new webhook after a webhook-paid cancellation/refund never create a false late-payment review");
+
+  // Keep unproven history conservative, then exercise the existing deployed
+  // recovery path for a review already recorded by the old implementation.
+  const originalRef = c("storePaymentEvents").doc(`stripe:${stripe.accountId}:test:evt_after_sales_unshipped`);
+  await originalRef.update({ outcome: "legacy" });
+  const oldReviewId = "evt_after_sales_unproven_payment";
+  assert.equal((await ok(paymentWebhook(unshipped.sessionId, oldReviewId))).reason, "late_success");
+  await originalRef.update({ outcome: "applied" });
+  const completedRefund = (await history(unshipped.id)).refunds.find(row => row.status === "succeeded");
+  const reviewBody = { orderId: unshipped.id, eventId: `stripe:${stripe.accountId}:test:${oldReviewId}`, expectedRevision: 0,
+    operationId: randomUUID(), action: "record_refund", reference: completedRefund.providerId, notes: "Verify the full test refund already completed for this cancelled order." };
+  const resolve = () => request("/api/store/payment-review", { method: "POST", headers, body: JSON.stringify(reviewBody) });
+  await ok(resolve()); await ok(resolve());
+  assert.equal((await unshipped.customer()).paymentReviewRequired, false);
+  assert.equal((await unshipped.order.get()).data().status, "cancelled");
+  assert.deepEqual((await unshipped.stock.get()).data(), cancelledStock);
+  assert.equal(stripe.refundCreates(), refundsBeforeLookup);
+  check("unproven original payments remain reviewable and an existing full refund resolves prior reviews without another refund or stock change");
 
   const receiveInput = async (target, quantity, disposition, locationId = target.locationId) => ({ action: "receive", orderId: target.id, operationId: randomUUID(), expectedRevision: (await history(target.id)).returnState.revision,
     variantId: target.variantId, quantity, disposition, locationId: disposition === "discard" ? null : locationId, notes: "Test return inspection" });

@@ -42,7 +42,7 @@ export type PaymentOrderState = {
   paymentEventId?: string; paymentSchemaVersion?: number;
   expiresAt?: string;
 };
-export function decideStorePayment(order: PaymentOrderState, input: PaymentConfirmation, identityConflict = false): {
+export function decideStorePayment(order: PaymentOrderState, input: PaymentConfirmation, identityConflict = false, previouslyApplied = false): {
   outcome: Exclude<PaymentEventOutcome, "legacy">; reason: PaymentEventReason;
 } {
   if (identityConflict) return { outcome: "review", reason: "payment_identity_conflict" };
@@ -51,6 +51,11 @@ export function decideStorePayment(order: PaymentOrderState, input: PaymentConfi
   if (!["pending_payment", "paid", "fulfilled", "cancelled", "expired"].includes(order.status))
     return { outcome: "review", reason: "invalid_order_state" };
   if (input.status === "failed") return { outcome: "ignored", reason: order.status === "pending_payment" ? "payment_failed" : "late_failure" };
+  // A later report of the original, durably accepted payment is not a new late
+  // payment. The server verifies its original receipt before setting this flag.
+  if (["cancelled", "expired"].includes(order.status) && previouslyApplied &&
+      order.paymentId === input.paymentId && order.paymentProvider === input.provider)
+    return { outcome: "ignored", reason: "already_paid" };
   if (["cancelled", "expired"].includes(order.status) || (order.status === "pending_payment" && order.expiresAt && Date.parse(order.expiresAt) <= Date.now()))
     return { outcome: "review", reason: "late_success" };
   if (order.status === "paid" || order.status === "fulfilled") {

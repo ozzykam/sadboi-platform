@@ -1,5 +1,5 @@
 import "server-only";
-import { storeOrderInputSchema, readCheckoutTotals, readOrderRefundState } from "@sadboi/core";
+import { storeOrderInputSchema, readCheckoutTotals, readOrderRefundState, readDisputeState, orderHasDisputeHold } from "@sadboi/core";
 import { adminServices } from "./firebase";
 import { businessId } from "./staff";
 import { AccessError } from "./staff";
@@ -30,6 +30,7 @@ export async function storeOrderCatalog() {
     }
     const refunds = readOrderRefundState(data.refundState);
     return { id: doc.id, input: storeOrderInputSchema.parse(data.input),
+      disputeCount: readDisputeState(data.disputeState).rows.length, disputeHold: orderHasDisputeHold(data.disputeState),
       refundedMinor: refunds.refundedMinor, refundPending: !!refunds.activeId || refunds.pendingMinor > 0,
       shipmentIssueStatus: typeof data.shipmentIssueStatus === "string" ? data.shipmentIssueStatus : null,
       shipmentIssueKind: typeof data.shipmentIssueKind === "string" ? data.shipmentIssueKind : null,

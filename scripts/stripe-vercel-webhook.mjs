@@ -12,7 +12,7 @@ const root = fileURLToPath(new URL("../", import.meta.url));
 const envPath = path.join(root, "web-app/.env.vercel");
 const Stripe = createRequire(path.join(root, "web-app/package.json"))("stripe");
 const origin = "https://sadboi-platform-web-app.vercel.app";
-const events = ["checkout.session.completed", "checkout.session.async_payment_succeeded", "checkout.session.async_payment_failed", "checkout.session.expired", "refund.created", "refund.updated", "refund.failed"];
+const events = ["checkout.session.completed", "checkout.session.async_payment_succeeded", "checkout.session.async_payment_failed", "checkout.session.expired", "refund.created", "refund.updated", "refund.failed", "charge.dispute.created", "charge.dispute.updated", "charge.dispute.closed", "charge.dispute.funds_reinstated", "charge.dispute.funds_withdrawn"];
 try {
   const config = parseEnv(readFileSync(envPath, "utf8"));
   if (!config.STRIPE_SECRET_KEY?.startsWith("sk_test_") || !/^acct_[a-zA-Z0-9]+$/.test(config.STRIPE_ACCOUNT_ID ?? ""))

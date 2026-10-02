@@ -12,7 +12,7 @@ Contacts at [Contacts](http://127.0.0.1:3100/admin/contacts) provide the shared 
 
 ## Connected behavior and limits
 
-Contacts are an internal relationship directory. Notes and follow-ups do not send messages, create invoices, alter supplier purchase orders, change artwork rights, or create commission records. Those workflows will link to contacts as they are built. Supplier order details remain in Purchasing, while a supplier relationship can also be represented here.
+Contacts are an internal relationship directory. Notes and follow-ups do not send messages, create invoices, alter supplier purchase orders, change artwork rights, or create commission records. Staff can now select an active contact when creating an inquiry in Projects; see [commission inquiries and projects](42-commission-inquiries-and-projects.md). Commission records preserve contact snapshots at intake or reassignment, so later directory edits do not rewrite their history. Supplier order details remain in Purchasing, while a supplier relationship can also be represented here.
 
 The directory supports 1,000 contacts and organizations, including archived records, until pagination is added. Each record supports up to 20 relationship entries in the domain schema; the current UI presents three practical relationship rows. Email, dates, names, labels, notes, and websites have bounded validation. An organization must be active before a new person can link to it.
 

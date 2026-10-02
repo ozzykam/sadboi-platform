@@ -11,6 +11,7 @@ const topics = [
   ["editing", "Edit or archive"],
   ["workspace", "Manage staff access"],
   ["contacts", "Manage contacts"],
+  ["commissions", "Manage commission inquiries and projects"],
   ["stock", "Set up & count stock"],
   ["purchasing", "Order from a supplier"],
   ["quotes", "Compare printer quotes"],
@@ -28,6 +29,7 @@ const topics = [
   ["shipping-rates", "Set shipping rates and review totals"],
   ["returns-refunds", "Receive returns and issue test refunds"],
   ["shipment-cases", "Resolve damaged or lost shipments"],
+  ["payment-disputes", "Review payment disputes"],
   ["production", "Track supplier production"],
   ["deliveries", "Inspect & receive deliveries"],
   ["examples", "Everyday examples"],
@@ -56,6 +58,36 @@ export default async function Page() {
         ))}
       </nav>
       <div className="howto-content">
+        <section className="howto-section" id="commissions" aria-labelledby="commissions-title">
+          <h2 id="commissions-title">Manage commission inquiries and projects</h2>
+          <p>Use Projects to record a client brief, decide whether the studio wants to take it on, and track internal work. Super admins manage records; accounting reads saved details and history. These private records are not a client portal.</p>
+          <ol>
+            <li>Add the person or organization in <Link href="/admin/contacts">Contacts</Link> first. In <Link href="/admin/projects">Projects</Link>, choose <strong>Add inquiry</strong> and select an active contact. Enter Title, Brief and Deliverables. Planning budget is optional USD; blank means unknown, while zero means a known zero budget. Desired deadline and Next follow-up are optional.</li>
+            <li>Record Qualification notes and Private notes. Choose Inquiry stage: New, Reviewing, Estimating, Accepted or Declined. Add an Update note explaining the decision, then choose <strong>Save inquiry</strong>. Acceptance is the studio’s internal decision, not a signed agreement or proof of a deposit.</li>
+            <li>Open a saved, active Accepted inquiry. Enter a Conversion note and choose <strong>Create project from inquiry</strong>. Save any inquiry edits first: conversion uses the saved brief. The linked contact must still be active. One inquiry creates one project; the accepted inquiry becomes read-only and remains linked to the project.</li>
+            <li>Use <strong>Add milestone</strong> and <strong>Add task</strong> to plan work. Give each a title, optional due date and notes; optionally link a task to a milestone. Set task and milestone progress, add an Update note and choose <strong>Save project</strong>. All changes in that save become one history version.</li>
+            <li>Set Project status to Active or On hold as work progresses. Finish or cancel open tasks before completing their milestone. Complete or skip milestones and finish or cancel tasks before marking the whole project Completed. Cancelled stops internal tracking without changing payments or orders.</li>
+          </ol>
+          <p><strong>Example:</strong> record a fictional album-cover inquiry with a $600 planning budget and one final cover image as the deliverable. Accept it, create its project, add a Sketch review milestone and a Prepare sketches task linked to it. Mark the task Done and the milestone Completed after internal review. No client approval, invoice, deposit or delivery is implied by these steps.</p>
+          <p><strong>Changes and history:</strong> Progress and change history shows the latest 20 saved versions, including notes and previous plans; older versions stay stored. Correct an inquiry before conversion or edit its linked project afterward. Project edits retain the original Accepted inquiry snapshot. Contact names/emails are preserved at intake or reassignment and do not follow directory edits automatically. Saved tasks cannot be removed; cancel them. Skip unwanted milestones. To change completed/cancelled work, explicitly reopen it as Active, Planned or On hold and explain why.</p>
+          <p><strong>Archive and recovery:</strong> Visibility → Archived hides an unconverted inquiry or project from the active list without deleting history, cancelling work or sending anything. Use Show → Archived to find it and restore Visibility → Active list. Restore an archived project before editing it. Reload saved record and Back to list discard unsaved edits. A stale revision requires reloading. After an uncertain result, keep the tab open and choose <strong>Retry same commission save</strong>. After reopening the same browser tab, choose <strong>Recover interrupted save</strong> first; recovery depends on browser storage. If storage is unavailable, check saved records before submitting a new inquiry or conversion.</p>
+          <p><strong>Connections and limits:</strong> no stock reservations, artwork publication, contracts, invoices, payments, email or client approval changes occur. Staff record inquiries received elsewhere; public inquiry intake is later work. Dates do not send reminders. This slice supports 500 inquiries and 500 projects, 40 tasks and 20 milestones per project, and 200 saved versions per record. Time tracking, proposals, revision allowances, client proof review and protected final delivery remain separate work.</p>
+        </section>
+        <section className="howto-section" id="payment-disputes" aria-labelledby="payment-disputes-title">
+          <h2 id="payment-disputes-title">Review payment disputes</h2>
+          <p>A payment dispute happens when a customer challenges a card charge with their bank. It is separate from a refund or shipment case. This workflow tracks the original confirmed Stripe test payment. Super admins check Stripe and save private notes; accounting can read the history.</p>
+          <ol>
+            <li>Open <Link href="/admin/orders">Orders</Link>, select the order and choose <strong>Load payment disputes</strong>. Choose <strong>Refresh Stripe disputes</strong> to retrieve current records. An unchecked or empty saved history does not prove there is no dispute in Stripe.</li>
+            <li>Review the disputed amount, reason, status, response deadline and last check time. Stripe supplies these values. A passed deadline requires checking the available options in Stripe immediately.</li>
+            <li>Choose <strong>Update private notes</strong>. Set the <strong>Response plan</strong>, record <strong>Evidence references</strong> and explain the next action in <strong>Dispute update notes</strong>. Choose <strong>Save private dispute notes</strong>. References can identify receipts, tracking, policies and customer messages in existing secure storage; they do not upload files or send a response.</li>
+            <li>Open the Stripe Dashboard, select the displayed account and test mode, and find the displayed dispute ID. Submit evidence or accept the dispute there. A saved plan to accept or challenge is only an internal note. Stripe evidence saved as a draft is not necessarily submitted; check its submission status.</li>
+            <li>Refresh Stripe disputes after responding and when an outcome arrives. Stripe determines Won, Lost, inquiry closure or prevention; staff notes cannot change the provider outcome. Status changes and previous notes remain in their histories.</li>
+          </ol>
+          <p><strong>Example:</strong> a fictional $35 test order is disputed as product not received. Record a delivery-receipt reference and plan to challenge. Submit the actual evidence in Stripe before its deadline. The app shows Under review after synchronization and later the outcome. It does not create a refund, payment, journal entry or stock movement for the dispute.</p>
+          <p><strong>Connections:</strong> known open or lost disputes pause unshipped fulfillment, new replacement preparation/dispatch and new app refunds. Cancelling an unshipped order or prepared replacement still releases its existing allocation. Already-dispatched goods can still be marked delivered or have tracking corrected. Won, closed inquiries and prevented disputes remove the dispute hold after synchronization, while other payment/refund restrictions still apply. A loss does not automatically cancel or restock an order. Review chargeback funds in Stripe before considering a separate refund.</p>
+          <p><strong>Recovery:</strong> Reload dispute history replaces unsaved edits. Stale notes require reloading. After an uncertain save, keep the page open and use <strong>Retry same dispute note</strong>; session storage preserves the request where available. Provider outages retain saved history and holds. Refresh again after a concurrent update. The screen shows the latest 30 status changes and 30 notes; older history is retained. Notes have a 200-update limit.</p>
+          <p><strong>Limits:</strong> up to 20 disputes for an order’s original payment. Disputes on unmapped, additional or unaccepted late payments need separate Stripe/payment-history review. New disputes arrive through configured Stripe webhooks or manual refresh; the scheduler rechecks already-known open disputes. Deadlines do not send reminders. Evidence uploads, bank submission/acceptance inside this app, fees and balance accounting, customer notifications and live-mode support are later work. Staff notes and dispute details are never added to the customer’s private order page.</p>
+        </section>
         <section className="howto-section" id="shipment-cases" aria-labelledby="shipment-cases-title">
           <h2 id="shipment-cases-title">Resolve damaged or lost shipments</h2>
           <p>Use a shipment case when a customer reports damage or loss after dispatch. Super admins manage cases and replacements; accounting reads their history. The original order must be a dispatched shipping order, with trustworthy fulfillment and stock records. Pickup and unshipped orders use returns or cancellation instead.</p>

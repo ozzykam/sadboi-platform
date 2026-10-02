@@ -4,7 +4,7 @@ import { assertStock, fulfillmentRequestSchema, fulfillmentInputSchema, fulfillm
 import { adminServices } from "./firebase";
 import { AccessError, businessId, type Staff } from "./staff";
 import { inventoryBalanceRef, readInventoryBalance, inventoryTotal } from "./inventory";
-import { fulfillmentEmailKind, readOrderRefundState } from "@sadboi/core";
+import { fulfillmentEmailKind, readOrderRefundState, orderHasDisputeHold } from "@sadboi/core";
 import { queueOrderEmail } from "./order-email-queue";
 const collection = (name: string) => adminServices().db.collection("businesses/" + businessId + "/" + name);
 const hash = (value: string) => createHash("sha256").update(value).digest("hex");
@@ -43,6 +43,8 @@ export async function saveFulfillment(raw: unknown, staff: Staff) {
     const data = order.data()!, previous = readFulfillment(existing.data(), input.orderId);
     if ((previous?.revision ?? 0) !== expectedRevision) fail("Someone changed this fulfillment. Reload the order before saving.", "fulfillment-revision");
     if (data.status !== "paid") fail("Fulfillment requires a paid order. Completed and cancelled orders cannot be reopened.");
+    if ((!previous || ["unfulfilled", "packed"].includes(previous.input.status)) && input.status !== "cancelled" && orderHasDisputeHold(data.disputeState))
+      fail("This order has an open or lost payment dispute. Review Payment disputes before dispatch; cancellation remains available.");
     const refunds = readOrderRefundState(data.refundState);
     if ((!previous || ["unfulfilled", "packed"].includes(previous.input.status)) && input.status !== "cancelled" &&
         (refunds.activeId || refunds.refundedMinor || refunds.pendingMinor)) fail("This order has refund activity. Cancel its unshipped fulfillment instead of dispatching it.");

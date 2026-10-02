@@ -1,6 +1,6 @@
 import "server-only";
 import { createHash } from "node:crypto";
-import { assertStock, replacementRequestSchema, replacementStatusSchema, replacementEffect, shipmentCaseInputSchema,
+import { assertStock, replacementRequestSchema, replacementStatusSchema, replacementEffect, shipmentCaseInputSchema, orderHasDisputeHold,
   stockLocationInputSchema, inventoryId, readOrderRefundState, replacementDestinationSchema, type ReplacementStatus } from "@sadboi/core";
 import { adminServices } from "./firebase";
 import { AccessError, businessId, type Staff } from "./staff";
@@ -62,6 +62,8 @@ export async function saveReplacement(raw: unknown, staff: Staff) {
     }
     if ((effect === "allocate" || effect === "consume") && (data.paymentReviewRequired || readOrderRefundState(data.refundState).activeId || readOrderRefundState(data.refundState).pendingMinor))
       fail("Resolve payment review and pending refunds before preparing or shipping a replacement.");
+    if ((effect === "allocate" || effect === "consume") && orderHasDisputeHold(data.disputeState))
+      fail("Resolve the open or lost payment dispute before preparing or shipping a replacement. Cancellation remains available.");
     const stockLines = effect === "none" ? [] : lines.filter(line => line.fulfillment === "stocked");
     const locationIds = [...new Set(stockLines.map(line => line.locationId!))];
     const [balances, locations] = await Promise.all([Promise.all(stockLines.map(line => tx.get(inventoryBalanceRef(line.variantId, line.locationId!)))), Promise.all(locationIds.map(locationId => tx.get(collection("stockLocations").doc(locationId))))]);
