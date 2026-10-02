@@ -12,6 +12,7 @@ import {
   type PurchaseLine,
   type QuoteCatalog,
 } from "@sadboi/core";
+import { Lightbulb } from "lucide-react";
 import { inventoryRequest } from "@/lib/inventory-client";
 import { Badge, Button, PageHeading } from "./ui";
 import {
@@ -774,17 +775,14 @@ export function Purchasing({
         </p>
       )}
       <p className="howto-context">
-        Need a walkthrough?{" "}
-        <Link className="inline-link" href="/admin/how-to#quotes">
-          Compare printer quotes
-        </Link>{" "}
-        Â·{" "}
-        <Link className="inline-link" href="/admin/how-to#purchasing">
-          Create a supplier order
-        </Link>{" "}
-        Â·{" "}
-        <Link className="inline-link" href="/admin/how-to#deliveries">
-          Receive deliveries &amp; update stock
+        <Link className="inline-link howto-link" href="/admin/how-to#quotes">
+          <Lightbulb size={14} /> Compare printer quotes
+        </Link><br/>
+        <Link className="inline-link howto-link" href="/admin/how-to#purchasing">
+          <Lightbulb size={14} /> Create a supplier order
+        </Link><br/>
+        <Link className="inline-link howto-link" href="/admin/how-to#deliveries">
+          <Lightbulb size={14} /> Receive deliveries &amp; update stock
         </Link>
       </p>
       {error && (

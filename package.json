@@ -43,6 +43,7 @@
     "test:purchasing": "firebase emulators:exec --only auth,firestore,storage --project demo-sadboi-platform \"node scripts/auth-integration.mjs --artworks --inventory --purchasing\""
   },
   "devDependencies": {
-    "firebase-tools": "15.30.1"
+    "firebase-tools": "15.30.1",
+    "prettier": "^3.9.9"
   }
 }

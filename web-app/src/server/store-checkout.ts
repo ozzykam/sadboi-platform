@@ -52,7 +52,11 @@ export async function createStoreOrder(raw: unknown) {
         expiresAt?: string;
       };
     }
-    if (!quoteId) fail("Review the current checkout total before requesting an order.", 400);
+    if (!quoteId)
+      fail(
+        "Review the current checkout total before requesting an order.",
+        400,
+      );
     const [counter, locations, quote] = await Promise.all([
       tx.get(counterRef),
       tx.get(
@@ -65,7 +69,10 @@ export async function createStoreOrder(raw: unknown) {
     ]);
     if (locations.size > 100)
       fail("Online stock needs review before this order can be placed.", 503);
-    if (quote.id !== quoteId) fail("Prices, shipping rates or order details changed. Review the updated total before requesting the order.");
+    if (quote.id !== quoteId)
+      fail(
+        "Prices, shipping rates or order details changed. Review the updated total before requesting the order.",
+      );
 
     // Firestore requires every read to finish before the first write, including
     // balances for later cart lines. Missing balances never create stock.
@@ -122,8 +129,17 @@ export async function createStoreOrder(raw: unknown) {
       fail("Order numbering needs review.", 503);
     const orderNumber = `SO-${String(count + 1).padStart(6, "0")}`;
     const managementToken = randomBytes(32).toString("hex");
-    const expiresAt = new Date(Date.now() + orderHoldMinutes * 60_000).toISOString();
-    const result = { id: orderRef.id, orderNumber, totalMinor, managementToken, expiresAt, pricing: quote.totals };
+    const expiresAt = new Date(
+      Date.now() + orderHoldMinutes * 60_000,
+    ).toISOString();
+    const result = {
+      id: orderRef.id,
+      orderNumber,
+      totalMinor,
+      managementToken,
+      expiresAt,
+      pricing: quote.totals,
+    };
     const orderData = {
       input,
       lines: snapshots,
@@ -131,8 +147,12 @@ export async function createStoreOrder(raw: unknown) {
       pricing: quote.totals,
       orderNumber,
       status: "pending_payment",
-      expiresAt, managementTokenHash: hash(managementToken), allocationState: "held", lifecycleRevision: 0,
-      businessId, emailAccessOperationId: operationRef.id,
+      expiresAt,
+      managementTokenHash: hash(managementToken),
+      allocationState: "held",
+      lifecycleRevision: 0,
+      businessId,
+      emailAccessOperationId: operationRef.id,
       createdAt: now,
       updatedAt: now,
     };

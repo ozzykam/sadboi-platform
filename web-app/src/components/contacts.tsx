@@ -1,8 +1,9 @@
 "use client";
 import { useRef, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { contactActivityKinds, type ContactActivity, contactRelationshipKinds, type ContactRecord, type ContactsDirectory } from "@sadboi/core";
-import { Eye, Plus, Trash2 } from "lucide-react";
+import { Eye, Plus, Trash2, Lightbulb } from "lucide-react";
 import { inventoryRequest } from "@/lib/inventory-client";
 import { Badge, Button, PageHeading } from "./ui";
 import { Input, InventoryForm, Select, Status, Textarea, value } from "./inventory-form";
@@ -361,10 +362,11 @@ export function Contacts({
   initial: ContactsDirectory;
   canEdit: boolean;
 }) {
+  const searchParams = useSearchParams();
   const [directory, setDirectory] = useState(initial),
     [kind, setKind] = useState<"all" | "person" | "organization">("all"),
     [query, setQuery] = useState(""),
-    [editing, setEditing] = useState<string | null>(null),
+    [editing, setEditing] = useState<string | null>(() => searchParams.get("edit")),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
     [detail, setDetail] = useState<ContactDetail | null>(null),
@@ -470,8 +472,7 @@ export function Contacts({
     <>
       <PageHeading
         eyebrow="CONTACTS / RELATIONSHIPS"
-        title="Keep the people around the work close."
-        description="People, organizations, roles, notes, and the next conversation."
+        title="Homies, collaborators, supporters, & partners"
         action={
           <Button variant="secondary" disabled={busy} onClick={refresh}>
             {busy ? "Refreshing..." : "Refresh contacts"}
@@ -485,9 +486,8 @@ export function Contacts({
         </p>
       )}
       <p className="howto-context">
-        Need a walkthrough?{" "}
-        <Link className="inline-link" href="/admin/how-to#contacts">
-          Learn how to use contacts
+        <Link className="inline-link howto-link" href="/admin/how-to#contacts">
+          <Lightbulb size={14} /> How to use contacts
         </Link>
       </p>
       {error && (
@@ -559,7 +559,7 @@ export function Contacts({
                     <th scope="col">Last activity</th>
                     <th scope="col">Next follow-up</th>
                     <th scope="col">Status</th>
-                    {canEdit && <th scope="col"><span className="sr-only">Actions</span></th>}
+                    <th scope="col"><span className="sr-only">Actions</span></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -651,13 +651,14 @@ export function Contacts({
                             {record.status}
                           </Badge>
                         </td>
-                        {canEdit && (
-                          <td>
+                        <td>
+                            <Link className="button ghost" href={`/admin/contacts/${record.id}`}>View</Link>
+                            {canEdit && (
                             <Button variant="ghost" onClick={() => setEditing(record.id)}>
                               Edit
                             </Button>
-                          </td>
-                        )}
+                            )}
+                        </td>
                       </tr>
                     );
                   })}

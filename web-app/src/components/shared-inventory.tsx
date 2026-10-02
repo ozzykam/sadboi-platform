@@ -1,6 +1,7 @@
 ﻿"use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import {Lightbulb } from "lucide-react";
 import {
   parseUsd,
   type InventoryCatalog,
@@ -570,7 +571,7 @@ export function SharedInventory({
     <>
       <PageHeading
         eyebrow="INVENTORY / STUDIO OPERATIONS"
-        title="From artwork to object."
+        title="Art, Merch, & More"
         description="Products, physical stock, and every movement between the studio, galleries, and events."
         action={
           <Button variant="secondary" onClick={refresh} disabled={busy}>
@@ -585,13 +586,11 @@ export function SharedInventory({
         </p>
       )}
       <p className="howto-context">
-        Need a walkthrough?{" "}
-        <Link className="inline-link" href="/admin/how-to#products">
-          Create or edit products &amp; variants
-        </Link>{" "}
-        Â·{" "}
-        <Link className="inline-link" href="/admin/how-to#stock">
-          Set up or count stock
+        <Link className="inline-link howto-link" href="/admin/how-to#products">
+          <Lightbulb size={14} /> Create or edit products &amp; variants
+        </Link><br/>
+        <Link className="inline-link howto-link" href="/admin/how-to#stock">
+          <Lightbulb size={14} /> Set up or count stock
         </Link>
       </p>
       {error && (

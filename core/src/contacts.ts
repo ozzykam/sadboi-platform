@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 const text = (max: number) => z.string().trim().max(max);
-export const contactRelationshipKinds = ["client", "collector", "gallery", "licensee", "printer", "supplier", "collaborator", "patron", "other"] as const;
+export const contactRelationshipKinds = ["Client", "Collector", "Gallery", "Licensee", "Printer", "Supplier", "Collaborator", "Patron", "Other"] as const;
 export const contactActivityKinds = ["email", "call", "meeting", "message", "note", "other"] as const;
 export const contactActivitySchema = z.object({
   id: z.string().trim().min(1).max(80),
