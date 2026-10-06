@@ -118,6 +118,7 @@ export function Proposal({ initial, canEdit }: { initial: Detail; canEdit: boole
         <p>{record.state === "draft" ? "Save all changes first. Issuing uses the saved draft below, requires resolved tax and a current validity date, and freezes its contents." : "Creating a revised draft supersedes the issued offer. Share the replacement with the client yourself. Accepted proposals are final in this workflow."}</p>
       </fieldset>}
       {record?.state === "accepted" && <p className="notice">Accepted proposals are read-only. Agreements, deposits and later change orders are separate workflows.</p>}
+      {record?.state === "accepted" && <p><Link className="inline-link" href={`/admin/projects/agreement?proposalId=${detail.seriesId}`}>Open agreement</Link></p>}
       {(record?.revision ?? 0) >= 100 && <p className="notice">The 100-change limit has been reached. History remains available; ask the administrator to review before further work.</p>}
       <section aria-label="Proposal history"><h2>Proposal history</h2>
         {!record && <p>Save the first draft to review the calculated totals and document.</p>}

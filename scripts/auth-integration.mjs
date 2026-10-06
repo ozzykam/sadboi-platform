@@ -119,6 +119,7 @@ try {
  if(process.argv.includes("--contacts")) { const {contactsChecks}=await import("./contacts-integration.mjs"); await contactsChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin}); }
  if(process.argv.includes("--commissions")) { const {commissionChecks}=await import("./commission-integration.mjs"); await commissionChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin}); }
  if(process.argv.includes("--proposals")) { const {proposalChecks}=await import("./proposal-integration.mjs"); await proposalChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin}); }
+ if(process.argv.includes("--agreements")) { const {agreementChecks}=await import("./agreement-integration.mjs"); await agreementChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin}); }
  if(process.argv.includes("--public-inquiries")) { const {publicInquiryChecks}=await import("./public-inquiry-integration.mjs"); await publicInquiryChecks({request,ownerCookie,legalCookie,identity,signIn,session,db,check,origin}); }
  if(process.argv.includes("--artworks")) { const {artworkChecks}=await import("./artwork-integration.mjs"); await artworkChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin}); }
  if(process.argv.includes("--inventory")) { const {inventoryChecks}=await import("./inventory-integration.mjs"); await inventoryChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin}); }

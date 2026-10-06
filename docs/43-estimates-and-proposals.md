@@ -29,4 +29,4 @@ Chrome verified keyboard draft submission, the $600 subtotal less $50 discount =
 
 Final `pnpm check` passed: typecheck, lint, **105 domain tests**, seven credential tests, two runtime tests and the production build. An initial lint error from JSX inside page-level try/catch was corrected by keeping only the data load in the catch boundary. `git diff --check` passed. No live records, provider settings, emails, deployment or git push were changed.
 
-Next: agreements linked to the accepted proposal, then deposits/invoices and client proof/delivery workflows. User-deferred dispute testing, email/domain setup and live carrier quotes remain deferred.
+Agreements linked to accepted proposals now have a [private signing workflow](45-agreements-and-signing.md). Next: deposits/invoices and client proof/delivery workflows. User-deferred dispute testing, email/domain setup and live carrier quotes remain deferred.

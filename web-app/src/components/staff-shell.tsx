@@ -31,6 +31,7 @@ export function StaffShell({
           <Link href="/admin/purchasing">Purchasing</Link>
         )}
         <Link href="/admin/contacts">Contacts</Link>
+        <Link href="/admin/agreements">Agreements</Link>
         {staff.role !== "legal" && <Link href="/admin/inquiries">Inquiries</Link>}
         {staff.role !== "legal" && <Link href="/admin/projects">Projects</Link>}
         {staff.role !== "legal" && <Link href="/admin/orders">Orders</Link>}

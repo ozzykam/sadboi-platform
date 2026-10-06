@@ -1,5 +1,7 @@
 # Build checklist
 
+October 5 agreement continuation: accepted-proposal agreements now include frozen terms and proposal snapshots, revocable seven-day private signing links, explicit client consent, immutable signature history and retry recovery. This is a single-signatory slice; countersigning, amendments, attachments and legal templates remain open. See [agreements and signing](45-agreements-and-signing.md) for validation and limits.
+
 Origin labels: **B** = freelancing business project; **E** = ecommerce template; **N** = new work. A combined label means adapted source functionality plus new behavior. Concrete source paths and limitations are in [the reuse map](02-source-audit.md).
 
 Firebase project initialization and 10 passing baseline rules checks are recorded in [Firebase setup](08-firebase-setup.md). Staff authentication is recorded in [staff sign-in](09-staff-sign-in.md). Shared artwork and private uploads are recorded in [shared artwork status](10-shared-artwork.md), with 59 integration checks. Products and the first stock workflow are recorded in [inventory status](11-inventory.md). Authorization for remaining business modules, general seed fixtures, and browser tests remain outstanding.

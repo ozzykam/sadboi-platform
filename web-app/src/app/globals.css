@@ -2038,19 +2038,52 @@ td small {
   margin-bottom: 18px;
 }
 .contacts-table-wrap {
+  overflow-x: auto;
   margin-top: 4px;
+  border: 1px solid var(--line);
+  background: var(--panel);
 }
 .contacts-table {
   min-width: 980px;
 }
 .contacts-table th,
 .contacts-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
   vertical-align: top;
+}
+.contacts-table thead th {
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+.contacts-table tbody tr {
+  cursor: default;
+  transition: background 0.15s ease;
+}
+.contacts-table tbody tr:hover {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+.contacts-table tbody tr:last-child th,
+.contacts-table tbody tr:last-child td {
+  border-bottom: 0;
 }
 .contacts-table td small {
   display: block;
+  color: var(--muted);
+  font-weight: 400;
   margin-top: 4px;
+  overflow-wrap: anywhere;
 }
+.contacts-table td:last-child {
+  white-space: nowrap;
+}
+.contacts-table td:last-child .button + .button {
+  margin-left: 6px;
+}
+
 .contact-detail-layout {
   display: grid;
   grid-template-columns: minmax(260px, 0.8fr) minmax(0, 1.6fr);
@@ -4739,6 +4772,14 @@ td small {
 .contact-consent { display: flex; gap: 10px; align-items: flex-start; line-height: 1.45; font-size: 14px; }
 .contact-consent input { margin-top: 4px; }
 .contact-honeypot { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+.agreement-signing { max-width: 900px; margin: 40px auto; padding: 0 20px; }
+.agreement-signing h1 { font-size: clamp(28px, 5vw, 42px); line-height: 1.15; }
+.agreements { overflow-wrap: anywhere; }
+.agreement-controls { display: grid; gap: 20px; margin-bottom: 28px; }
+.agreement-document h4 { margin: 20px 0 8px; }
+.agreement-document { line-height: 1.6; }
+.agreement-document p { margin-bottom: 12px; }
+.agreement-document h3, .agreement-document h4 { font-weight: 600; }
 .public-inquiry-card { overflow-wrap: anywhere; }
 .inbox-toolbar { display: flex; align-items: end; gap: 20px; flex-wrap: wrap; margin: 24px 0; }
 .inbox-toolbar .field { min-width: 220px; }
@@ -4783,6 +4824,17 @@ td small {
 @media (max-width: 600px) { .inbox-toolbar { align-items: stretch; flex-direction: column; gap: 10px; } .inbox-toolbar .field { min-width: 0; } .inbox-count { padding: 0; } .inquiry-dialog { padding: 26px 20px; } }
 @media (max-width: 700px) { .activity-editor-heading { align-items: stretch; flex-direction: column; } .activity-row { grid-template-columns: 1fr; } .activity-row-fields { grid-template-columns: 1fr; } .activity-row-fields .field:nth-child(3), .activity-row-fields .activity-completed { grid-column: auto; } .activity-row > .relationship-remove { justify-self: end; } }
 @media print {
+  body:has(.agreements) { background: white !important; color: black !important; }
+  body:has(.agreements) .staff-shell,
+  body:has(.agreements) .staff-content,
+  body:has(.agreements) .agreement-signing { display: block; margin: 0; padding: 0; max-width: none; min-height: 0; }
+  body:has(.agreements) .staff-header,
+  body:has(.agreements) .staff-nav,
+  body:has(.agreements) .staff-footer,
+  body:has(.agreements) .site-header,
+  body:has(.agreements) .skip-link,
+  .agreements .agreement-controls { display: none !important; }
+  .agreements .agreement-document { color: black; background: white; border: 0; padding: 0; }
   body:has(.proposals) { background: white !important; color: black !important; }
   body:has(.proposals) .staff-header, body:has(.proposals) .staff-nav, body:has(.proposals) .staff-footer, body:has(.proposals) .skip-link, .proposals .proposal-controls { display: none !important; }
   body:has(.proposals) .staff-shell, body:has(.proposals) .staff-content { display: block; margin: 0; padding: 0; max-width: none; min-height: 0; }

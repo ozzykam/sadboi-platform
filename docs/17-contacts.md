@@ -20,6 +20,8 @@ Each contact can also carry up to 100 private activity entries. An entry records
 
 ## Consistency and history
 
+Relationship types use lowercase values such as `client` and `gallery`. The shared schema accepts known capitalized variants from saved records and returns lowercase values on reads and writes. Unknown types still fail validation; duplicate relationships are checked after normalization. Reading a contact does not rewrite its stored data; the next normal save persists the lowercase format.
+
 Contact writes require the current super-admin membership, exact origin/CSRF proof, strict schemas, and a current revision. Concurrent edits return a conflict instead of silently replacing a newer record. Actor-scoped operation IDs make retries idempotent. Contact records, operation records, and audit events are server-owned under `businesses/sadboi`; no new client Firestore permissions or composite indexes are required.
 
 If a save is uncertain, keep the form open and retry the same entry. After reloading, refresh the directory before repeating it. If the record changed, review the latest values and edit again. Archiving is reversible by editing the record back to Active; it does not delete history.

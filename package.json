@@ -25,6 +25,7 @@
     "test:contacts": "firebase emulators:exec --only auth,firestore --project demo-sadboi-platform \"node scripts/auth-integration.mjs --contacts\"",
     "test:commissions": "firebase emulators:exec --only auth,firestore --project demo-sadboi-platform \"node scripts/auth-integration.mjs --contacts --commissions\"",
     "test:proposals": "firebase emulators:exec --only auth,firestore --project demo-sadboi-platform \"node scripts/auth-integration.mjs --contacts --commissions --proposals\"",
+    "test:agreements": "firebase emulators:exec --only auth,firestore --project demo-sadboi-platform \"node scripts/auth-integration.mjs --agreements\"",
     "test:public-inquiries": "firebase emulators:exec --only auth,firestore --project demo-sadboi-platform \"node scripts/auth-integration.mjs --public-inquiries\"",
     "test:store-orders": "firebase emulators:exec --only auth,firestore --project demo-sadboi-platform \"node scripts/auth-integration.mjs --store-orders\"",
     "test:fulfillment": "firebase emulators:exec --only auth,firestore --project demo-sadboi-platform \"node scripts/auth-integration.mjs --store-orders --fulfillment\"",

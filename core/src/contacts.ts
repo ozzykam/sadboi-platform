@@ -1,7 +1,14 @@
 import { z } from "zod";
 
 const text = (max: number) => z.string().trim().max(max);
-export const contactRelationshipKinds = ["Client", "Collector", "Gallery", "Licensee", "Printer", "Supplier", "Collaborator", "Patron", "Other"] as const;
+export const contactRelationshipKinds = ["client", "collector", "gallery", "licensee", "printer", "supplier", "collaborator", "patron", "other"] as const;
+// Preserve the original lowercase format while accepting capitalized saved records.
+const relationshipKind = z.preprocess(
+  (value) => typeof value === "string"
+    ? contactRelationshipKinds.find((kind) => kind.toLowerCase() === value.toLowerCase()) ?? value
+    : value,
+  z.enum(contactRelationshipKinds),
+);
 export const contactActivityKinds = ["email", "call", "meeting", "message", "note", "other"] as const;
 export const contactActivitySchema = z.object({
   id: z.string().trim().min(1).max(80),
@@ -16,7 +23,7 @@ export const contactInputSchema = z.object({
   kind: z.enum(["person", "organization"]), name: text(200).min(1),
   email: z.union([z.literal(""), z.email().max(254)]), phone: text(80), website: text(500),
   organizationId: z.union([z.literal(""), z.string().regex(/^[a-f0-9]{64}$/)]),
-  relationships: z.array(z.object({ kind: z.enum(contactRelationshipKinds), label: text(120) }).strict()).max(20),
+  relationships: z.array(z.object({ kind: relationshipKind, label: text(120) }).strict()).max(20),
   activities: z.array(contactActivitySchema).max(100).default([]),
   notes: text(3000), nextFollowUp: z.union([z.literal(""), z.iso.date()]), followUpNote: text(1000), status: z.enum(["active", "archived"]),
 }).strict().superRefine((value, ctx) => {

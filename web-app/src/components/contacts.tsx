@@ -546,8 +546,8 @@ export function Contacts({
               </p>
             </div>
           )}
-          <div className="table-scroll contacts-table-wrap">
-              <table className="contacts-table">
+          <div className="table-scroll inbox-table-wrap contacts-table-wrap">
+              <table className="inbox-table contacts-table">
                 <caption className="sr-only">Contacts directory</caption>
                 <thead>
                   <tr>

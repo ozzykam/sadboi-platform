@@ -1,5 +1,9 @@
 # Build resumption — September 23, 2026
 
+## Latest continuation — October 5: agreements and client signing
+
+Agreements now support saved proposal/client snapshots and seven-day private signing links, with revocation, client consent, signature history and request recovery. See [agreements and signing](45-agreements-and-signing.md) for validation and limits. Next feature slice: commission deposits/invoices. Existing email/domain activation, dispute provider testing and carrier quotes remain deferred.
+
 ## Latest continuation — October 1: public contact and inquiry intake
 
 Added `/contact` with purpose guidance for commissions, shop/order help, wholesale/stockist, press/collaboration and general questions. Submissions go to the private **Inquiries** inbox for super-admin/accounting review; statuses and private notes are revision-protected. No automatic email, CRM contact, project, order, payment or agreement is created. See [scope and verification](44-public-contact-and-inquiries.md). The focused emulator suite passed 29 checks; `pnpm check` passed with the production build. Next follow-up is deploy when authorized, then stronger abuse controls if public volume requires them.

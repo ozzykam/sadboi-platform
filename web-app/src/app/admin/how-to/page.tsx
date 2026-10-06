@@ -2,10 +2,13 @@
 import Link from "next/link";
 import { PageHeading } from "@/components/ui";
 import { requireStaff } from "@/server/staff";
+import { AgreementHelp } from "@/components/agreement-help";
+import { ProposalFieldExamples } from "@/components/proposal-field-examples";
 
 export const metadata: Metadata = { title: "How-to | Sadboi Studio" };
 
 const topics = [
+  ["agreements", "Prepare and sign agreements"],
   ["gallery", "Publish artwork to the gallery"],
   ["products", "Create products & variants"],
   ["editing", "Edit or archive"],
@@ -60,6 +63,7 @@ export default async function Page() {
         ))}
       </nav>
       <div className="howto-content">
+        <AgreementHelp />
         <section className="howto-section" id="public-inquiries" aria-labelledby="public-inquiries-title">
           <h2 id="public-inquiries-title">Review public inquiries</h2>
           <p>Visitors use the public <Link href="/contact">Contact</Link> form to choose a purpose and send a message. Super admins and accounting can read the private inbox; only super admins change statuses.</p>
@@ -70,6 +74,7 @@ export default async function Page() {
         </section>
         <section className="howto-section" id="proposals" aria-labelledby="proposals-title">
           <h2 id="proposals-title">Prepare estimates and proposals</h2>
+          <ProposalFieldExamples />
           <p>Use a proposal to set the client-facing scope, price, timing and revision allowance before an agreement or deposit. Start with a saved inquiry or project and an active contact. Super admins prepare and record responses; accounting can read and print. Converted inquiries and their projects share one proposal series.</p>
           <ol>
             <li>In <Link href="/admin/projects">Projects</Link>, open the saved inquiry or project and choose <strong>Estimates and proposals</strong>. Review the copied title, scope and deliverables for the client; private notes are not copied. Enter Timing and dependencies, Included revisions and extra-work policy, and Valid through (UTC).</li>
