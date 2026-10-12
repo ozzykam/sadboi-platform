@@ -1,6 +1,26 @@
 # Build resumption — September 23, 2026
 
-## Latest continuation — October 5: agreements and client signing
+## Current priority — event planning and public appearances
+
+Event detail UX follow-up: saved events now open in an overview, with attendance/publication badges, dates/location, next to-do, task/fee/completion details and private planning information. Edit event, Edit to-dos and individual task Edit controls open the existing form. Update event returns to the saved overview; Cancel editing offers explicit discard/keep controls for unsaved changes. Publication, recovery and history are expandable. `pnpm check` passed; Chrome verified the existing event overview, task-focus/cancel behavior and 390px layout without page overflow or console errors.
+
+The user paused proof/review development and requested event opportunities, application deadlines/fees, staff to-do/calendar planning and a patron-facing appearance schedule. Confirmed events require a separate **Publish appearance** action (explicit user choice). Stripe commission collection remains deferred. See [event workflow](47-events-and-appearances.md) for the new scope and validation record.
+
+Implemented **Events** at `/admin/events` with private opportunities, application/attendance states, deadlines, USD fees and receipt references, completion history, archive/search/filter controls and a monthly calendar. `/appearances` is linked from the public header/homepage and provides schedule/calendar views of explicitly published confirmed appearances. Public-field changes, cancellation or archiving withdraw the listing; private-only updates preserve it. No reminders, applications or payments are sent automatically. Super admins manage; accounting reads.
+
+Final `pnpm check` passed with 126 domain tests, seven credential tests, two runtime tests, lint, typecheck and the production build. `git diff --check` passed.
+
+The focused emulator run passed 31 grouped checks. Chrome verified public schedule/calendar navigation, deadline completion and fees, explicit publication/withdrawal, undated opportunity creation and 390px layouts without page overflow or captured errors. Temporary browser and emulator resources were cleaned up. Deployment remains pending; no new environment variables, provider setup or composite indexes are required. Production records and external services were unchanged. Proof/review and Stripe invoice collection remain paused; obtain the user's next priority before resuming either.
+
+## Previous continuation — October 5: commission invoices and deposits
+
+User priority update: skip Stripe commission payment collection for now. Keep it deferred, with external receipts recorded through the existing invoice workflow. The next proposed build is client proof review and version-specific approval: private client access, shared proof versions, feedback/revision requests and explicit approval history. Follow with revision allowances/change orders and protected final delivery. The user asked what is next; implementation of this next slice has not yet been requested.
+
+Implemented the first commission billing slice after signed agreements: **Invoices** navigation, deposit/milestone/final-balance drafts, allocation caps against the signed total, atomic issue numbers, frozen client documents, external receipt records, partial/paid/overdue balances, corrections/void history and retry recovery. Super admins manage; accounting reads/prints. In-app examples: `/admin/how-to#commission-billing`. See [scope and validation](46-commission-invoices-and-deposits.md).
+
+`pnpm check` passed with 118 domain tests, credential/runtime checks, lint, typecheck and the production build. The focused emulator run passed 33 grouped integration checks. Chrome verified draft/issue/partial payment/reversal, unsaved-edit protection and 390px layout with no page overflow or captured errors. Temporary browser and emulator resources were cleaned up. Actual PDF output and deployed verification remain pending. No provider setup, environment variables or indexes are needed. No deployment, external email, real payment or production record changed. Next proposed slice: Stripe test collection for commission invoices, followed by client proof/delivery and payment gates. Keep existing live-email/domain, carrier quotes and dispute provider testing deferred.
+
+## Previous continuation — October 5: agreements and client signing
 
 Agreements now support saved proposal/client snapshots and seven-day private signing links, with revocation, client consent, signature history and request recovery. See [agreements and signing](45-agreements-and-signing.md) for validation and limits. Next feature slice: commission deposits/invoices. Existing email/domain activation, dispute provider testing and carrier quotes remain deferred.
 

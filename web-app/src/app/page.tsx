@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowUpRight, LogIn, ShoppingBag } from "lucide-react";
+import { BookImage, LogIn, ShoppingBag, CalendarDays } from "lucide-react";
 export const dynamic = "force-dynamic";
 export default function Home() {
   return (
@@ -21,10 +21,13 @@ export default function Home() {
           </p>
           <div className="entrance-actions">
             <Link href="/art" className="button primary">
-              Explore the art <ArrowUpRight size={18} />
+              View Gallery <BookImage size={18} aria-hidden="true" />
             </Link>
             <Link href="/shop" className="button secondary">
-              Go to shop <ShoppingBag size={18} aria-hidden="true" />
+              Shop Merch <ShoppingBag size={18} aria-hidden="true" />
+            </Link>
+            <Link href="/appearances" className="button secondary">
+              Public Events <CalendarDays size={18} aria-hidden="true" />
             </Link>
           </div>
         </div>

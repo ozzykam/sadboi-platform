@@ -151,6 +151,8 @@ September 23 continuation: persisted cart validation and retry-safe multi-line o
 
 ## 6. Events, galleries, and POS
 
+- [x] **N** Build private event opportunities, attendance/application states, dated preparation tasks, application/booth fees and receipt references, completion history, staff to-do/monthly calendar, and separately published confirmed public appearances. See [scope and validation](47-events-and-appearances.md).
+- [ ] **N** Deploy and verify the event planner and public appearance schedule. Automated reminders, external applications/payments, gallery contracts and CRM linkage remain separate work.
 - [ ] **N** Build event/gallery records, applications, booking states, calendar, contacts, contracts, and preparation tasks.
 - [ ] **N** Build packing lists, event stock transfers, consignment agreements, itemized gallery reports, returns, and discrepancies.
 - [ ] **E/N** Build mobile POS with SKU search/scan, cart, selected event/location, totals, discount permissions, and receipts.
@@ -178,6 +180,9 @@ September 23 continuation: persisted cart validation and retry-safe multi-line o
 - [ ] **B/N** Adapt project, task, time, prospect, and proposal screens for commission/internal art workflows.
 - [ ] **N** Build inquiry brief, qualification, deliverables, revision policy, estimates, milestones, budget, and optional deadlines.
 - [ ] **B/N** Connect proposal acceptance, required agreement, deposit, milestone invoices, and final balance.
+- [x] **N** Implement signed-agreement commission billing with deposit/milestone/final drafts, allocation caps, immutable issued numbers/documents, staff-recorded external receipts, partial/paid/overdue balances, corrections, voids and retry-safe history. Verified with 118 domain tests, full check/build, 33 grouped integration checks and Chrome desktop/390px checks. See [commission invoices and deposits](46-commission-invoices-and-deposits.md).
+- [ ] **N** **Deferred by user:** Stripe test collection and reconciliation for commission invoices and private client payment access. Continue with client proof review and approvals; external payments can still be recorded manually.
+- [ ] **N** Add commission credit/refund handling and financial posting; validate actual PDF output and deploy the staff billing slice.
 - [ ] **N** Build commission portal with client-safe status, messages, proof versions, annotations/comments, and explicit approvals.
 - [ ] **N** Track included/extra revisions and accepted change orders; retain old scope/price versions.
 - [ ] **N** Gate final deliverables using agreed approval/payment conditions and protected downloads.

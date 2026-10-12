@@ -69,6 +69,7 @@ export function SiteHeader() {
         >
           Shop
         </Link>
+        <Link href="/appearances" aria-current={pathname.startsWith("/appearances") ? "page" : undefined}>Appearances</Link>
         <Link href="/contact" aria-current={pathname.startsWith("/contact") ? "page" : undefined}>Contact</Link>
       </nav>
       <div className="shop-header-actions">

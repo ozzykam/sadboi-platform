@@ -4,11 +4,15 @@ import { PageHeading } from "@/components/ui";
 import { requireStaff } from "@/server/staff";
 import { AgreementHelp } from "@/components/agreement-help";
 import { ProposalFieldExamples } from "@/components/proposal-field-examples";
+import { CommissionBillingHelp } from "@/components/commission-billing-help";
+import { EventHelp } from "@/components/event-help";
 
 export const metadata: Metadata = { title: "How-to | Sadboi Studio" };
 
 const topics = [
   ["agreements", "Prepare and sign agreements"],
+  ["commission-billing", "Invoice commission deposits and balances"],
+  ["events", "Plan events and publish appearances"],
   ["gallery", "Publish artwork to the gallery"],
   ["products", "Create products & variants"],
   ["editing", "Edit or archive"],
@@ -64,6 +68,8 @@ export default async function Page() {
       </nav>
       <div className="howto-content">
         <AgreementHelp />
+        <CommissionBillingHelp />
+        <EventHelp />
         <section className="howto-section" id="public-inquiries" aria-labelledby="public-inquiries-title">
           <h2 id="public-inquiries-title">Review public inquiries</h2>
           <p>Visitors use the public <Link href="/contact">Contact</Link> form to choose a purpose and send a message. Super admins and accounting can read the private inbox; only super admins change statuses.</p>

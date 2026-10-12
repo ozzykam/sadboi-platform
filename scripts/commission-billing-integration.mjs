@@ -1,0 +1,120 @@
+import assert from "node:assert/strict";
+import { randomBytes, randomUUID } from "node:crypto";
+import { access, unlink, writeFile } from "node:fs/promises";
+import { setTimeout as delay } from "node:timers/promises";
+
+export async function commissionBillingChecks({ request, csrf, ownerCookie, legalCookie, identity, signIn, session, db, check, origin }) {
+  const accounting = await identity("billing-accounting@example.test", true, "accounting"), accountingCookie = session(await signIn(accounting));
+  const proof = await csrf(), headers = { "Content-Type": "application/json", Origin: origin, Cookie: ownerCookie + "; " + proof.cookie, "X-CSRF-Token": proof.token };
+  const c = name => db.collection(`businesses/sadboi/${name}`), id = () => randomBytes(32).toString("hex");
+  const post = (body, extra = {}, route = "/api/commission-billing") => request(route, { method: "POST", headers: { ...headers, ...extra }, body: JSON.stringify(body) });
+  const read = (proposalId, cookie = ownerCookie) => request(`/api/commission-billing?proposalId=${proposalId}`, { headers: { Cookie: cookie } });
+  const ok = async (response, status = 200) => { const r = await response, text = await r.text(); assert.equal(r.status, status, text); return JSON.parse(text); };
+  const today = new Date().toISOString().slice(0, 10);
+  const client = { id: id(), name: "Billing Test Client", email: "billing-client@example.test" };
+  await c("contacts").doc(client.id).set({ businessId: "sadboi", input: { status: "active" } });
+  const proposal = { title: "Album commission", scope: "Original illustration", deliverables: "One cover and two crops", timeline: "Two weeks", revisionPolicy: "Two rounds", terms: "Client-approved terms", validUntil: "2099-12-31", currency: "USD", lines: [{ description: "Illustration", quantity: 1, unitMinor: 55000 }], discountMinor: 0, taxMinor: 0, taxStatus: "not_applicable", taxNote: "Fictional test tax treatment" };
+  async function signedSource(sign = true) {
+    const proposalId = id();
+    await c("commissionProposals").doc(proposalId).set({ businessId: "sadboi", state: "accepted", input: proposal, client, number: "PR-BILLING", version: 1, updatedAt: new Date().toISOString() });
+    const base = { source: { proposalId }, note: "PRIVATE AGREEMENT NOTE" };
+    await ok(post({ ...base, action: "save", expectedRevision: 0, operationId: randomUUID(), input: { title: "Album-cover commission", body: "Fictional reviewed agreement for integration testing.", effectiveDate: today, expiresDate: "", currency: "USD", totalMinor: 55000 } }, {}, "/api/agreements"), 201);
+    if (sign) {
+      await ok(post({ ...base, action: "invite", expectedRevision: 1, operationId: randomUUID(), token: id() }, {}, "/api/agreements"), 201);
+      await ok(post({ ...base, action: "recordSignature", expectedRevision: 2, operationId: randomUUID(), signerName: client.name, signedDate: today, evidence: "PRIVATE SIGNATURE EVIDENCE" }, {}, "/api/agreements"), 201);
+    }
+    return proposalId;
+  }
+  const proposalId = await signedSource(), invoiceId = randomUUID();
+  const input = { title: "Album deposit", kind: "deposit", description: "First installment of signed commission", amountMinor: 27500, dueDate: "2099-12-31", paymentInstructions: "Contact the studio using your agreed payment arrangements." };
+  const cmd = (action, expectedRevision, extra = {}) => ({ action, expectedRevision, proposalId, invoiceId, operationId: randomUUID(), note: "PRIVATE BILLING NOTE", ...extra });
+  const first = cmd("save", 0, { input });
+  assert.equal((await read(proposalId, "")).status, 401);
+  assert.equal((await read(proposalId, legalCookie)).status, 403);
+  for (const cookie of [legalCookie, accountingCookie]) assert.equal((await post(first, { Cookie: cookie + "; " + proof.cookie })).status, 403);
+  assert.equal((await post(first, { "X-CSRF-Token": "invalid" })).status, 403);
+  assert.equal((await post(first, { Origin: "https://other.example" })).status, 403);
+  assert.equal((await post({ ...first, paid: true })).status, 400);
+  assert.equal((await read("bad/id")).status, 400);
+  check("billing enforces authentication, roles, CSRF, same-origin and strict commands");
+  const unsigned = await signedSource(false);
+  assert.equal((await post({ ...first, proposalId: unsigned, operationId: randomUUID() })).status, 409);
+  await ok(post(first), 201); await ok(post(first), 201);
+  let detail = await ok(read(proposalId));
+  assert.equal(detail.revision, 1); assert.equal(detail.history.length, 1);
+  assert.equal((await post({ ...first, note: "Different payload" })).status, 409);
+  assert.equal((await post(cmd("save", 0, { input }))).status, 409);
+  assert.equal((await post(cmd("save", 1, { invoiceId: randomUUID(), input: { ...input, amountMinor: 27501 } }))).status, 409);
+  check("signed agreements are required, duplicate saves are idempotent and drafts reserve the total");
+  const issue = cmd("issue", 1);
+  await Promise.all([ok(post(issue), 201), ok(post(issue), 201)]);
+  detail = await ok(read(proposalId));
+  assert.equal(detail.revision, 2); assert.equal(detail.history.length, 2); assert.match(detail.invoices[0].number, /^CI-\d{6}$/);
+  const firstNumber = detail.invoices[0].number;
+  assert.equal((await post(cmd("save", 2, { input: { ...input, amountMinor: 100 } }))).status, 409);
+  assert.equal((await post(cmd("issue", 2))).status, 409);
+  check("concurrent retry issues one frozen invoice and consumes one invoice number");
+  const pay = cmd("recordPayment", 2, { payment: { amountMinor: 10000, receivedDate: today, method: "bank_transfer", reference: "PRIVATE BANK REFERENCE" } });
+  await Promise.all([ok(post(pay), 201), ok(post(pay), 201)]);
+  detail = await ok(read(proposalId));
+  assert.equal(detail.revision, 3); assert.equal(detail.invoices[0].payments.length, 1);
+  assert.equal((await post({ ...pay, operationId: randomUUID(), expectedRevision: 3 })).status, 409);
+  assert.equal((await post(cmd("recordPayment", 3, { payment: { ...pay.payment, amountMinor: 17501, reference: "Other receipt" } }))).status, 409);
+  assert.equal((await post(cmd("recordPayment", 3, { payment: { ...pay.payment, receivedDate: "2099-01-01", reference: "Future receipt" } }))).status, 409);
+  assert.equal((await post(cmd("void", 3))).status, 409);
+  const page = await request(`/admin/projects/invoices?proposalId=${proposalId}`, { headers: { Cookie: accountingCookie } });
+  assert.equal(page.status, 200); const html = await page.text(); assert.match(html, /Accounting can review and print/); assert.match(html, /partially paid/);
+  const document = html.match(/<article[^>]*aria-label="Commission invoice document"[\s\S]*?<\/article>/)?.[0]; assert.ok(document); assert.match(document, /175.00/);
+  for (const secret of ["PRIVATE BILLING NOTE", "PRIVATE BANK REFERENCE", "PRIVATE SIGNATURE EVIDENCE", "PRIVATE AGREEMENT NOTE"]) assert.ok(!document.includes(secret));
+  assert.ok(!html.includes(">Record received payment</button>"));
+  check("partial receipts are replay-safe, overpayment and future dates fail, and printable invoices exclude private evidence");
+  const finalId = randomUUID();
+  const race = await Promise.all([post(cmd("save", 3, { invoiceId: finalId, input: { ...input, kind: "final", title: "Final balance" } })), post(cmd("save", 3, { invoiceId: randomUUID(), input: { ...input, title: "Competing invoice" } }))]);
+  assert.deepEqual(race.map(r => r.status).sort(), [201, 409]);
+  detail = await ok(read(proposalId)); assert.equal(detail.invoices.length, 2); assert.equal(detail.revision, 4);
+  const secondId = detail.invoices[1].id;
+  await ok(post(cmd("issue", 4, { invoiceId: secondId })), 201);
+  detail = await ok(read(proposalId)); assert.notEqual(detail.invoices[1].number, firstNumber);
+  assert.equal((await post(cmd("save", 5, { invoiceId: randomUUID(), input: { ...input, amountMinor: 1 } }))).status, 409);
+  check("competing allocations cannot overbill and each installment receives a distinct number");
+  const reverse = cmd("reversePayment", 5, { paymentId: pay.operationId });
+  await ok(post(reverse), 201); await ok(post(reverse), 201);
+  assert.equal((await post({ ...reverse, operationId: randomUUID(), expectedRevision: 6 })).status, 409);
+  detail = await ok(read(proposalId)); assert.ok(detail.invoices[0].payments[0].reversedAt); assert.equal(detail.history.find(event => event.revision === 3).invoice.payments[0].reversedAt, null);
+  await ok(post(cmd("void", 6)), 201);
+  detail = await ok(read(proposalId)); assert.equal(detail.invoices[0].number, firstNumber); assert.equal(detail.invoices[0].state, "void");
+  assert.equal((await post(cmd("recordPayment", 7, { payment: pay.payment }))).status, 409);
+  check("payment corrections preserve original snapshots, retries do not repeat reversals and void retains invoice numbers");
+  await c("contacts").doc(client.id).update({ "input.status": "archived" });
+  assert.equal((await post(cmd("save", 7, { invoiceId: randomUUID(), input }))).status, 409);
+  await c("contacts").doc(client.id).update({ "input.status": "active" });
+  await ok(post({ source: { proposalId }, action: "void", expectedRevision: 3, operationId: randomUUID(), note: "Void test agreement" }, {}, "/api/agreements"), 201);
+  assert.equal((await post(cmd("save", 7, { invoiceId: randomUUID(), input }))).status, 409);
+  await ok(post(cmd("recordPayment", 7, { invoiceId: secondId, payment: { ...pay.payment, reference: "Existing receivable after agreement void", amountMinor: 27500 } })), 201);
+  await ok(read(proposalId, accountingCookie));
+  check("archived contacts and voided agreements block new billing while existing receipts remain reconcilable");
+  const otherId = await signedSource(), thirdId = randomUUID();
+  await ok(post(cmd("save", 0, { proposalId: otherId, invoiceId: thirdId, input })), 201);
+  await c("commissionAgreements").doc(otherId).update({ "input.totalMinor": 999 });
+  assert.equal((await post(cmd("issue", 1, { proposalId: otherId, invoiceId: thirdId }))).status, 409);
+  await c("commissionAgreements").doc(otherId).update({ "input.totalMinor": 55000, businessId: "foreign" }); assert.equal((await read(otherId)).status, 409);
+  await c("commissionAgreements").doc(otherId).update({ businessId: "sadboi" });
+  const freshSource = await signedSource(), freshInvoice = randomUUID();
+  await ok(post(cmd("save", 0, { proposalId: freshSource, invoiceId: freshInvoice, input })), 201);
+  await Promise.all([ok(post(cmd("issue", 1, { proposalId: otherId, invoiceId: thirdId })), 201), ok(post(cmd("issue", 1, { proposalId: freshSource, invoiceId: freshInvoice })), 201)]);
+  const [a, b] = await Promise.all([ok(read(otherId)), ok(read(freshSource))]); assert.notEqual(a.invoices[0].number, b.invoices[0].number);
+  const billingDoc = c("commissionBilling").doc(otherId); await billingDoc.update({ revision: 200 });
+  assert.equal((await post(cmd("void", 200, { proposalId: otherId, invoiceId: thirdId }))).status, 400); await billingDoc.update({ revision: 2 });
+  check("tampered/foreign agreements fail closed, cross-agreement numbering is atomic and history limits are enforced");
+  assert.equal((await request("/admin/invoices", { headers: { Cookie: accountingCookie } })).status, 200);
+  assert.equal((await request("/admin/invoices", { headers: { Cookie: legalCookie } })).status, 307);
+  const help = await request("/admin/how-to", { headers: { Cookie: ownerCookie } }); assert.match(await help.text(), /id="commission-billing"/);
+  for (const name of ["storeOrders", "stockMovements", "orderEmails"]) assert.equal((await c(name).get()).size, 0);
+  check("staff directory and how-to respect roles and commission billing creates no shop, stock or email side effects");
+  if (process.argv.includes("--billing-preview")) {
+    const marker = "web-app/.next-auth-test/billing-preview.done"; try { await unlink(marker); } catch {}
+    await writeFile("web-app/.next-auth-test/billing-preview.ready", JSON.stringify({ url: origin + `/admin/projects/invoices?proposalId=${freshSource}` }));
+    console.log("Billing browser preview ready.");
+    for (let i = 0; i < 1200; i++) { try { await access(marker); break; } catch {} await delay(500); }
+  }
+}

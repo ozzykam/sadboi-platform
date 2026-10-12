@@ -266,6 +266,7 @@ export function Agreement({
             </>
           )}{" "}
           · <a href="#agreements">How to manage agreements</a>
+          {canViewProposal && record?.signedAt && (<> · <Link href={`/admin/projects/invoices?proposalId=${detail.proposalId}`}>Open invoices</Link></>)}
         </p>
         {message && (
           <p role="status" className="notice">

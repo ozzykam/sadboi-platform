@@ -24,7 +24,7 @@ API routes enforce staff roles, origin/CSRF for staff commands, origin/JSON/boun
 
 One agreement per accepted proposal series, up to 100 history entries, USD only. An invitation requires an active contact and room for its signing history entry. Client signature and revocation races cannot both commit. Agreement actions do not alter project status, invoices, stock, payment or email records.
 
-This is a single-signatory workflow based on possession of a private invitation, not independent identity verification. Countersigning, legal templates, attachments, amendments, reminders, automatic email, and invoices/deposits are later work. Existing starter agreements without a proposal snapshot must receive a fresh invitation before client signing.
+This is a single-signatory workflow based on possession of a private invitation, not independent identity verification. Countersigning, legal templates, attachments, amendments, reminders and automatic email are later work. Signed agreements now link to [commission invoices and deposits](46-commission-invoices-and-deposits.md), a separate staff billing workflow; signing itself never creates an invoice or collects money. Existing starter agreements without a proposal snapshot must receive a fresh invitation before client signing.
 
 ## Validation
 
