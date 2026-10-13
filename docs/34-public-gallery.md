@@ -28,6 +28,10 @@ The in-app tutorial is `/admin/how-to#gallery` and is linked from the publishing
 
 ## Verification
 
+The October 12 skeleton update passed `pnpm check`: typecheck, lint, 126 domain tests, seven credential tests, two runtime tests and the production build.
+
+October 12 loading UX: `/art` and `/shop` now stream distinct route skeletons while catalog data loads. Gallery placeholders use framed, varied artwork proportions; shop placeholders use square merchandise images with title/price/action shapes. Individual image placeholders remain until load completes, handle cached images, and switch to an unavailable message on failure. Images retain reserved space, decorative skeletons stay out of the accessibility tree, and shimmer stops for reduced-motion preferences. Chrome verified both route loading states, loaded gallery/shop images and product-dialog images, plus 390px layouts without page overflow or captured console errors. No business records were changed.
+
 `pnpm check` runs type checking, lint, domain tests, Firebase credential tests, and a production build. `pnpm test:gallery` runs existing artwork/authentication coverage plus gallery publication, privacy, filters, stable URLs, product links, retries, archival, and withdrawal checks against disposable emulators.
 
 Verified September 23, 2026: 69 combined authentication/artwork/gallery integration checks passed. Browser verification covered the populated emulator gallery, artwork detail, viewer zoom, Escape dismissal and focus restoration, mobile detail reflow at 390px, shared navbar reflow at 320px, and the live gallery-to-shop cart handoff. Public test artwork was created only in the emulator. A streamed 200 response for absent artwork was corrected by removing the detail route's loading boundary; missing and withdrawn pieces now pass 404 checks.

@@ -19,7 +19,8 @@ import {
   checkoutWasRejected,
   type CheckoutAttempt,
 } from "@/lib/store-checkout-client";
-import Image from "next/image";
+import { CatalogImage } from "./catalog-image";
+import { ShopIntro } from "./catalog-skeletons";
 import { ArrowLeft, Eye, ShoppingBag } from "lucide-react";
 import type { PublicCatalogItem } from "@/server/public-catalog";
 import { StoreOrderForm, type StoreCartLine } from "./store-order-form";
@@ -189,18 +190,7 @@ export function ShopCatalog({ products, shipping }: { products: PublicCatalogIte
   }
   return (
     <>
-      <section className="shop-hero shop-hero-compact">
-        <p className="eyebrow">SADBOI / SHOP</p>
-        <h1>
-          Made in small
-          <br />
-          <em>editions.</em>
-        </h1>
-        <p>
-          Objects, prints, and pieces from the studio. Browse the catalog by
-          category.
-        </p>
-      </section>
+      <ShopIntro />
       <section className="shop-section" id="shop-products">
         <div className="shop-catalog-layout">
           <aside
@@ -268,13 +258,11 @@ export function ShopCatalog({ products, shipping }: { products: PublicCatalogIte
                       aria-label={`View ${product.title}`}
                     >
                       {imageUrl ? (
-                        <Image
+                        <CatalogImage
+                          variant="shop"
                           src={imageUrl}
                           alt=""
-                          fill
                           sizes="(max-width: 760px) 50vw, 25vw"
-                          className="shop-product-photo"
-                          unoptimized
                         />
                       ) : (
                         <>
@@ -346,13 +334,11 @@ export function ShopCatalog({ products, shipping }: { products: PublicCatalogIte
                       onClick={() => setZoomed(true)}
                       aria-label={`View ${selected.title} full size`}
                     >
-                      <Image
+                      <CatalogImage
+                        variant="shop"
                         src={selectedImage}
                         alt={selected.title}
-                        fill
                         sizes="(max-width: 760px) 100vw, 45vw"
-                        className="shop-product-photo"
-                        unoptimized
                       />
                     </button>
                   ) : (

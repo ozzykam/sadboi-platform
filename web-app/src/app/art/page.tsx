@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { publicGallery } from "@/server/gallery";
 import { GalleryGrid } from "@/components/gallery-grid";
+import { GalleryIntro } from "@/components/catalog-skeletons";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Gallery",
@@ -37,14 +38,7 @@ export default async function GalleryPage({
   );
   return (
     <main id="gallery-main" className="gallery-main">
-      <section className="gallery-intro">
-        <p className="eyebrow">JOEL HEDSTROM / SADBOI</p>
-        <h1>The body of work.</h1>
-        <p>
-          A collection of originals, ongoing obsessions, and the stories behind
-          them.
-        </p>
-      </section>
+      <GalleryIntro />
       {!!works.length && (
         <form
           action="/art"
