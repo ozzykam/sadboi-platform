@@ -10,6 +10,9 @@ Open [Artwork](http://127.0.0.1:3100/admin/artworks) after signing in.
 2. On the saved record, use **Add an artwork image** to upload an original and generate its private preview.
 3. Reopen the record from either super-admin account to see the same data.
 4. Change its status to **Archived** when it should leave the active workflow. Archiving preserves records and images.
+5. To remove an image, use **Remove image** under **Originals & previews**, review the filename, and choose **Permanently remove image**. Download a copy first if needed. Images currently published in the gallery must first be replaced with **Update gallery** or withdrawn with **Unpublish**. Removal keeps artwork metadata, selects a remaining catalog cover when needed, and leaves a placeholder if no images remain.
+
+Image removal is super-admin only and CSRF-protected. It first marks the asset unavailable and updates the image count/cover in a transaction, then deletes its stored original and preview. A retained tombstone prevents an old upload retry from restoring the deleted image; selecting the file again creates a fresh upload. Interrupted storage cleanup appears as **Retry removal** for admins, including after reload. Private and public reads and publication reject unavailable assets. Retries do not decrement counts or duplicate removal audit events. Image removal does not change the artwork's metadata revision or discard unsaved form details.
 
 Artwork details include title, series, year, medium, description, tags, dimensions, color profile, rights classification, status, and private studio notes. Ready status does not publish anything.
 
@@ -59,7 +62,7 @@ File locations use server-generated IDs and per-attempt paths. Object creation u
 
 Uploads are retryable using an actor-scoped upload ID. An in-progress attempt reserves a two-minute lease. Each attempt has a durable journal with its object paths and status. On failure, the server checks whether the transaction already committed before attempting cleanup, preventing an uncertain acknowledgement from causing a completed original to be deleted. Incomplete cleanup is recorded as pending; an automated reconciler is still to be built. A process crash can leave a private processing attempt requiring retry or reconciliation.
 
-No public derivatives, image deletion UI, configurable cover selection, malware-scanning service, or retention/deletion automation is implemented yet. All generated previews in this slice are private.
+The original slice generated private previews only; public gallery publishing is covered in [Public gallery](34-public-gallery.md). Image removal is now available in the artwork editor. Configurable cover selection, malware scanning, and automated retention cleanup remain outside this workflow.
 
 ## Local development
 
@@ -84,6 +87,12 @@ The artwork test command starts disposable Auth, Firestore, and Storage emulator
 - Browser discovery returned no connected browser. Visual/mobile layout, actual form interaction, and a real user upload still need browser verification.
 
 Failure-recovery journaling is implemented; network-loss and process-crash fault injection are not yet part of the automated checks.
+
+### Image removal verification (2026-10-14)
+
+- `pnpm check` passed, including type checking, lint, tests, and the production build.
+- All **77 combined authentication, artwork, and gallery integration checks passed** against disposable emulators. Removal checks cover authorization, CSRF, asset ownership, published-image protection, deletion of both stored files, cover fallback, repeated requests, blocked upload retries, and resuming interrupted cleanup.
+- Browser checks confirmed the centered confirmation dialog, blurred backdrop, cancellation, mobile sizing, and disabled removal for a published image. No live artwork images were removed.
 
 ## Reuse
 

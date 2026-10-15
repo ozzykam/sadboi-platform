@@ -2,6 +2,8 @@
 import { ShopCatalog } from "@/components/shop-catalog";
 import { shippingSettings } from "@/server/shipping";
 import { publicPageMetadata } from "@/server/seo";
+import { Suspense } from "react";
+import { ShopSkeleton } from "@/components/catalog-skeletons";
 
 export const dynamic = "force-dynamic";
 export const generateMetadata = () =>
@@ -11,7 +13,11 @@ export const generateMetadata = () =>
       "Shop Sadboi Studio editions and merchandise featuring original artwork by Joel Hedstrom.",
   });
 
-export default async function ShopPage() {
+export default function ShopPage() {
+  return <Suspense fallback={<ShopSkeleton />}><ShopContent /></Suspense>;
+}
+
+async function ShopContent() {
   const [catalog, shipping] = await Promise.all([
     publicCatalog(),
     shippingSettings(),

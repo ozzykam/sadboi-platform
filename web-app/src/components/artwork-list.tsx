@@ -85,7 +85,10 @@ export function ArtworkList() {
             ? `${filtered.length} ${filtered.length === 1 ? "work" : "works"}`
             : "Opening archive…"}
         </span>
-        <ArtworkViewToggle view={view} onChange={setView} />
+        <div className="artwork-results-actions">
+          <span>LOCAL DRAFT CATALOG</span>
+          <ArtworkViewToggle view={view} onChange={setView} />
+        </div>
       </div>
       {filtered.length ? (
         view === "table" ? (

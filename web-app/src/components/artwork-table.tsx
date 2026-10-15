@@ -74,9 +74,15 @@ function ArtworkThumbnail({ art }: { art: TableArtwork }) {
 export function ArtworkTable({
   artworks,
   showGallery = false,
+  orderEditor,
 }: {
   artworks: TableArtwork[];
   showGallery?: boolean;
+  orderEditor?: {
+    values: Record<string, { value: string; revision: number }>;
+    disabled: boolean;
+    onChange: (id: string, value: string) => void;
+  };
 }) {
   const router = useRouter();
   return (
@@ -92,6 +98,7 @@ export function ArtworkTable({
             <th scope="col">Status</th>
             <th scope="col">Rights</th>
             {showGallery && <th scope="col">Public gallery</th>}
+            {orderEditor && <th scope="col">Display order</th>}
           </tr>
         </thead>
         <tbody>
@@ -101,7 +108,9 @@ export function ArtworkTable({
               onClick={(event) => {
                 // Keep the title's native link behavior, including new-tab clicks.
                 if (
-                  (event.target as HTMLElement).closest("a") ||
+                  (event.target as HTMLElement).closest(
+                    "a, input, button, label",
+                  ) ||
                   window.getSelection()?.toString()
                 )
                   return;
@@ -140,6 +149,30 @@ export function ArtworkTable({
                     </>
                   ) : (
                     "Private"
+                  )}
+                </td>
+              )}
+              {orderEditor && (
+                <td>
+                  {art.gallery?.published ? (
+                    <input
+                      className="artwork-order-input"
+                      type="number"
+                      min={0}
+                      max={999999}
+                      step={1}
+                      required
+                      aria-label={`Display order for ${art.title}`}
+                      disabled={orderEditor.disabled}
+                      value={
+                        orderEditor.values[art.id]?.value ?? art.gallery.order
+                      }
+                      onChange={(event) =>
+                        orderEditor.onChange(art.id, event.target.value)
+                      }
+                    />
+                  ) : (
+                    <small>Publish first</small>
                   )}
                 </td>
               )}

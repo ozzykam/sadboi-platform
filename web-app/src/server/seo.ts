@@ -35,7 +35,7 @@ export async function publicPageMetadata(
   options?: {
     title: string;
     description: string;
-    image?: { path: string; alt: string; width: number; height: number };
+    image?: { path: string; alt: string; width?: number; height?: number };
   },
 ): Promise<Metadata> {
   const { input, indexable } = await publicSeo();

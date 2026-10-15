@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { galleryInputSchema, gallerySlug } from "./gallery";
+import { galleryInputSchema, galleryOrderSchema, gallerySlug } from "./gallery";
 const input = {
   published: true,
   assetId: "a".repeat(64),
@@ -10,6 +10,26 @@ const input = {
   rightsConfirmed: true,
 };
 describe("gallery publication", () => {
+  it("validates bounded order batches and rejects duplicate IDs or injected fields", () => {
+    const entry = { id: "a".repeat(64), revision: 1, order: 0 };
+    expect(galleryOrderSchema.safeParse([entry]).success).toBe(true);
+    for (const entries of [
+      [],
+      [entry, entry],
+      [{ ...entry, order: -1 }],
+      [{ ...entry, order: 1.5 }],
+      [{ ...entry, order: 1000000 }],
+      [{ ...entry, revision: 0 }],
+      [{ ...entry, id: "../private" }],
+      [{ ...entry, published: true }],
+      Array.from({ length: 101 }, (_, index) => ({
+        ...entry,
+        id: index.toString(16).padStart(64, "0"),
+      })),
+    ]) {
+      expect(galleryOrderSchema.safeParse(entries).success).toBe(false);
+    }
+  });
   it("requires a selected image, visual description, and publication permission", () => {
     expect(galleryInputSchema.safeParse(input).success).toBe(true);
     for (const change of [

@@ -7,7 +7,7 @@ import { artworkRequest } from "@/lib/artwork-client";
 
 export function ArtworkPublishing({
   artwork,
-  assets,
+  assets: assetRecords,
   onSaved,
   detailsDirty = false,
   detailsSaving = false,
@@ -20,10 +20,14 @@ export function ArtworkPublishing({
   detailsSaving?: boolean;
   onBusyChange?: (busy: boolean) => void;
 }) {
+  const assets = assetRecords.filter((asset) => !asset.removalPending);
   const saved = artwork.gallery;
   const [assetId, setAssetId] = useState(
     saved?.assetId ?? artwork.coverAssetId ?? assets[0]?.id ?? "",
   );
+  const selectedAssetId = assets.some((asset) => asset.id === assetId)
+    ? assetId
+    : "";
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [message, setMessage] = useState("");
@@ -41,7 +45,7 @@ export function ArtworkPublishing({
     }
     const input: GalleryInput = {
       published: publishing,
-      assetId: assetId || null,
+      assetId: selectedAssetId || null,
       alt: String(form.get("galleryAlt") ?? ""),
       caption: String(form.get("galleryCaption") ?? ""),
       credits: String(form.get("galleryCredits") ?? ""),
@@ -138,7 +142,7 @@ export function ArtworkPublishing({
               <label htmlFor="gallery-image">Gallery image</label>
               <select
                 id="gallery-image"
-                value={assetId}
+                value={selectedAssetId}
                 onChange={(event) => setAssetId(event.target.value)}
               >
                 <option value="">Choose an image</option>
@@ -149,10 +153,10 @@ export function ArtworkPublishing({
                 ))}
               </select>
             </div>
-            {assetId && (
+            {selectedAssetId && (
               <Image
                 className="gallery-publish-preview"
-                src={`/api/artworks/${artwork.id}/assets/${assetId}`}
+                src={`/api/artworks/${artwork.id}/assets/${selectedAssetId}`}
                 alt="Selected gallery preview"
                 width={320}
                 height={320}

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { createRequire } from "node:module";
 import { access, rm } from "node:fs/promises";
 import { setTimeout as delay } from "node:timers/promises";
@@ -233,6 +233,148 @@ export async function galleryChecks({
   assert.ok(
     (await (await request(detail)).text()).includes("A public artwork story."),
   );
+  // Ordering is a separate, atomic operation; saved story edits stay private.
+  const orderUrl = "/api/artworks/gallery-order";
+  const artRef = db.doc(`businesses/sadboi/artworks/${art.id}`);
+  const publicRef = db.doc(`businesses/sadboi/gallery/${art.id}`);
+  const beforeOrder = (await artRef.get()).data();
+  const beforePublicOrder = (await publicRef.get()).data();
+  const secondId = createHash("sha256").update(randomUUID()).digest("hex");
+  const secondRef = db.doc(`businesses/sadboi/artworks/${secondId}`);
+  const secondPublicRef = db.doc(`businesses/sadboi/gallery/${secondId}`);
+  await secondRef.set({
+    ...beforeOrder,
+    gallery: { ...beforeOrder.gallery, publishedRevision: art.revision },
+  });
+  await secondPublicRef.set({
+    ...beforePublicOrder,
+    work: { ...beforePublicOrder.work, id: secondId },
+  });
+  const orderBody = {
+    operationId: randomUUID(),
+    entries: [
+      { id: art.id, revision: art.revision, order: 17 },
+      { id: secondId, revision: art.revision, order: 2 },
+    ],
+  };
+  assert.equal(
+    (
+      await request(orderUrl, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(orderBody),
+      })
+    ).status,
+    401,
+  );
+  assert.equal((await mutate(orderUrl, orderBody, legalCookie)).status, 403);
+  assert.equal(
+    (
+      await request(orderUrl, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Origin: origin,
+          Cookie: ownerCookie,
+        },
+        body: JSON.stringify(orderBody),
+      })
+    ).status,
+    403,
+  );
+  assert.equal(
+    (
+      await mutate(orderUrl, {
+        ...orderBody,
+        entries: [{ ...orderBody.entries[0], order: -1 }],
+      })
+    ).status,
+    400,
+  );
+  assert.equal(
+    (await mutate(orderUrl, { ...orderBody, input: { published: true } }))
+      .status,
+    400,
+  );
+  check(
+    "gallery ordering requires super-admin access, CSRF, bounded inputs, and order-only fields",
+  );
+  const staleBatch = {
+    ...orderBody,
+    operationId: randomUUID(),
+    entries: [orderBody.entries[0], { ...orderBody.entries[1], revision: 1 }],
+  };
+  assert.equal((await mutate(orderUrl, staleBatch)).status, 409);
+  assert.deepEqual((await publicRef.get()).data(), beforePublicOrder);
+  assert.equal((await artRef.get()).data().revision, art.revision);
+  await secondPublicRef.update({ published: false });
+  assert.equal((await mutate(orderUrl, orderBody)).status, 409);
+  assert.deepEqual((await publicRef.get()).data(), beforePublicOrder);
+  await secondPublicRef.update({ published: true });
+  check(
+    "one stale or unpublished artwork rejects the entire order batch without partial writes",
+  );
+  const savedOrder = await mutate(orderUrl, orderBody);
+  assert.equal(savedOrder.status, 200, await savedOrder.clone().text());
+  art = (await savedOrder.json()).artworks.find((item) => item.id === art.id);
+  assert.equal(art.gallery.order, 17);
+  assert.equal(art.revision, beforeOrder.revision + 1);
+  assert.equal(
+    art.gallery.publishedRevision,
+    beforeOrder.gallery.publishedRevision,
+  );
+  const secondSaved = (await secondRef.get()).data();
+  assert.equal(secondSaved.gallery.publishedRevision, secondSaved.revision);
+  assert.equal(secondSaved.gallery.order, 2);
+  assert.deepEqual((await artRef.get()).data().input, beforeOrder.input);
+  assert.deepEqual((await publicRef.get()).data(), {
+    ...beforePublicOrder,
+    work: { ...beforePublicOrder.work, order: 17 },
+  });
+  assert.equal((await secondPublicRef.get()).data().work.order, 2);
+  const orderEvents = await artRef
+    .collection("events")
+    .where("kind", "==", "gallery-order-changed")
+    .get();
+  assert.equal(orderEvents.size, 1);
+  assert.equal(orderEvents.docs[0].data().previousOrder, 5);
+  assert.equal(orderEvents.docs[0].data().order, 17);
+  check(
+    "order saves update both snapshots atomically, retain unpublished edits, and audit the change",
+  );
+  const orderRetry = await mutate(orderUrl, orderBody);
+  assert.equal(orderRetry.status, 200);
+  assert.equal(
+    (await orderRetry.json()).artworks.find((item) => item.id === art.id)
+      .revision,
+    art.revision,
+  );
+  assert.equal(
+    (
+      await artRef
+        .collection("events")
+        .where("kind", "==", "gallery-order-changed")
+        .get()
+    ).size,
+    1,
+  );
+  assert.equal(
+    (
+      await mutate(orderUrl, {
+        ...orderBody,
+        entries: [{ ...orderBody.entries[0], order: 18 }],
+      })
+    ).status,
+    409,
+  );
+  check(
+    "retrying an order save is idempotent and request IDs cannot be reused for other changes",
+  );
+  await secondPublicRef.delete();
+  await db.recursiveDelete(secondRef);
+  assert.ok(
+    (await (await request(detail)).text()).includes("A public artwork story."),
+  );
   const update = await publish();
   assert.equal(update.status, 200);
   art = (await update.json()).artwork;
@@ -244,26 +386,22 @@ export async function galleryChecks({
     "studio edits require republishing and title changes preserve artwork URLs",
   );
   const p = db.collection("businesses/sadboi/products");
-  await p
-    .doc("d".repeat(64))
-    .set({
-      input: {
-        artworkId: art.id,
-        title: "Public linked print",
-        status: "active",
-        publication: "public",
-      },
-    });
-  await p
-    .doc("e".repeat(64))
-    .set({
-      input: {
-        artworkId: art.id,
-        title: "PRIVATE_PRODUCT_SENTINEL",
-        status: "active",
-        publication: "private",
-      },
-    });
+  await p.doc("d".repeat(64)).set({
+    input: {
+      artworkId: art.id,
+      title: "Public linked print",
+      status: "active",
+      publication: "public",
+    },
+  });
+  await p.doc("e".repeat(64)).set({
+    input: {
+      artworkId: art.id,
+      title: "PRIVATE_PRODUCT_SENTINEL",
+      status: "active",
+      publication: "private",
+    },
+  });
   const linkedHtml = await (await request(detail)).text();
   assert.ok(linkedHtml.includes("Public linked print"));
   assert.ok(!linkedHtml.includes("PRIVATE_PRODUCT_SENTINEL"));
@@ -311,12 +449,22 @@ export async function galleryChecks({
     await edit({ rights: "owned" });
     const preview = await publish();
     assert.equal(preview.status, 200);
-    const stopFile = new URL("../web-app/.next-auth-test/gallery-preview.done", import.meta.url);
+    const stopFile = new URL(
+      "../web-app/.next-auth-test/gallery-preview.done",
+      import.meta.url,
+    );
     await rm(stopFile, { force: true });
     console.log(`GALLERY BROWSER PREVIEW: ${origin}${detail}`);
-    console.log("Create web-app/.next-auth-test/gallery-preview.done to finish (10-minute maximum).");
+    console.log(
+      "Create web-app/.next-auth-test/gallery-preview.done to finish (10-minute maximum).",
+    );
     for (let i = 0; i < 1200; i++) {
-      try { await access(stopFile); break; } catch { await delay(500); }
+      try {
+        await access(stopFile);
+        break;
+      } catch {
+        await delay(500);
+      }
     }
     await rm(stopFile, { force: true });
   }

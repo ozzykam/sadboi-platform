@@ -2,7 +2,8 @@ import { publicPageMetadata } from "@/server/seo";
 import Link from "next/link";
 import { publicGallery } from "@/server/gallery";
 import { GalleryGrid } from "@/components/gallery-grid";
-import { GalleryIntro } from "@/components/catalog-skeletons";
+import { GalleryIntro, GallerySkeleton } from "@/components/catalog-skeletons";
+import { Suspense } from "react";
 export const dynamic = "force-dynamic";
 export const generateMetadata = () =>
   publicPageMetadata("/art", {
@@ -11,11 +12,17 @@ export const generateMetadata = () =>
       "Explore original artwork, series, and stories by Joel Hedstrom / Sadboi.",
   });
 type Filters = { q?: string; series?: string; medium?: string };
-export default async function GalleryPage({
-  searchParams,
-}: {
+type GalleryPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
+};
+export default function Page(props: GalleryPageProps) {
+  return (
+    <Suspense fallback={<GallerySkeleton />}>
+      <GalleryPage {...props} />
+    </Suspense>
+  );
+}
+async function GalleryPage({ searchParams }: GalleryPageProps) {
   const raw = await searchParams;
   const filters: Filters = Object.fromEntries(
     ["q", "series", "medium"].map((key) => [

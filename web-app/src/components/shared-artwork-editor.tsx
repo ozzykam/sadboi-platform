@@ -22,6 +22,7 @@ export function SharedArtworkEditor({
   const [currentAssets, setCurrentAssets] = useState(assets);
   const [formState, setFormState] = useState({ dirty: false, saving: false });
   const [publishing, setPublishing] = useState(false);
+  const [removingImage, setRemovingImage] = useState(false);
   const operation = useRef(""),
     lastPayload = useRef("");
   async function save(input: ArtworkInput) {
@@ -107,7 +108,7 @@ export function SharedArtworkEditor({
         variants={0}
         onSave={save}
         onStateChange={setFormState}
-        disabled={publishing}
+        disabled={publishing || removingImage}
       />
       {artwork ? (
         <>
@@ -115,6 +116,12 @@ export function SharedArtworkEditor({
             artworkId={artwork.id}
             initial={assets}
             canEdit
+            publishedAssetId={
+              artwork.gallery?.published ? artwork.gallery.assetId : null
+            }
+            removalDisabled={publishing || formState.saving}
+            onRemovalBusy={setRemovingImage}
+            onAssetsChanged={setCurrentAssets}
             onUploaded={(asset) =>
               setCurrentAssets((current) => [
                 asset,
@@ -127,7 +134,7 @@ export function SharedArtworkEditor({
             assets={currentAssets}
             onSaved={setArtwork}
             detailsDirty={formState.dirty}
-            detailsSaving={formState.saving}
+            detailsSaving={formState.saving || removingImage}
             onBusyChange={setPublishing}
           />
         </>

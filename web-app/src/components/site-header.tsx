@@ -97,7 +97,7 @@ export function SiteHeader({
           <span>Staff/Client Login</span>
           <LogIn size={18} aria-hidden="true" />
         </Link>
-        {pathname === "/shop" ? (
+        {pathname === "/shop" || pathname.startsWith("/shop/") ? (
           <button
             type="button"
             className="shop-cart-button"

@@ -7,6 +7,7 @@ export type SharedArtwork = Omit<Artwork, "internalNotes"> & {
   gallery?: GallerySettings;
 };
 export type ArtworkAsset = {
+  removalPending?: boolean;
   id: string;
   filename: string;
   contentType: string;

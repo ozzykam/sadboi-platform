@@ -87,7 +87,7 @@ export default async function ArtworkPage({ params }: Props) {
             <section className="artwork-shop-links">
               <h2>From this work</h2>
               {products.map((product) => (
-                <Link key={product.id} href={`/shop#product-${product.id}`}>
+                <Link key={product.id} href={`/shop/${product.id}`}>
                   {product.title} <span aria-hidden="true">↗</span>
                 </Link>
               ))}

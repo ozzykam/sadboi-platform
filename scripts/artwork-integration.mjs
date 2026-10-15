@@ -96,4 +96,6 @@ export async function artworkChecks({request,csrf,ownerCookie,legalCookie,identi
  const page2=await (await read("/api/artworks?cursor="+page1.nextCursor)).json();assert.equal(page2.artworks.length,2);assert.equal(page2.nextCursor,null);
  assert.equal(new Set([...page1.artworks,...page2.artworks].map(a=>a.id)).size,52);check("catalog pagination has no duplicate or missing records");
  assert.equal((await read("/api/artworks?cursor=invalid/path")).status,404);check("invalid cursor cannot escape the business collection");
+ const {artworkRemovalChecks}=await import("./artwork-removal-integration.mjs");
+ await artworkRemovalChecks({request,csrf,ownerCookie,legalCookie,db,check,origin});
 }

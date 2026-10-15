@@ -1,5 +1,23 @@
 import { z } from "zod";
 
+export const galleryOrderSchema = z
+  .array(
+    z
+      .object({
+        id: z.string().regex(/^[a-f0-9]{64}$/),
+        revision: z.number().int().min(1).max(Number.MAX_SAFE_INTEGER),
+        order: z.number().int().min(0).max(999999),
+      })
+      .strict(),
+  )
+  .min(1)
+  .max(100)
+  .refine(
+    (entries) =>
+      new Set(entries.map((entry) => entry.id)).size === entries.length,
+    "Each artwork can appear only once.",
+  );
+
 export const galleryInputSchema = z
   .object({
     published: z.boolean(),

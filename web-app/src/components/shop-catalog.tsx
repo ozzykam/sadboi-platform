@@ -20,13 +20,15 @@ import {
   type CheckoutAttempt,
 } from "@/lib/store-checkout-client";
 import { CatalogImage } from "./catalog-image";
+import Link from "next/link";
+import { ShopProductDetail } from "./shop-product-detail";
 import { ShopIntro } from "./catalog-skeletons";
 import { ArrowLeft, Eye, ShoppingBag } from "lucide-react";
 import type { PublicCatalogItem } from "@/server/public-catalog";
 import { StoreOrderForm, type StoreCartLine } from "./store-order-form";
 import { Button, Input } from "./ui";
 
-export function ShopCatalog({ products, shipping }: { products: PublicCatalogItem[]; shipping: ShippingSettings }) {
+export function ShopCatalog({ products, shipping, detailProduct }: { products: PublicCatalogItem[]; shipping: ShippingSettings; detailProduct?: PublicCatalogItem }) {
   const [shippingService, setShippingService] = useState<"standard" | "express">(shipping.input.standard.enabled ? "standard" : "express");
   const [review, setReview] = useState<{ input: StoreOrderInput; quote: Awaited<ReturnType<typeof checkoutQuote>> } | null>(null);
   const categories = useMemo(
@@ -190,9 +192,18 @@ export function ShopCatalog({ products, shipping }: { products: PublicCatalogIte
   }
   return (
     <>
-      <ShopIntro />
+      {detailProduct ? (
+        <ShopProductDetail
+          product={detailProduct}
+          onAddToCart={addToCart}
+          onViewCart={() => setCartOpen(true)}
+          disabled={!cartReady || !!pending || checkoutBusy}
+          pending={!!pending}
+        />
+      ) : <ShopIntro />}
       <section className="shop-section" id="shop-products">
         <div className="shop-catalog-layout">
+          {!detailProduct && <>
           <aside
             className="shop-sidebar"
             id="shop-categories"
@@ -271,10 +282,9 @@ export function ShopCatalog({ products, shipping }: { products: PublicCatalogIte
                         </>
                       )}
                     </button>
-                    <button
-                      type="button"
+                    <Link
+                      href={`/shop/${product.id}`}
                       className="shop-product-meta shop-product-meta-button"
-                      onClick={() => setSelected(product)}
                     >
                       <div>
                         <h3>{product.title}</h3>
@@ -284,7 +294,7 @@ export function ShopCatalog({ products, shipping }: { products: PublicCatalogIte
                         </p>
                       </div>
                       <strong>From ${(lowest / 100).toFixed(2)}</strong>
-                    </button>
+                    </Link>
                     <button
                       type="button"
                       className="shop-product-view"
@@ -298,6 +308,7 @@ export function ShopCatalog({ products, shipping }: { products: PublicCatalogIte
               })}
             </div>
           </section>
+          </>}
           {selected && (
             <div
               className="shop-dialog-backdrop"
@@ -349,6 +360,7 @@ export function ShopCatalog({ products, shipping }: { products: PublicCatalogIte
                   <div className="shop-dialog-title-header">
                     <p className="eyebrow">{selected.kind}</p>
                     <h2 id="shop-dialog-title">{selected.title}</h2>
+                    <Link className="inline-link" href={`/shop/${selected.id}`}>Open product page ↗</Link>
                   </div>
                   <div className="shop-dialog-description">
                     {(

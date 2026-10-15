@@ -26,14 +26,18 @@ function projection(
     height: data.height,
     sha256: data.sha256,
     createdAt: data.createdAt,
+    ...(data.status === "deleting" ? { removalPending: true } : {}),
   };
 }
 export async function listAssets(id: string, staff: Staff) {
   await getArtwork(id, staff);
   const records = await artworkRef(id)
     .collection("assets")
-    .where("status", "==", "ready")
-    .limit(100)
+    .where(
+      "status",
+      "in",
+      staff.role === "super_admin" ? ["ready", "deleting"] : ["ready"],
+    )
     .get();
   return records.docs
     .map((doc) => projection(doc.id, doc.data()))
@@ -137,6 +141,12 @@ export async function uploadAsset(
       throw new AccessError(404, "not-found", "Artwork not found.");
     if (upload.exists) {
       const current = upload.data()!;
+      if (["deleting", "deleted"].includes(current.status))
+        throw new AccessError(
+          409,
+          "removed-image",
+          "This image was removed. Select the file again to start a new upload.",
+        );
       if (current.sha256 !== sha256)
         throw new AccessError(
           409,
@@ -172,31 +182,31 @@ export async function uploadAsset(
   if (existing) return existing;
   const bucket = artworkBucket();
   try {
-    await bucket
-      .file(originalPath)
-      .save(buffer, {
-        resumable: false,
-        preconditionOpts: { ifGenerationMatch: 0 },
-        metadata: {
-          contentType: types[format],
-          cacheControl: "private, no-store",
-          contentDisposition: "attachment",
-        },
-      });
-    await bucket
-      .file(previewPath)
-      .save(preview, {
-        resumable: false,
-        preconditionOpts: { ifGenerationMatch: 0 },
-        metadata: {
-          contentType: "image/webp",
-          cacheControl: "private, no-store",
-        },
-      });
+    await bucket.file(originalPath).save(buffer, {
+      resumable: false,
+      preconditionOpts: { ifGenerationMatch: 0 },
+      metadata: {
+        contentType: types[format],
+        cacheControl: "private, no-store",
+        contentDisposition: "attachment",
+      },
+    });
+    await bucket.file(previewPath).save(preview, {
+      resumable: false,
+      preconditionOpts: { ifGenerationMatch: 0 },
+      metadata: {
+        contentType: "image/webp",
+        cacheControl: "private, no-store",
+      },
+    });
     await db.runTransaction(async (tx) => {
       const parent = await tx.get(art),
         current = await tx.get(ref);
-      if (!parent.exists || current.data()?.attempt !== attempt)
+      if (
+        !parent.exists ||
+        current.data()?.attempt !== attempt ||
+        current.data()?.status !== "processing"
+      )
         throw new AccessError(
           409,
           "conflict",
@@ -232,6 +242,12 @@ export async function uploadAsset(
     // state before removing files; never delete a completed original.
     const committed = await db.runTransaction(async (tx) => {
       const current = await tx.get(ref);
+      if (["deleting", "deleted"].includes(current.data()?.status))
+        throw new AccessError(
+          409,
+          "removed-image",
+          "This image was removed. Select the file again to start a new upload.",
+        );
       if (
         current.data()?.attempt === attempt &&
         current.data()?.status === "ready"

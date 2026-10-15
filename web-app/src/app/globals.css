@@ -2088,6 +2088,36 @@ td small {
   display: flex;
   gap: 6px;
 }
+.artwork-results-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+.artwork-results-actions > span { font-size: 9px; letter-spacing: 0.08em; }
+.artwork-order-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+  font-size: 13px;
+}
+.artwork-order-toolbar > div:first-child { flex: 1 1 320px; }
+.artwork-order-toolbar .artwork-view-toggle { flex-wrap: wrap; }
+.artwork-order-toolbar [role="status"] { display: block; margin-top: 8px; }
+.artwork-order-input {
+  width: 110px;
+  min-height: 40px;
+  padding: 8px;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  font: inherit;
+}
 .artwork-table tbody tr {
   cursor: pointer;
 }
@@ -4581,6 +4611,9 @@ td small {
   text-decoration: underline;
   text-underline-offset: 5px;
 }
+.asset-removal-dialog p { margin-top: 16px; line-height: 1.6; overflow-wrap: anywhere; }
+.asset-removal-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+.asset-card .button + .button { margin-left: 8px; }
 /* Pack the main gallery into fluid columns without cropping the artwork. */
 .gallery-main-fluid {
   max-width: 2200px;

@@ -1,8 +1,12 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
-import type { ArtworkPage } from "@sadboi/core";
+import { useRef, useState } from "react";
+import {
+  galleryOrderSchema,
+  type ArtworkPage,
+  type SharedArtwork,
+} from "@sadboi/core";
 import { artworkRequest } from "@/lib/artwork-client";
 import { ArtworkMark, Badge, PageHeading } from "./ui";
 import {
@@ -25,6 +29,83 @@ export function SharedArtworkList({
   const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   const [view, setView] = useState<ArtworkView>("table");
+  const [orders, setOrders] = useState<
+    Record<string, { value: string; revision: number }>
+  >({});
+  const [savingOrder, setSavingOrder] = useState(false);
+  const [orderMessage, setOrderMessage] = useState("");
+  const orderAttempt = useRef<{ payload: string; operationId: string } | null>(
+    null,
+  );
+  const orderSaving = useRef(false);
+  function changeOrder(id: string, value: string) {
+    const art = artworks.find((item) => item.id === id)!;
+    setOrderMessage("");
+    setError("");
+    setOrders((current) => {
+      const next = { ...current };
+      if (value.trim() !== "" && Number(value) === art.gallery?.order)
+        delete next[id];
+      else
+        next[id] = { value, revision: current[id]?.revision ?? art.revision };
+      return next;
+    });
+  }
+  async function saveOrder() {
+    if (orderSaving.current) return;
+    const parsed = galleryOrderSchema.safeParse(
+      Object.entries(orders).map(([id, draft]) => ({
+        id,
+        revision: draft.revision,
+        order: draft.value.trim() === "" ? NaN : Number(draft.value),
+      })),
+    );
+    if (!parsed.success) {
+      setError(
+        "Enter a whole number from 0 to 999999 for each edited display order. Save up to 100 changes at a time.",
+      );
+      return;
+    }
+    const payload = JSON.stringify(parsed.data);
+    if (orderAttempt.current?.payload !== payload)
+      orderAttempt.current = { payload, operationId: crypto.randomUUID() };
+    orderSaving.current = true;
+    setSavingOrder(true);
+    setError("");
+    setOrderMessage("");
+    try {
+      const data: { artworks: SharedArtwork[] } = await artworkRequest(
+        "/api/artworks/gallery-order",
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            entries: parsed.data,
+            operationId: orderAttempt.current.operationId,
+          }),
+        },
+      );
+      setArtworks((current) =>
+        current.map(
+          (art) => data.artworks.find((saved) => saved.id === art.id) ?? art,
+        ),
+      );
+      setOrders({});
+      orderAttempt.current = null;
+      setOrderMessage(
+        "Display order saved. The public gallery now uses the updated order.",
+      );
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Could not save display order. Your changes are still here; retry the save.",
+      );
+    } finally {
+      orderSaving.current = false;
+      setSavingOrder(false);
+    }
+  }
   const filtered = artworks.filter(
     (art) =>
       (art.title + " " + art.series + " " + art.tags.join(" "))
@@ -33,6 +114,16 @@ export function SharedArtworkList({
       (status === "all" || art.status === status) &&
       (rights === "all" || art.rights === rights),
   );
+  if (canEdit)
+    filtered.sort(
+      (a, b) =>
+        Number(Boolean(b.gallery?.published)) -
+          Number(Boolean(a.gallery?.published)) ||
+        (a.gallery?.order ?? 0) - (b.gallery?.order ?? 0) ||
+        b.year - a.year ||
+        a.title.localeCompare(b.title) ||
+        a.id.localeCompare(b.id),
+    );
   async function loadMore() {
     setBusy(true);
     setError("");
@@ -105,16 +196,74 @@ export function SharedArtworkList({
           {filtered.length} matching / {artworks.length} loaded
           {cursor ? " · More available" : ""}
         </span>
-        <ArtworkViewToggle view={view} onChange={setView} />
+        <div className="artwork-results-actions">
+          <span>PRIVATE STUDIO CATALOG</span>
+          <ArtworkViewToggle view={view} onChange={setView} />
+        </div>
       </div>
       {error && (
         <p className="notice error" role="alert">
           {error}
         </p>
       )}
+      {canEdit && (
+        <div className="artwork-order-toolbar">
+          <div>
+            <p>
+              Lower display-order numbers appear first in the public gallery.
+            </p>
+            <p className="field-hint">
+              Edit published pieces in Table view, then save. Equal numbers use
+              newest year, title, then ID. Changes remain pending across filters
+              and views.
+            </p>
+            <span role="status">
+              {orderMessage ||
+                (Object.keys(orders).length
+                  ? `${Object.keys(orders).length} unsaved display-order changes`
+                  : "No unsaved display-order changes")}
+            </span>
+          </div>
+          <div className="artwork-view-toggle">
+            <button
+              type="button"
+              className="button secondary"
+              disabled={savingOrder || !Object.keys(orders).length}
+              onClick={() => {
+                setOrders({});
+                setError("");
+                setOrderMessage("");
+                orderAttempt.current = null;
+              }}
+            >
+              Discard changes
+            </button>
+            <button
+              type="button"
+              className="button primary"
+              disabled={savingOrder || busy || !Object.keys(orders).length}
+              onClick={saveOrder}
+            >
+              {savingOrder ? "Saving display order…" : "Save display order"}
+            </button>
+          </div>
+        </div>
+      )}
       {filtered.length ? (
         view === "table" ? (
-          <ArtworkTable artworks={filtered} showGallery={canEdit} />
+          <ArtworkTable
+            artworks={filtered}
+            showGallery={canEdit}
+            orderEditor={
+              canEdit
+                ? {
+                    values: orders,
+                    disabled: savingOrder,
+                    onChange: changeOrder,
+                  }
+                : undefined
+            }
+          />
         ) : (
           <div className="artwork-grid">
             {filtered.map((art) => (
@@ -196,7 +345,11 @@ export function SharedArtworkList({
         </div>
       )}
       {cursor && (
-        <button className="button secondary" disabled={busy} onClick={loadMore}>
+        <button
+          className="button secondary"
+          disabled={busy || savingOrder}
+          onClick={loadMore}
+        >
           {busy ? "Loading…" : "Load more artwork"}
         </button>
       )}

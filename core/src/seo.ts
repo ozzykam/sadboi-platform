@@ -118,7 +118,7 @@ export const seoPublicPaths = [
   "/appearances",
   "/contact",
 ] as const;
-export function seoSitemapUrls(origin: string, slugs: string[]) {
+export function seoSitemapUrls(origin: string, slugs: string[], productIds: string[] = []) {
   return [
     ...seoPublicPaths.map((path) => new URL(path, origin).href),
     ...new Set(
@@ -126,6 +126,7 @@ export function seoSitemapUrls(origin: string, slugs: string[]) {
         (slug) => new URL(`/art/${encodeURIComponent(slug)}`, origin).href,
       ),
     ),
+    ...new Set(productIds.map((id) => new URL(`/shop/${encodeURIComponent(id)}`, origin).href)),
   ];
 }
 

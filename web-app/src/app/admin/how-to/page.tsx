@@ -1,4 +1,4 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeading } from "@/components/ui";
 import { requireStaff } from "@/server/staff";
@@ -203,6 +203,47 @@ export default async function Page() {
         >
           <p className="eyebrow">ARTWORK / PUBLIC GALLERY</p>
           <h2 id="gallery-title">Put a piece on display</h2>
+          <p>
+            To delete an uploaded image, open the artwork and find it under
+            <strong> Originals &amp; previews</strong>. Download the original if
+            you need a copy, choose <strong>Remove image</strong>, then confirm
+            with <strong>Permanently remove image</strong>. This deletes the
+            original and preview, but keeps the artwork record and its details.
+            If it is the catalog thumbnail, another remaining image takes its
+            place. Removing the last image leaves a placeholder.
+          </p>
+          <p>
+            An image used in the public gallery is protected: first select a
+            different Gallery image and choose <strong>Update gallery</strong>,
+            or choose <strong>Unpublish</strong>. Then remove the old image.
+            Only super admins can remove images. If cleanup is interrupted,
+            choose <strong>Retry removal</strong>, including after reloading the
+            page. Removed images cannot be restored here; upload your own copy
+            again if needed.
+          </p>
+          <p>
+            To rearrange published pieces, open <strong>Artwork</strong> in
+            <strong> Table</strong> view and edit their{" "}
+            <strong>Display order</strong>{" "}
+            numbers. Lower numbers appear first: for example, use 10, 20, and
+            30, leaving room to insert another piece at 15 later. Equal numbers
+            use newest year, then title. The gallery flows down each column,
+            then across. Choose <strong>Save display order</strong> to apply all
+            pending changes together, including edited rows hidden by a filter,
+            or
+            <strong> Discard changes</strong> to reset them. Switching views
+            keeps pending changes; leaving or reloading the page discards them.
+          </p>
+          <p>
+            Only super admins can reorder published artwork. Publish private
+            pieces from their artwork page first. An order save changes
+            placement only; saved artwork edits still need{" "}
+            <strong>Update gallery</strong>. You can save up to 100 changed
+            orders at once. If another staff member changed a record, the entire
+            save is rejected: note your intended order, reload the catalog, and
+            apply it to the latest records. If a request fails without a
+            conflict, retry the same save safely.
+          </p>
           <p>
             The gallery is the public body of work, including pieces that are
             not for sale. Publishing is available to super admins. Start with a
