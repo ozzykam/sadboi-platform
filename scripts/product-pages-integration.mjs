@@ -120,7 +120,7 @@ export async function productPageChecks({
   const html = await page.text();
   assert.match(html, /Moonlight Print/);
   assert.match(html, /Printed on archival paper/);
-  assert.match(html, /6<!-- --> available/);
+  assert.match(html.replace(/<!--.*?-->/g, ""), /6 available/);
   for (const secret of [
     "PRIVATE_PRODUCT_NOTE",
     "PRIVATE_COST_SENTINEL",
@@ -184,7 +184,7 @@ export async function productPageChecks({
   });
   await balance.update({ onHand: 4 });
   const outOfStock = await (await request(url)).text();
-  assert.match(outOfStock, /0<!-- --> available/);
+  assert.match(outOfStock.replace(/<!--.*?-->/g, ""), /0 available/);
   check("sold-out products remain discoverable with zero availability");
   await balance.update({ onHand: 10 });
   if (process.argv.includes("--product-preview")) {

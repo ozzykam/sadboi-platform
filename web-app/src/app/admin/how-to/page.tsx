@@ -1276,7 +1276,7 @@ export default async function Page() {
               Private or Archived also withdraws the direct page. Private or
               archived variations never appear. A public product without public
               variations shows an unavailable message instead of a purchase form.
-              Product titles, descriptions and images provide the page's search
+              Product titles, descriptions and images provide the page&apos;s search
               and sharing metadata; production indexing follows Search &amp;
               sharing settings. Checkout remains test-only.
             </p>

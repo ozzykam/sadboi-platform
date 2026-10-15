@@ -20,4 +20,6 @@ Staff maintain the page through Inventory → Products & variants; no new publis
 
 ## Verification
 
-The product-page integration suite runs against disposable Auth, Firestore and Storage emulators with `node scripts/auth-integration.mjs --product-pages`. Add `--product-preview` to keep the fixture shop open on `http://localhost:3102` for browser checks. Create `web-app/.next-auth-test/product-preview.done` to finish the preview. No live inventory is created or modified.
+Run `pnpm test:product-pages` for the product-page integration suite against disposable Auth, Firestore and Storage emulators. To inspect its fixtures, run `pnpm exec firebase emulators:exec --only auth,firestore,storage --project demo-sadboi-platform "node scripts/auth-integration.mjs --product-pages --product-preview"`. This keeps the shop open on `http://localhost:3102`; create `web-app/.next-auth-test/product-preview.done` to finish the preview. No live inventory is created or modified.
+
+All **32 combined authentication/product-page integration checks passed**, covering public metadata and fields, safe stock availability, crawlable links, stable addresses after renaming, empty/sold-out variants, and withdrawal of private/archived pages and images. Chrome checks covered quick view, product-page links, adding two different products to one cart, persisted cart after reload, 390px reflow without horizontal page overflow, and image-viewer Escape/focus restoration. No browser errors were captured. No live business records were changed and no test orders were submitted.

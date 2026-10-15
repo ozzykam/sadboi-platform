@@ -5339,6 +5339,12 @@ td small {
 .shop-product-detail-price { font-size: 20px; }
 .shop-product-detail-price small { font-size: 12px; color: #6f6567; }
 .shop-product-detail-actions { display: flex; flex-wrap: wrap; gap: 20px; align-items: center; margin: 24px 0; }
+.shop-product-detail-actions .button.secondary,
+.shop-product-viewer .button.secondary {
+  color: #443a3d;
+  background: #fffdf8;
+  border: 1px solid #cfc5bc;
+}
 .shop-product-viewer {
   margin: auto;
   padding: 20px;
