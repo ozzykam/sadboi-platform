@@ -21,6 +21,7 @@ export function StaffShell({
       </header>
       <nav className="staff-nav" aria-label="Studio navigation">
         <Link href="/admin">Overview</Link>
+        {staff.role === "super_admin" && <Link href="/admin/collections">Collections</Link>}
         {staff.role !== "accounting" && (
           <Link href="/admin/artworks">Artwork</Link>
         )}

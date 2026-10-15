@@ -7,10 +7,12 @@ import { ProposalFieldExamples } from "@/components/proposal-field-examples";
 import { CommissionBillingHelp } from "@/components/commission-billing-help";
 import { EventHelp } from "@/components/event-help";
 import { SeoHelp } from "@/components/seo-help";
+import { ShopCollectionsHelp } from "@/components/shop-collections-help";
 
 export const metadata: Metadata = { title: "How-to | Sadboi Studio" };
 
 const topics = [
+  ["collections", "Curate shop collections"],
   ["seo", "Manage website SEO"],
   ["agreements", "Prepare and sign agreements"],
   ["commission-billing", "Invoice commission deposits and balances"],
@@ -73,6 +75,7 @@ export default async function Page() {
         <CommissionBillingHelp />
         <EventHelp />
         <SeoHelp />
+        <ShopCollectionsHelp />
         <section className="howto-section" id="public-inquiries" aria-labelledby="public-inquiries-title">
           <h2 id="public-inquiries-title">Review public inquiries</h2>
           <p>Visitors use the public <Link href="/contact">Contact</Link> form to choose a purpose and send a message. Super admins and accounting can read the private inbox; only super admins change statuses.</p>
@@ -1262,6 +1265,25 @@ export default async function Page() {
         >
           <p className="eyebrow">12 / PUBLIC CATALOG</p>
             <h2 id="catalog-title">Publish products and variants</h2>
+            <p>
+              In Inventory, edit a saved variant to add its <strong>Variation
+              description</strong> and <strong>Variation images</strong>. For
+              example: “Signed 8 × 10 print on archival cotton paper, with a
+              white border for framing.” Choose up to 12 JPEG, PNG, or WebP
+              images, each up to 12 MB. Images save immediately in selection
+              order; the first is the cover. Remove an unwanted image using its
+              Remove button. Save applies the description and other variation
+              details. Existing single images remain as the first gallery image.
+            </p>
+            <p>
+              Shoppers can click a variation&apos;s name or <strong>View details
+              &amp; images</strong> to see its description, specifications and
+              image carousel. Use arrows, thumbnails, or swipe between images;
+              Close or Escape returns to the product and preserves quantities.
+              One image shows without carousel controls. A variation without an
+              image uses the product image when available. Private or archived
+              variations and products do not expose their galleries publicly.
+            </p>
             <p>
               Each public product has its own page. Click its title in Shop, or
               choose <strong>Open product page</strong> in the quick-view dialog,

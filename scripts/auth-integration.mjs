@@ -17,7 +17,7 @@ const app = initializeApp({projectId: "demo-sadboi-platform"});
 const auth = getAuth(app); const db = getFirestore(app);
 // Browser previews use a separate hostname so their cookies cannot replace a
 // live developer session on 127.0.0.1:3100 (cookies are not scoped to ports).
-const browserPreview = process.argv.includes("--product-preview") || process.argv.includes("--seo-preview") || process.argv.includes("--commission-preview") || process.argv.includes("--dispute-preview") || process.argv.includes("--shipment-preview") || process.argv.includes("--after-sales-preview") || process.argv.includes("--shipping-preview") || process.argv.includes("--gallery-preview") || process.argv.includes("--fulfillment-preview") || process.argv.includes("--payment-preview") || process.argv.includes("--lifecycle-preview") || process.argv.includes("--email-preview");
+const browserPreview = process.argv.includes("--collection-preview") || process.argv.includes("--product-preview") || process.argv.includes("--seo-preview") || process.argv.includes("--commission-preview") || process.argv.includes("--dispute-preview") || process.argv.includes("--shipment-preview") || process.argv.includes("--after-sales-preview") || process.argv.includes("--shipping-preview") || process.argv.includes("--gallery-preview") || process.argv.includes("--fulfillment-preview") || process.argv.includes("--payment-preview") || process.argv.includes("--lifecycle-preview") || process.argv.includes("--email-preview");
 const paymentSecret = "emulator-only-" + randomUUID();
 const expirySecret = "emulator-only-expiry-" + randomUUID();
 const stripe = (process.argv.includes("--disputes") || process.argv.includes("--after-sales") || process.argv.includes("--order-lifecycle") || process.argv.includes("--shipping")) ? await (await import("./stripe-fixture.mjs")).stripeFixture() : null;
@@ -116,6 +116,7 @@ try {
  redirected(await request("/admin/settings",{headers:{Cookie:legalCookie}}),"/admin");check("legal cannot access workspace settings");
  redirected(await request("/admin/artworks/new",{headers:{Cookie:legalCookie}}),"/admin");check("legal cannot create artwork");
  if(process.argv.includes("--product-pages")) { const {productPageChecks}=await import("./product-pages-integration.mjs"); await productPageChecks({request,csrf,ownerCookie,db,check,origin}); }
+ if(process.argv.includes("--collections")) { const {collectionChecks}=await import("./shop-collections-integration.mjs"); await collectionChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin}); }
  if(process.argv.includes("--seo")) { const {seoChecks}=await import("./seo-integration.mjs"); await seoChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin}); }
  if(process.argv.includes("--workspace")) { const {workspaceChecks}=await import("./workspace-integration.mjs"); await workspaceChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin}); }
  if(process.argv.includes("--contacts")) { const {contactsChecks}=await import("./contacts-integration.mjs"); await contactsChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin}); }

@@ -122,6 +122,7 @@ export function seoSitemapUrls(
   origin: string,
   slugs: string[],
   productIds: string[] = [],
+  collectionIds: string[] = [],
 ) {
   return [
     ...seoPublicPaths.map((path) => new URL(path, origin).href),
@@ -133,6 +134,12 @@ export function seoSitemapUrls(
     ...new Set(
       productIds.map(
         (id) => new URL(`/shop/${encodeURIComponent(id)}`, origin).href,
+      ),
+    ),
+    ...new Set(
+      collectionIds.map(
+        (id) =>
+          new URL(`/shop/collections/${encodeURIComponent(id)}`, origin).href,
       ),
     ),
   ];

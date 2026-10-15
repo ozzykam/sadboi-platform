@@ -1,6 +1,8 @@
 ﻿"use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { VariantImages } from "./variant-images";
 import {Lightbulb } from "lucide-react";
 import {
   parseUsd,
@@ -32,20 +34,24 @@ type Editing = {
 function ImageUpload({
   resource,
   id,
-  hasImage,
-  onUploaded,
+  imageAssetId,
+  onUploadingChange,
 }: {
   resource: "products" | "variants";
   id?: string;
-  hasImage?: boolean;
-  onUploaded: () => void;
+  imageAssetId?: string;
+  onUploadingChange: (uploading: boolean) => void;
 }) {
   const [busy, setBusy] = useState(false),
-    [message, setMessage] = useState("");
+    [message, setMessage] = useState(""),
+    [error, setError] = useState(""),
+    [savedAssetId, setSavedAssetId] = useState(imageAssetId);
   async function upload(file: File) {
     if (!id) return;
     setBusy(true);
+    onUploadingChange(true);
     setMessage("");
+    setError("");
     try {
       const proof = await fetch("/api/auth/csrf", { cache: "no-store" });
       const token = (await proof.json()).token;
@@ -56,12 +62,13 @@ function ImageUpload({
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? "Upload failed.");
-      setMessage("Image uploaded.");
-      onUploaded();
+      setSavedAssetId(data.image.assetId);
+      setMessage("Image saved. Save below applies your other product or variant changes.");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Upload failed.");
+      setError(error instanceof Error ? error.message : "Upload failed.");
     } finally {
       setBusy(false);
+      onUploadingChange(false);
     }
   }
   return (
@@ -76,14 +83,26 @@ function ImageUpload({
             disabled={busy}
             onChange={(event) => {
               const file = event.target.files?.[0];
+              event.target.value = "";
               if (file) void upload(file);
             }}
           />
           <p className="field-hint">
-            {hasImage
-              ? "Replace the current public catalog image."
-              : "Upload a square or portrait JPEG, PNG, or WebP."}
+            Choose a JPEG, PNG, or WebP up to 12 MB. Selecting a file uploads
+            and saves the shop image immediately.
           </p>
+          {savedAssetId && (
+            <Image
+              src={`/api/inventory/images/${resource}/${id}?v=${encodeURIComponent(savedAssetId)}`}
+              alt="Saved shop image"
+              width={160}
+              height={160}
+              unoptimized
+              style={{ objectFit: "contain", maxWidth: "100%" }}
+            />
+          )}
+          {busy && <p role="status">Uploading image… Please wait before saving.</p>}
+          {error && <p className="notice error" role="alert">{error}</p>}
           {message && (
             <p className="notice" role="status">
               {message}
@@ -173,7 +192,7 @@ function ArtworkChoice() {
     </div>
   );
 }
-function ProductFields({ record }: { record?: ProductRecord }) {
+function ProductFields({ record, onUploadingChange }: { record?: ProductRecord; onUploadingChange: (uploading: boolean) => void }) {
   return (
     <>
       <p className="field-hint inv-wide">
@@ -197,6 +216,7 @@ function ProductFields({ record }: { record?: ProductRecord }) {
         <option value="print">Print</option>
         <option value="apparel">Apparel</option>
         <option value="accessory">Accessory</option>
+        <option value="playing_card">Playing Card</option>
         <option value="other">Other</option>
       </Select>
       <Textarea
@@ -212,8 +232,8 @@ function ProductFields({ record }: { record?: ProductRecord }) {
         <ImageUpload
           resource="products"
           id={record.id}
-          hasImage={!!record.imageAssetId}
-          onUploaded={() => {}}
+          imageAssetId={record.imageAssetId}
+          onUploadingChange={onUploadingChange}
         />
       )}
       <div className="inv-color-fields">
@@ -230,7 +250,7 @@ function ProductFields({ record }: { record?: ProductRecord }) {
           defaultValue={record?.gradientEnd ?? "#9f596a"}
         />
       </div>
-      \r\n <Status initial={record?.status} />
+      <Status initial={record?.status} />
       <Select
         label="Publication"
         name="publication"
@@ -246,10 +266,12 @@ function VariantFields({
   record,
   productId,
   catalog,
+  onUploadingChange,
 }: {
   record?: StockVariantRecord;
   productId?: string;
   catalog: InventoryCatalog;
+  onUploadingChange: (uploading: boolean) => void;
 }) {
   return (
     <>
@@ -292,6 +314,14 @@ function VariantFields({
         maxLength={160}
         defaultValue={record?.name}
         placeholder="A3 archival print"
+      />
+      <Textarea
+        label="Variation description"
+        name="description"
+        rows={5}
+        maxLength={3000}
+        defaultValue={record?.description ?? ""}
+        helperText="Shown when a shopper opens this variation. Describe its design, materials, dimensions, or what makes it different."
       />
       <Input
         label="Size"
@@ -343,11 +373,10 @@ function VariantFields({
         <option value="made_to_order">Made to order</option>
       </Select>
       {record && (
-        <ImageUpload
-          resource="variants"
+        <VariantImages
           id={record.id}
-          hasImage={!!record.imageAssetId}
-          onUploaded={() => {}}
+          initial={record.imageAssetIds ?? (record.imageAssetId ? [record.imageAssetId] : [])}
+          onUploadingChange={onUploadingChange}
         />
       )}
       <Status initial={record?.status} />
@@ -414,6 +443,7 @@ function MetadataEditor({
   onSaved: (id: string) => Promise<void>;
   onClose: () => void;
 }) {
+  const [imageUploading, setImageUploading] = useState(false);
   const product =
     editing.resource === "products"
       ? catalog.products.find((p) => p.id === editing.id)
@@ -435,7 +465,6 @@ function MetadataEditor({
         title: value(data, "title"),
         kind: value(data, "kind"),
         description: value(data, "description"),
-        imageAssetId: product?.imageAssetId,
         gradientStart: value(data, "gradientStart"),
         gradientEnd: value(data, "gradientEnd"),
         status,
@@ -446,6 +475,7 @@ function MetadataEditor({
         productId: variant?.productId ?? value(data, "productId"),
         sku: variant?.sku ?? value(data, "sku"),
         name: value(data, "name"),
+        description: value(data, "description"),
         size: value(data, "size"),
         color: value(data, "color"),
         material: value(data, "material"),
@@ -456,7 +486,6 @@ function MetadataEditor({
           ? Number(value(data, "weightGrams"))
           : null,
         fulfillment: value(data, "fulfillment"),
-        imageAssetId: variant?.imageAssetId,
         status,
         publication: value(data, "publication"),
       };
@@ -478,7 +507,7 @@ function MetadataEditor({
               ? "variant"
               : "location"}
         </h2>
-        <Button variant="ghost" onClick={onClose}>
+        <Button variant="ghost" onClick={onClose} disabled={imageUploading}>
           Close
         </Button>
       </div>
@@ -488,14 +517,16 @@ function MetadataEditor({
         prepare={prepare}
         onSaved={onSaved}
         again={false}
+        disabled={imageUploading}
       >
         {editing.resource === "products" ? (
-          <ProductFields record={product} />
+          <ProductFields record={product} onUploadingChange={setImageUploading} />
         ) : editing.resource === "variants" ? (
           <VariantFields
             record={variant}
             productId={editing.productId}
             catalog={catalog}
+            onUploadingChange={setImageUploading}
           />
         ) : (
           <LocationFields record={location} />

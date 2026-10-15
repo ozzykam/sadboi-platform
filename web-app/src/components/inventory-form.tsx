@@ -52,6 +52,7 @@ export function InventoryForm({
   again = true,
   endpoint = "/api/inventory",
   successMessage = "Saved to shared inventory.",
+  disabled = false,
 }: {
   action: string;
   record?: { id: string; revision: number };
@@ -62,6 +63,7 @@ export function InventoryForm({
   again?: boolean;
   endpoint?: string;
   successMessage?: string;
+  disabled?: boolean;
 }) {
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
@@ -78,7 +80,7 @@ export function InventoryForm({
   const submitting = useRef(false);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (submitting.current) return;
+    if (submitting.current || disabled) return;
     submitting.current = true;
     const data = new FormData(event.currentTarget);
     setBusy(true);
@@ -172,7 +174,7 @@ export function InventoryForm({
           <fieldset disabled={busy || uncertain} key={generation}>
             <div className="inv-fields">{children}</div>
           </fieldset>
-          <Button type="submit" loading={busy}>
+          <Button type="submit" loading={busy} disabled={disabled}>
             {uncertain ? "Retry same entry" : label}
           </Button>
         </>

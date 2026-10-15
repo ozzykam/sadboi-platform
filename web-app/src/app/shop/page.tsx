@@ -4,6 +4,7 @@ import { shippingSettings } from "@/server/shipping";
 import { publicPageMetadata } from "@/server/seo";
 import { Suspense } from "react";
 import { ShopSkeleton } from "@/components/catalog-skeletons";
+import { publicShopCollections } from "@/server/shop-collections";
 
 export const dynamic = "force-dynamic";
 export const generateMetadata = () =>
@@ -26,9 +27,14 @@ async function ShopContent() {
     publicCatalog(),
     shippingSettings(),
   ]);
+  const collections = await publicShopCollections(catalog.products);
   return (
     <main className="shop-shell">
-      <ShopCatalog products={catalog.products} shipping={shipping} />
+      <ShopCatalog
+        products={catalog.products}
+        shipping={shipping}
+        collections={collections.map(({ id, title }) => ({ id, title }))}
+      />
       <footer className="shop-footer">
         <span>sadboi / studio</span>
         <span>Private studio editions · Made with intention</span>

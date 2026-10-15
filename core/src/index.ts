@@ -37,3 +37,4 @@ export * from "./proposals";
 export * from "./public-inquiries";
 export * from "./events";
 export * from "./seo";
+export * from "./shop-collections";

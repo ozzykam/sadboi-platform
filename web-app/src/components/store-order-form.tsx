@@ -4,6 +4,7 @@ import type { PublicCatalogItem } from "@/server/public-catalog";
 import type { StoreCartLine } from "@sadboi/core";
 export type { StoreCartLine } from "@sadboi/core";
 import { Button } from "./ui";
+import { ShopVariantDetails } from "./shop-variant-details";
 export function StoreOrderForm({
   product,
   onAddToCart,
@@ -46,17 +47,7 @@ export function StoreOrderForm({
       <div className="shop-quantity-list">
         {product.variants.map((v) => (
           <div className="shop-quantity-row" key={v.id}>
-            <div className="shop-variation-info">
-              <strong>${(v.priceMinor / 100).toFixed(2)}</strong>
-              <span>
-                {v.name}
-                <small>
-                  {[v.size, v.color, v.material, v.finish]
-                    .filter(Boolean)
-                    .join(" · ") || "Standard"}
-                </small>
-              </span>
-            </div>
+            <ShopVariantDetails variant={v} product={product} />
             <div className="shop-stepper-column">
               <small className="shop-availability">
                 {v.fulfillment === "made_to_order"
@@ -145,7 +136,8 @@ export function StoreOrderForm({
         Add selected to cart
       </Button>
       <small className="shop-order-note">
-        Review your total in the cart, then use the private order page for test payment.
+        Review your total in the cart, then use the private order page for test
+        payment.
       </small>
     </form>
   );

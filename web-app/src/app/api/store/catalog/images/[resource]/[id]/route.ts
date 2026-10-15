@@ -8,7 +8,11 @@ export async function GET(
     const { resource, id } = await params;
     if (!imageResource(resource))
       return Response.json({ error: "Not found." }, { status: 404 });
-    return await readInventoryImage(resource, id);
+    return await readInventoryImage(
+      resource,
+      id,
+      new URL(_request.url).searchParams.get("asset"),
+    );
   } catch (error) {
     return inventoryFailure(error);
   }

@@ -2,6 +2,10 @@ import "server-only";
 import { adminServices } from "./firebase";
 import { businessId } from "./staff";
 import {
+  inventoryImageAssetId,
+  inventoryImages,
+} from "./inventory-image-reference";
+import {
   stockAvailable,
   type ProductInput,
   type StockVariantInput,
@@ -12,7 +16,12 @@ export type PublicCatalogItem = ProductInput & {
   id: string;
   imageUrl?: string;
   variants: Array<
-    StockVariantInput & { id: string; available: number; imageUrl?: string }
+    StockVariantInput & {
+      id: string;
+      available: number;
+      imageUrl?: string;
+      imageUrls?: string[];
+    }
   >;
 };
 export async function publicCatalog(): Promise<{
@@ -61,8 +70,8 @@ export async function publicCatalog(): Promise<{
       .map((doc) => ({
         ...doc.data().input,
         id: doc.id,
-        imageUrl: doc.data().input.imageAssetId
-          ? `/api/store/catalog/images/products/${doc.id}`
+        imageUrl: inventoryImageAssetId(doc.data())
+          ? `/api/store/catalog/images/products/${doc.id}?v=${encodeURIComponent(inventoryImageAssetId(doc.data())!)}`
           : undefined,
         variants: variants.docs
           .filter(
@@ -72,10 +81,14 @@ export async function publicCatalog(): Promise<{
           )
           .map((variant) => ({
             ...variant.data().input,
+            imageUrls: inventoryImages(variant.data()).map(
+              (image) =>
+                `/api/store/catalog/images/variants/${variant.id}?asset=${encodeURIComponent(image.assetId)}`,
+            ),
             id: variant.id,
             available: available.get(variant.id) ?? 0,
-            imageUrl: variant.data().input.imageAssetId
-              ? `/api/store/catalog/images/variants/${variant.id}`
+            imageUrl: inventoryImageAssetId(variant.data())
+              ? `/api/store/catalog/images/variants/${variant.id}?v=${encodeURIComponent(inventoryImageAssetId(variant.data())!)}`
               : undefined,
           })),
       }))

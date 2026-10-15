@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { randomBytes } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { createRequire } from "node:module";
 import { access, rm } from "node:fs/promises";
 import { setTimeout as delay } from "node:timers/promises";
@@ -49,13 +49,17 @@ export async function productPageChecks({
   };
   await product.set({
     input: productInput,
+    revision: 1,
     privateNote: "PRIVATE_PRODUCT_NOTE",
     internalCost: "PRIVATE_COST_SENTINEL",
   });
   await collection("products")
     .doc(secondId)
     .set({ input: { ...productInput, title: "Small Night Print" } });
-  await variant.set({ input: variantInput });
+  await variant.set({ input: variantInput, revision: 1 });
+  await collection("artworks")
+    .doc(productInput.artworkId)
+    .set({ title: "Moon study" });
   await collection("productVariants")
     .doc(id())
     .set({
@@ -114,6 +118,95 @@ export async function productPageChecks({
     body: png,
   });
   assert.equal(upload.status, 201, await upload.clone().text());
+  const uploadHeaders = {
+    "Content-Type": "image/png",
+    Origin: origin,
+    Cookie: ownerCookie + "; " + proof.cookie,
+    "X-CSRF-Token": proof.token,
+  };
+  for (const [resource, ref, input] of [
+    ["products", product, productInput],
+    ["variants", variant, variantInput],
+  ]) {
+    const uploadUrl = `/api/inventory/images/${resource}/${ref.id}`;
+    const first = await request(uploadUrl, {
+      method: "POST",
+      headers: uploadHeaders,
+      body: png,
+    });
+    assert.equal(first.status, 201);
+    const oldAssetId = (await first.json()).image.assetId;
+    async function saveImageMetadata(imageFields) {
+      const current = (await ref.get()).data();
+      const saved = await request(`/api/inventory?action=${resource}`, {
+        method: "PATCH",
+        headers: { ...uploadHeaders, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: ref.id,
+          revision: current.revision,
+          operationId: randomUUID(),
+          input: { ...input, ...imageFields },
+        }),
+      });
+      assert.equal(saved.status, 200, await saved.clone().text());
+    }
+    await saveImageMetadata({});
+    assert.equal((await ref.get()).data().input.imageAssetId, oldAssetId);
+    const replacement = await request(uploadUrl, {
+      method: "POST",
+      headers: uploadHeaders,
+      body: png,
+    });
+    assert.equal(replacement.status, 201);
+    const newAssetId = (await replacement.json()).image.assetId;
+    assert.notEqual(newAssetId, oldAssetId);
+    await saveImageMetadata({ imageAssetId: oldAssetId });
+    assert.equal((await ref.get()).data().input.imageAssetId, newAssetId);
+    await saveImageMetadata({ imageAssetId: "" });
+    assert.equal((await ref.get()).data().input.imageAssetId, newAssetId);
+    // Simulate an earlier broken save. The stored upload still restores the preview.
+    await ref.update({ input });
+    const catalog = await (
+      await request("/api/inventory", { headers: { Cookie: ownerCookie } })
+    ).json();
+    assert.equal(
+      catalog[resource].find((item) => item.id === ref.id).imageAssetId,
+      newAssetId,
+    );
+    const publicHtml = await (await request(`/shop/${productId}`)).text();
+    assert.ok(publicHtml.includes(`${ref.id}?v=${newAssetId}`));
+    await saveImageMetadata({});
+    assert.equal((await ref.get()).data().input.imageAssetId, newAssetId);
+    await ref.update({ "input.publication": "private" });
+    const preview = await request(uploadUrl, {
+      headers: { Cookie: ownerCookie },
+    });
+    assert.equal(preview.status, 200);
+    assert.match(preview.headers.get("cache-control"), /private, no-store/);
+    assert.equal((await request(uploadUrl)).status, 401);
+    assert.equal(
+      (await request(`/api/store/catalog/images/${resource}/${ref.id}`)).status,
+      404,
+    );
+    await ref.update({ "input.publication": "public" });
+    assert.equal(
+      (
+        await request(uploadUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "image/png",
+            Cookie: ownerCookie,
+            Origin: origin,
+          },
+          body: png,
+        })
+      ).status,
+      403,
+    );
+    check(
+      `${resource} image survives save, replacement, stale metadata and legacy recovery; previews remain private`,
+    );
+  }
   const url = `/shop/${productId}`;
   const page = await request(url);
   assert.equal(page.status, 200);
@@ -187,6 +280,19 @@ export async function productPageChecks({
   assert.match(outOfStock.replace(/<!--.*?-->/g, ""), /0 available/);
   check("sold-out products remain discoverable with zero availability");
   await balance.update({ onHand: 10 });
+  const { variantGalleryChecks } =
+    await import("./variant-gallery-integration.mjs");
+  await variantGalleryChecks({
+    request,
+    csrf,
+    ownerCookie,
+    origin,
+    product,
+    variant,
+    variantInput,
+    sharp,
+    check,
+  });
   if (process.argv.includes("--product-preview")) {
     const stopFile = new URL(
       "../web-app/.next-auth-test/product-preview.done",

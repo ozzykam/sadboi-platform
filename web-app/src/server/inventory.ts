@@ -44,6 +44,10 @@ import {
 } from "./staff";
 import { ensureStaffMode, authResponse } from "./auth-http";
 import { operationId } from "./artworks";
+import {
+  inventoryImageAssetId,
+  inventoryImages,
+} from "./inventory-image-reference";
 const hash = (value: string) =>
   createHash("sha256").update(value).digest("hex");
 const root = () => adminServices().db.doc("businesses/" + businessId);
@@ -185,6 +189,12 @@ function dto(resource: Resource, snapshot: DocumentSnapshot) {
   const input = schemas[resource].parse(data.input);
   return {
     ...input,
+    ...(resource === "variants"
+      ? { imageAssetIds: inventoryImages(data).map((image) => image.assetId) }
+      : {}),
+    ...(resource !== "locations" && inventoryImageAssetId(data)
+      ? { imageAssetId: inventoryImageAssetId(data) }
+      : {}),
     id: snapshot.id,
     revision: data.revision,
     createdAt: data.createdAt,
@@ -233,7 +243,7 @@ export async function saveMetadata(
   const result = schemas[resource].safeParse(body.input);
   if (!result.success)
     fail(result.error.issues.map((issue) => issue.message).join(" "), 400);
-  let input = result.data;
+  const submittedInput = result.data;
   const target = editing ? inventoryId(body.id) : null;
   if (
     editing &&
@@ -242,10 +252,11 @@ export async function saveMetadata(
     fail("A current record revision is required.", 400);
   return operate(
     (editing ? "update:" : "create:") + resource,
-    { target, revision: body.revision ?? null, input },
+    { target, revision: body.revision ?? null, input: submittedInput },
     body.operationId,
     staff,
     async (tx, id, now) => {
+      let input = submittedInput;
       const ref = collection(names[resource]).doc(target ?? id),
         counterRef = collection("inventoryState").doc("counts");
       const [record, counters] = await Promise.all([
@@ -258,16 +269,16 @@ export async function saveMetadata(
         fail(
           "This record changed. Refresh its details before saving your edits.",
         );
-      if (
-        editing &&
-        (resource === "products" || resource === "variants") &&
-        "imageAssetId" in input &&
-        !input.imageAssetId &&
-        data!.input.imageAssetId
-      ) {
+      if (editing && (resource === "products" || resource === "variants")) {
+        // Uploads are saved independently. Never let an older metadata form
+        // clear or replace the image selected by the upload endpoint.
+        const { imageAssetId: ignored, ...fields } = input as
+          ProductInput | StockVariantInput;
+        void ignored;
+        const imageAssetId = inventoryImageAssetId(data!);
         input = {
-          ...input,
-          imageAssetId: data!.input.imageAssetId,
+          ...fields,
+          ...(imageAssetId ? { imageAssetId } : {}),
         } as typeof input;
       }
       if (!editing && record.exists) fail("Inventory record already exists.");

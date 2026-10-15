@@ -2,14 +2,16 @@ import { z } from "zod";
 export const inventoryId = z.string().regex(/^[a-f0-9]{64}$/);
 const text = (max: number) => z.string().trim().max(max);
 const state = z.enum(["active", "archived"]);
-const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/, "Use a six-digit hex color.");
+const hexColor = z
+  .string()
+  .regex(/^#[0-9a-fA-F]{6}$/, "Use a six-digit hex color.");
 const money = z.number().int().min(0).max(100_000_000);
 const quantity = z.number().int().positive().max(1_000_000);
 export const productInputSchema = z
   .object({
     artworkId: inventoryId,
     title: text(160).min(1),
-    kind: z.enum(["print", "apparel", "accessory", "other"]),
+    kind: z.enum(["print", "apparel", "accessory", "playing_card", "other"]),
     description: text(3000),
     imageAssetId: text(128).optional(),
     gradientStart: hexColor.optional(),
@@ -26,6 +28,7 @@ export const stockVariantInputSchema = z
       .regex(/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/)
       .transform((value) => value.toUpperCase()),
     name: text(160).min(1),
+    description: text(3000).optional(),
     size: text(100),
     color: text(80),
     material: text(160),
@@ -155,7 +158,9 @@ export type InventoryRecord<T> = T & {
   updatedAt: string;
 };
 export type ProductRecord = InventoryRecord<ProductInput>;
-export type StockVariantRecord = InventoryRecord<StockVariantInput>;
+export type StockVariantRecord = InventoryRecord<StockVariantInput> & {
+  imageAssetIds?: string[];
+};
 export type StockLocationRecord = InventoryRecord<StockLocationInput>;
 export type StockPolicyRecord = InventoryRecord<
   Omit<StockPolicyInput, "expectedRevision">

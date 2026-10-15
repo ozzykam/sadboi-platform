@@ -22,21 +22,24 @@ import {
 import { CatalogImage } from "./catalog-image";
 import Link from "next/link";
 import { ShopProductDetail } from "./shop-product-detail";
+import type { PublicCollection } from "@sadboi/core";
 import { ShopIntro } from "./catalog-skeletons";
 import { ArrowLeft, Eye, ShoppingBag } from "lucide-react";
 import type { PublicCatalogItem } from "@/server/public-catalog";
 import { StoreOrderForm, type StoreCartLine } from "./store-order-form";
 import { Button, Input } from "./ui";
 
-export function ShopCatalog({ products, shipping, detailProduct }: { products: PublicCatalogItem[]; shipping: ShippingSettings; detailProduct?: PublicCatalogItem }) {
+export function ShopCatalog({ products, shipping, detailProduct, collection, collections = [] }: { products: PublicCatalogItem[]; shipping: ShippingSettings; detailProduct?: PublicCatalogItem; collection?: PublicCollection; collections?: Array<Pick<PublicCollection, "id" | "title">> }) {
+  // Keep the full public catalog for cart restoration; only browsing is scoped.
+  const browseProducts = useMemo(() => collection ? collection.productIds.flatMap(id => { const product=products.find(item => item.id===id); return product ? [product] : []; }) : products, [collection,products]);
   const [shippingService, setShippingService] = useState<"standard" | "express">(shipping.input.standard.enabled ? "standard" : "express");
   const [review, setReview] = useState<{ input: StoreOrderInput; quote: Awaited<ReturnType<typeof checkoutQuote>> } | null>(null);
   const categories = useMemo(
     () => [
       "All",
-      ...Array.from(new Set(products.map((product) => product.kind))).sort(),
+      ...Array.from(new Set(browseProducts.map((product) => product.kind))).sort(),
     ],
-    [products],
+    [browseProducts],
   );
   const [category, setCategory] = useState("All");
   const [selected, setSelected] = useState<PublicCatalogItem | null>(null);
@@ -61,8 +64,8 @@ export function ShopCatalog({ products, shipping, detailProduct }: { products: P
   );
   const filtered =
     category === "All"
-      ? products
-      : products.filter((product) => product.kind === category);
+      ? browseProducts
+      : browseProducts.filter((product) => product.kind === category);
   useEffect(() => {
     const timer = window.setTimeout(() => {
       try {
@@ -101,6 +104,7 @@ export function ShopCatalog({ products, shipping, detailProduct }: { products: P
     if (!selected) return;
     const close = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
+      if (event.defaultPrevented || document.querySelector("dialog[open]")) return;
       if (zoomed) setZoomed(false);
       else setSelected(null);
     };
@@ -200,7 +204,7 @@ export function ShopCatalog({ products, shipping, detailProduct }: { products: P
           disabled={!cartReady || !!pending || checkoutBusy}
           pending={!!pending}
         />
-      ) : <ShopIntro />}
+      ) : collection ? <header className="shop-collection-intro"><Link href="/shop" className="shop-product-back">← All products</Link><p className="eyebrow">SADBOI / COLLECTION</p><h1>{collection.title}</h1><p className="preserve-lines">{collection.description}</p></header> : <ShopIntro />}
       <section className="shop-section" id="shop-products">
         <div className="shop-catalog-layout">
           {!detailProduct && <>
@@ -221,13 +225,14 @@ export function ShopCatalog({ products, shipping, detailProduct }: { products: P
                   <span className="capitalize">{item}</span>
                   <small>
                     {item === "All"
-                      ? products.length
-                      : products.filter((product) => product.kind === item)
+                      ? browseProducts.length
+                      : browseProducts.filter((product) => product.kind === item)
                           .length}
                   </small>
                 </button>
               ))}
             </nav>
+            {!!collections.length && <nav className="shop-collection-links" aria-label="Shop collections"><p className="shop-sidebar-label">Collections</p>{collections.map(item=><Link key={item.id} href={`/shop/collections/${item.id}`} aria-current={collection?.id===item.id ? "page" : undefined}>{item.title}</Link>)}</nav>}
           </aside>
           <section className="shop-products" aria-live="polite">
             <div className="shop-products-heading">
