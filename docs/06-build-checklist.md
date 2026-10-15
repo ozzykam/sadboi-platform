@@ -222,6 +222,8 @@ September 23 continuation: persisted cart validation and retry-safe multi-line o
 
 ## 10. Public design and publishing
 
+- [x] **N** Add shareable public product pages with product metadata, sitemap entries, artwork-to-product links, image viewing and the existing shared cart. Private/archived products withdraw their pages; checkout remains test-only. See [public catalog](28-public-catalog.md).
+
 - [x] **N** Public-site SEO foundation and super-admin Search & sharing settings: homepage metadata, canonical URLs, Open Graph/Twitter previews, website structured data, production indexing controls and a published-artwork sitemap. Homepage visual expansion was reverted at the user's request. See [SEO scope](48-website-seo.md).
 
 Implemented gallery slice: `/art` and stable artwork detail pages, search/series/medium filters, publication snapshots with selected display images, caption/alt text/credits/order, unpublish and automatic withdrawal on archive/draft/rights review, related work and product links, enlarged viewer, and the shared public shop-style navbar. See [public gallery](34-public-gallery.md). Broader publishing, homepage composition, collections, and SEO groups below remain open.

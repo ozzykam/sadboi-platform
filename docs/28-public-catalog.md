@@ -1,7 +1,23 @@
 # Public catalog foundation
 
-Updated September 21, 2026.
+Updated October 14, 2026.
 
 Products and variants now have a Publication setting: Private or Public catalog. `/shop` reads only active public products and active public variants. Stocked variants show online-eligible available units after reserved, allocated, and unavailable quantities are removed; made-to-order variants show their fulfillment mode.
 
-Publishing does not create orders or reduce stock. Checkout, customer records, shipping, and payment confirmation are the next storefront steps.
+Publishing does not create orders or reduce stock. The existing cart, order requests, flat-rate shipping/pickup and Stripe test checkout are separate workflows.
+
+## Shareable product pages
+
+Every active public product has a stable `/shop/[id]` address. Click its title in the shop or choose **Open product page** in its quick-view dialog. Artwork pages now link directly to their public products. Product renaming keeps the same address.
+
+The page shows the published product image (or the first public variant image), description, USD prices, variant specifications and online availability. Its image can be enlarged in a keyboard-accessible dialog. Products without public active variants show an unavailable message; sold-out products remain visible with zero availability.
+
+Choose quantities, **Add selected to cart**, then **View cart**. The page uses the same cart and checkout component as the shop, preserving other products and uncertain-order recovery. Adding items does not reserve inventory or create a payment. Checkout remains test-only.
+
+Product-specific title, description, canonical URL and Open Graph/Twitter image metadata use the existing SEO settings. Public product URLs are included in the production sitemap when indexing is enabled. Development and preview sites stay noindex. Private and archived products return HTTP 404, and hidden variants are excluded. The shop listing skeleton is confined to its page so it cannot turn missing product responses into streamed HTTP 200s.
+
+Staff maintain the page through Inventory → Products & variants; no new publishing switch is required. Instructions are in `/admin/how-to#catalog`. Site-wide structured data is unchanged; this slice does not claim live merchant offers or add payments, discounts, collections or publication scheduling.
+
+## Verification
+
+The product-page integration suite runs against disposable Auth, Firestore and Storage emulators with `node scripts/auth-integration.mjs --product-pages`. Add `--product-preview` to keep the fixture shop open on `http://localhost:3102` for browser checks. Create `web-app/.next-auth-test/product-preview.done` to finish the preview. No live inventory is created or modified.

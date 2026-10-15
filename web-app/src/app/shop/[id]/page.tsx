@@ -18,10 +18,14 @@ export async function generateMetadata({ params }: Props) {
   const result = await productForPage((await params).id);
   if (!result) notFound();
   const { product } = result;
-  const image = product.imageUrl ?? product.variants.find((variant) => variant.imageUrl)?.imageUrl;
+  const image =
+    product.imageUrl ??
+    product.variants.find((variant) => variant.imageUrl)?.imageUrl;
   return publicPageMetadata(`/shop/${product.id}`, {
     title: product.title,
-    description: product.description.trim().slice(0, 160) || `${product.title} — a ${product.kind} from Sadboi Studio. Browse available variations and prices.`,
+    description:
+      product.description.trim().slice(0, 160) ||
+      `${product.title} — a ${product.kind} from Sadboi Studio. Browse available variations and prices.`,
     ...(image ? { image: { path: image, alt: product.title } } : {}),
   });
 }
@@ -32,8 +36,16 @@ export default async function ProductPage({ params }: Props) {
   const shipping = await shippingSettings();
   return (
     <main className="shop-shell">
-      <ShopCatalog key={result.product.id} products={result.catalog.products} shipping={shipping} detailProduct={result.product} />
-      <footer className="shop-footer"><span>sadboi / studio</span><span>Private studio editions · Made with intention</span></footer>
+      <ShopCatalog
+        key={result.product.id}
+        products={result.catalog.products}
+        shipping={shipping}
+        detailProduct={result.product}
+      />
+      <footer className="shop-footer">
+        <span>sadboi / studio</span>
+        <span>Private studio editions · Made with intention</span>
+      </footer>
     </main>
   );
 }

@@ -14,7 +14,11 @@ export const generateMetadata = () =>
   });
 
 export default function ShopPage() {
-  return <Suspense fallback={<ShopSkeleton />}><ShopContent /></Suspense>;
+  return (
+    <Suspense fallback={<ShopSkeleton />}>
+      <ShopContent />
+    </Suspense>
+  );
 }
 
 async function ShopContent() {

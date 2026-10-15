@@ -163,4 +163,14 @@ describe("website SEO", () => {
     expect(JSON.parse(text).url).toBe(input.siteUrl + "/");
     expect(JSON.parse(text).description).toContain("</script>");
   });
+  it("includes each public product URL once without changing artwork URLs", () => {
+    const urls = seoSitemapUrls(
+      input.siteUrl,
+      ["piece-a"],
+      ["a".repeat(64), "a".repeat(64), "b".repeat(64)],
+    );
+    expect(urls).toHaveLength(8);
+    expect(urls).toContain(input.siteUrl + "/shop/" + "a".repeat(64));
+    expect(urls).toContain(input.siteUrl + "/art/piece-a");
+  });
 });

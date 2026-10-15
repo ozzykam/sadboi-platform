@@ -5273,3 +5273,86 @@ td small {
   min-width: 32px;
   min-height: 32px;
 }
+
+/* Shareable product pages retain the shop's colors and purchase controls. */
+.shop-product-detail {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 36px 6vw 0;
+}
+.shop-product-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 28px;
+  font-size: 13px;
+}
+.shop-product-detail-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: clamp(24px, 4vw, 64px);
+  align-items: start;
+}
+.shop-product-detail-image {
+  position: sticky;
+  top: 24px;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: #e6ded4;
+  border-radius: 12px;
+}
+.shop-product-detail-image-button {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+}
+.shop-product-detail-image .shop-product-photo {
+  object-fit: contain;
+  padding: 20px;
+}
+.shop-product-enlarge {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 12px;
+  background: #fffdf8;
+  border-radius: 6px;
+  font-size: 12px;
+}
+.shop-product-image-empty {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  color: #6f6567;
+}
+.shop-product-detail-content { min-width: 0; overflow-wrap: anywhere; }
+.shop-product-detail-content h1 {
+  font: normal clamp(32px, 4vw, 54px)/1.1 Georgia, serif;
+  margin: 12px 0 20px;
+}
+.shop-product-detail-price { font-size: 20px; }
+.shop-product-detail-price small { font-size: 12px; color: #6f6567; }
+.shop-product-detail-actions { display: flex; flex-wrap: wrap; gap: 20px; align-items: center; margin: 24px 0; }
+.shop-product-viewer {
+  margin: auto;
+  padding: 20px;
+  width: min(1100px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  border: 0;
+  border-radius: 12px;
+  background: #f0ece5;
+  color: #262326;
+}
+.shop-product-viewer::backdrop { background: #171215b3; backdrop-filter: blur(8px); }
+.shop-product-viewer img { display: block; width: 100%; height: min(75dvh, 1000px); object-fit: contain; margin-top: 16px; }
+@media (max-width: 760px) {
+  .shop-product-detail { padding: 24px 22px 0; }
+  .shop-product-detail-layout { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+  .shop-product-detail-image { position: relative; top: auto; }
+}

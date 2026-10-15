@@ -1261,7 +1261,25 @@ export default async function Page() {
           aria-labelledby="catalog-title"
         >
           <p className="eyebrow">12 / PUBLIC CATALOG</p>
-          <h2 id="catalog-title">Publish products and variants</h2>
+            <h2 id="catalog-title">Publish products and variants</h2>
+            <p>
+              Each public product has its own page. Click its title in Shop, or
+              choose <strong>Open product page</strong> in the quick-view dialog,
+              then copy the address to share it. For example, a Moonlight Print
+              page can show an 8 × 10 variation at $25 and an 11 × 14 variation
+              at $40, with a quantity selector for each. Choose quantities,
+              <strong> Add selected to cart</strong>, then <strong>View cart</strong>.
+            </p>
+            <p>
+              Edit the existing product and variants in Inventory to update the
+              page. Its address stays the same after renaming. Making the product
+              Private or Archived also withdraws the direct page. Private or
+              archived variations never appear. A public product without public
+              variations shows an unavailable message instead of a purchase form.
+              Product titles, descriptions and images provide the page's search
+              and sharing metadata; production indexing follows Search &amp;
+              sharing settings. Checkout remains test-only.
+            </p>
           <p>
             Publication is controlled separately from the internal
             Active/Archived status. Use Private while preparing a record, then
