@@ -2,9 +2,15 @@
 
 The gallery at `/art` presents all published artwork independently of product availability. Each piece has a stable `/art/[slug]` page with story, year, medium, series, tags, caption, credits, an accessible enlarged image viewer, previous/next navigation, related artwork, and optional links to public products. Search matches titles, series, and tags; series and medium filters work through URL parameters.
 
+The main gallery uses compact, fluid columns with 12px gutters and uncropped images at their original proportions. Cards flow down each column, then across; the layout supports up to six columns on wide screens and reduces the column count as space narrows. Loading placeholders follow the same layout.
+
 The shared public navbar uses the shop's landscape logo, height, colors, and layout, with Gallery, Shop, Staff/Client Login, and cart count. The logo links home. The homepage retains its own header, and `/admin` retains staff navigation. On small screens login uses a labeled icon. Cart opens in the shop and restores the existing local cart; the server still validates checkout independently.
 
 ## Publish a piece
+
+The admin artwork catalog opens in Table view, using the Contacts table styling and 64px-high, uncropped private image previews. Click a row (or use its keyboard-accessible title link) to open the artwork record. The Table/Grid toggle retains current search and filters; shared-catalog pagination works in either view. Missing or unavailable table previews show a placeholder. Local drafts use the same table with placeholders.
+
+Verified October 14, 2026: `pnpm check` passed (typecheck, lint, 133 domain tests, 7 credential tests, 2 runtime tests, and production build). Chrome checks covered six loaded thumbnails at 64px, filtered Table/Grid switching, row and keyboard-link navigation, empty-filter recovery, and a narrow viewport with horizontal scrolling confined to the table. No artwork records were modified during these checks. Local-draft and missing-image behavior were checked in code, not exercised in the browser.
 
 Super admins open a saved artwork and use **Public gallery**, after uploading an image under **Originals & previews**. Choose the image, enter visual alt text, optional caption/credits, and display order, then confirm public-display permission. **Publish to gallery** requires Ready for review status and resolved rights (owned or licensed). It does not require a product or stock.
 

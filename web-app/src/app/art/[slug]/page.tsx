@@ -8,19 +8,31 @@ import {
 } from "@/server/gallery";
 import { ArtworkViewer } from "@/components/artwork-viewer";
 import { GalleryGrid } from "@/components/gallery-grid";
+import { publicPageMetadata } from "@/server/seo";
+import { cache } from "react";
+const artworkForPage = cache(publicArtwork);
 export const dynamic = "force-dynamic";
 type Props = { params: Promise<{ slug: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const work = await publicArtwork((await params).slug);
-  return {
-    title: work?.title ?? "Artwork not found",
+  const work = await artworkForPage((await params).slug);
+  if (!work) notFound();
+  return publicPageMetadata(`/art/${encodeURIComponent(work.slug)}`, {
+    title: work.title,
     description:
-      work?.description.slice(0, 160) ||
+      work.description.slice(0, 160) ||
       "Original artwork by Joel Hedstrom / Sadboi.",
-  };
+    image: {
+      path: `/api/gallery/images/${encodeURIComponent(work.id)}?w=960`,
+      alt: work.alt,
+      width: Math.min(work.width, 960),
+      height: Math.round(
+        (work.height * Math.min(work.width, 960)) / work.width,
+      ),
+    },
+  });
 }
 export default async function ArtworkPage({ params }: Props) {
-  const work = await publicArtwork((await params).slug);
+  const work = await artworkForPage((await params).slug);
   if (!work) notFound();
   const [all, products] = await Promise.all([
     publicGallery(),

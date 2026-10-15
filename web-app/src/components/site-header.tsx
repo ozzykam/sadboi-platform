@@ -6,7 +6,13 @@ import { useEffect, useState } from "react";
 import { LogIn } from "lucide-react";
 import logo from "../../public/images/logo-landscape.webp";
 
-export function SiteHeader() {
+export function SiteHeader({
+  instagramUrl,
+  xUrl,
+}: {
+  instagramUrl: string;
+  xUrl: string;
+}) {
   const pathname = usePathname();
   const [count, setCount] = useState(0);
   useEffect(() => {
@@ -73,6 +79,16 @@ export function SiteHeader() {
         <Link href="/contact" aria-current={pathname.startsWith("/contact") ? "page" : undefined}>Contact</Link>
       </nav>
       <div className="shop-header-actions">
+        {instagramUrl && (
+          <a href={instagramUrl} className="site-social-link" target="_blank" rel="noopener noreferrer">
+            <Image src="/images/ig-logo-blk.webp" alt="Instagram" width={20} height={20} />
+          </a>
+        )}
+        {xUrl && (
+          <a href={xUrl} className="site-social-link" target="_blank" rel="noopener noreferrer">
+            <Image src="/images/x-logo-blk.webp" alt="X" width={20} height={20} />
+          </a>
+        )}
         <Link
           href="/sign-in"
           className="site-login"

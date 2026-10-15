@@ -1,6 +1,12 @@
 # Build resumption — September 23, 2026
 
-## Current priority — event planning and public appearances
+## Current priority — catalog and public website
+
+The user set this build order on October 14: (1) Catalog and public website, (2) Agreements and licensing, (3) Business finances, (4) In-person sales, (5) Event preparation, (6) Commission completion, (7) Gallery consignment. They authorized resuming work on the first area. Keep earlier deferrals for Stripe commission collection, proof/review, carrier quotes and dispute provider testing until their corresponding work is resumed explicitly.
+
+The user rejected and reverted the visual homepage expansion, retaining the original entrance design. The current slice is website SEO, with `https://sadboi.art` as the user-confirmed intended domain and a super-admin settings screen at `/admin/settings/seo`. The homepage design remains restored. See [SEO scope and verification](48-website-seo.md). Deployment, domain connection and Google Search Console submission remain separate; search indexing defaults off until explicitly enabled. Continue catalog/public-site priorities after this SEO foundation.
+
+## Previous priority — event planning and public appearances
 
 Event detail UX follow-up: saved events now open in an overview, with attendance/publication badges, dates/location, next to-do, task/fee/completion details and private planning information. Edit event, Edit to-dos and individual task Edit controls open the existing form. Update event returns to the saved overview; Cancel editing offers explicit discard/keep controls for unsaved changes. Publication, recovery and history are expandable. `pnpm check` passed; Chrome verified the existing event overview, task-focus/cancel behavior and 390px layout without page overflow or console errors.
 

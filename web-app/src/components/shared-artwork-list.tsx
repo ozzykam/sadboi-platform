@@ -5,6 +5,11 @@ import { useState } from "react";
 import type { ArtworkPage } from "@sadboi/core";
 import { artworkRequest } from "@/lib/artwork-client";
 import { ArtworkMark, Badge, PageHeading } from "./ui";
+import {
+  ArtworkTable,
+  ArtworkViewToggle,
+  type ArtworkView,
+} from "./artwork-table";
 export function SharedArtworkList({
   initial,
   canEdit,
@@ -19,6 +24,7 @@ export function SharedArtworkList({
     [rights, setRights] = useState("all");
   const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
+  const [view, setView] = useState<ArtworkView>("table");
   const filtered = artworks.filter(
     (art) =>
       (art.title + " " + art.series + " " + art.tags.join(" "))
@@ -99,7 +105,7 @@ export function SharedArtworkList({
           {filtered.length} matching / {artworks.length} loaded
           {cursor ? " · More available" : ""}
         </span>
-        <span>PRIVATE STUDIO CATALOG</span>
+        <ArtworkViewToggle view={view} onChange={setView} />
       </div>
       {error && (
         <p className="notice error" role="alert">
@@ -107,62 +113,69 @@ export function SharedArtworkList({
         </p>
       )}
       {filtered.length ? (
-        <div className="artwork-grid">
-          {filtered.map((art) => (
-            <Link
-              className="artwork-card"
-              href={"/admin/artworks/" + art.id}
-              key={art.id}
-            >
-              <div className="artwork-card-image">
-                {art.coverAssetId ? (
-                  <Image
-                    src={
-                      "/api/artworks/" + art.id + "/assets/" + art.coverAssetId
-                    }
-                    alt={art.title}
-                    width={640}
-                    height={640}
-                    unoptimized
-                    className="private-artwork-image"
-                  />
-                ) : (
-                  <ArtworkMark title={art.title} large />
-                )}
-              </div>
-              <div className="artwork-card-info">
-                <div>
-                  <h2>{art.title}</h2>
-                  <p>
-                    {art.series || "Independent work"} · {art.year}
-                  </p>
+        view === "table" ? (
+          <ArtworkTable artworks={filtered} showGallery={canEdit} />
+        ) : (
+          <div className="artwork-grid">
+            {filtered.map((art) => (
+              <Link
+                className="artwork-card"
+                href={"/admin/artworks/" + art.id}
+                key={art.id}
+              >
+                <div className="artwork-card-image">
+                  {art.coverAssetId ? (
+                    <Image
+                      src={
+                        "/api/artworks/" +
+                        art.id +
+                        "/assets/" +
+                        art.coverAssetId
+                      }
+                      alt={art.title}
+                      width={640}
+                      height={640}
+                      unoptimized
+                      className="private-artwork-image"
+                    />
+                  ) : (
+                    <ArtworkMark title={art.title} large />
+                  )}
                 </div>
-                <Badge tone={art.status === "ready" ? "green" : "neutral"}>
-                  {art.status}
-                </Badge>
-              </div>
-              <div className="artwork-card-footer">
-                <span>{art.medium}</span>
-                <span>
-                  {art.rights === "review"
-                    ? "Rights review needed"
-                    : art.rights === "owned"
-                      ? "Artist owned"
-                      : "Licensed work"}
-                </span>
-              </div>
-              {canEdit && (
-                <p className="field-hint">
-                  {art.gallery?.published
-                    ? art.revision !== art.gallery.publishedRevision
-                      ? "In gallery · Saved changes need publishing"
-                      : "In public gallery"
-                    : "Private · Not in gallery"}
-                </p>
-              )}
-            </Link>
-          ))}
-        </div>
+                <div className="artwork-card-info">
+                  <div>
+                    <h2>{art.title}</h2>
+                    <p>
+                      {art.series || "Independent work"} · {art.year}
+                    </p>
+                  </div>
+                  <Badge tone={art.status === "ready" ? "green" : "neutral"}>
+                    {art.status}
+                  </Badge>
+                </div>
+                <div className="artwork-card-footer">
+                  <span>{art.medium}</span>
+                  <span>
+                    {art.rights === "review"
+                      ? "Rights review needed"
+                      : art.rights === "owned"
+                        ? "Artist owned"
+                        : "Licensed work"}
+                  </span>
+                </div>
+                {canEdit && (
+                  <p className="field-hint">
+                    {art.gallery?.published
+                      ? art.revision !== art.gallery.publishedRevision
+                        ? "In gallery · Saved changes need publishing"
+                        : "In public gallery"
+                      : "Private · Not in gallery"}
+                  </p>
+                )}
+              </Link>
+            ))}
+          </div>
+        )
       ) : (
         <div className="empty-state roomy">
           <h2>

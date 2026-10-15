@@ -1,14 +1,15 @@
-import type { Metadata } from "next";
+import { publicPageMetadata } from "@/server/seo";
 import Link from "next/link";
 import { publicGallery } from "@/server/gallery";
 import { GalleryGrid } from "@/components/gallery-grid";
 import { GalleryIntro } from "@/components/catalog-skeletons";
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = {
-  title: "Gallery",
-  description:
-    "Explore original artwork, series, and stories by Joel Hedstrom / Sadboi.",
-};
+export const generateMetadata = () =>
+  publicPageMetadata("/art", {
+    title: "Gallery",
+    description:
+      "Explore original artwork, series, and stories by Joel Hedstrom / Sadboi.",
+  });
 type Filters = { q?: string; series?: string; medium?: string };
 export default async function GalleryPage({
   searchParams,
@@ -37,7 +38,7 @@ export default async function GalleryPage({
           .includes(filters.q.toLowerCase())),
   );
   return (
-    <main id="gallery-main" className="gallery-main">
+    <main id="gallery-main" className="gallery-main gallery-main-fluid">
       <GalleryIntro />
       {!!works.length && (
         <form
@@ -90,7 +91,7 @@ export default async function GalleryPage({
         <span>THE GALLERY</span>
       </div>
       {filtered.length ? (
-        <GalleryGrid works={filtered} />
+        <GalleryGrid works={filtered} fluid />
       ) : (
         <section className="gallery-empty">
           <h2>

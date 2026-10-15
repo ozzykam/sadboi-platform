@@ -36,3 +36,4 @@ export * from "./commission-billing";
 export * from "./proposals";
 export * from "./public-inquiries";
 export * from "./events";
+export * from "./seo";

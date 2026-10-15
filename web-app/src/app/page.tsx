@@ -1,10 +1,21 @@
 import Link from "next/link";
 import Image from "next/image";
 import { BookImage, LogIn, ShoppingBag, CalendarDays } from "lucide-react";
+import { publicPageMetadata, publicSeo } from "@/server/seo";
+import { seoWebsiteData, seoJsonLd } from "@sadboi/core";
 export const dynamic = "force-dynamic";
-export default function Home() {
+export const generateMetadata = () => publicPageMetadata("/");
+export default async function Home() {
+  const { input } = await publicSeo();
+  const structuredData = seoWebsiteData(input);
   return (
     <main className="entrance">
+      {structuredData && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: seoJsonLd(structuredData) }}
+        />
+      )}
       <div className="entrance-top">
         <div className="entrance-nav" aria-label="Main navigation">
         </div>
@@ -30,6 +41,20 @@ export default function Home() {
               Public Events <CalendarDays size={18} aria-hidden="true" />
             </Link>
           </div>
+          {(input.instagramUrl || input.xUrl) && (
+            <nav className="entrance-socials" aria-label="Sadboi on social media">
+              {input.instagramUrl && (
+                <a href={input.instagramUrl} target="_blank" rel="noopener noreferrer">
+                  <Image src="/images/ig-logo.webp" alt="Instagram" width={24} height={24} />
+                </a>
+              )}
+              {input.xUrl && (
+                <a href={input.xUrl} target="_blank" rel="noopener noreferrer">
+                  <Image src="/images/x-logo.webp" alt="X" width={24} height={24} />
+                </a>
+              )}
+            </nav>
+          )}
         </div>
         <Image
           src="/images/logo-portrait.png"

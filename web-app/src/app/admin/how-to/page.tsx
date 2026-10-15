@@ -6,10 +6,12 @@ import { AgreementHelp } from "@/components/agreement-help";
 import { ProposalFieldExamples } from "@/components/proposal-field-examples";
 import { CommissionBillingHelp } from "@/components/commission-billing-help";
 import { EventHelp } from "@/components/event-help";
+import { SeoHelp } from "@/components/seo-help";
 
 export const metadata: Metadata = { title: "How-to | Sadboi Studio" };
 
 const topics = [
+  ["seo", "Manage website SEO"],
   ["agreements", "Prepare and sign agreements"],
   ["commission-billing", "Invoice commission deposits and balances"],
   ["events", "Plan events and publish appearances"],
@@ -70,6 +72,7 @@ export default async function Page() {
         <AgreementHelp />
         <CommissionBillingHelp />
         <EventHelp />
+        <SeoHelp />
         <section className="howto-section" id="public-inquiries" aria-labelledby="public-inquiries-title">
           <h2 id="public-inquiries-title">Review public inquiries</h2>
           <p>Visitors use the public <Link href="/contact">Contact</Link> form to choose a purpose and send a message. Super admins and accounting can read the private inbox; only super admins change statuses.</p>
@@ -208,7 +211,11 @@ export default async function Page() {
           </p>
           <ol>
             <li>
-              Open <strong>Artwork</strong>, select a piece or choose{" "}
+              Open <strong>Artwork</strong>. The catalog starts in Table view
+              with fixed-height image previews; click a row or its title to open
+              that piece. Choose <strong>Grid</strong> for the card view or{" "}
+              <strong>Table</strong> to switch back. Search and filters apply to
+              both views. Select a piece or choose{" "}
               <strong>Add artwork</strong>, and enter its title, year, medium,
               series, story, and tags. Keep private information in{" "}
               <strong>Internal notes</strong>.

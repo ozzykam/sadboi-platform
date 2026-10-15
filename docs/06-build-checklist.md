@@ -1,5 +1,7 @@
 # Build checklist
 
+October 14 user priority order: **Catalog and public website → Agreements and licensing → Business finances → In-person sales → Event preparation → Commission completion → Gallery consignment**. Work follows that order; phase numbering below describes dependencies rather than current priority. Existing explicit provider/proof-review deferrals remain in effect.
+
 October 5 agreement continuation: accepted-proposal agreements now include frozen terms and proposal snapshots, revocable seven-day private signing links, explicit client consent, immutable signature history and retry recovery. This is a single-signatory slice; countersigning, amendments, attachments and legal templates remain open. See [agreements and signing](45-agreements-and-signing.md) for validation and limits.
 
 Origin labels: **B** = freelancing business project; **E** = ecommerce template; **N** = new work. A combined label means adapted source functionality plus new behavior. Concrete source paths and limitations are in [the reuse map](02-source-audit.md).
@@ -220,6 +222,8 @@ September 23 continuation: persisted cart validation and retry-safe multi-line o
 
 ## 10. Public design and publishing
 
+- [x] **N** Public-site SEO foundation and super-admin Search & sharing settings: homepage metadata, canonical URLs, Open Graph/Twitter previews, website structured data, production indexing controls and a published-artwork sitemap. Homepage visual expansion was reverted at the user's request. See [SEO scope](48-website-seo.md).
+
 Implemented gallery slice: `/art` and stable artwork detail pages, search/series/medium filters, publication snapshots with selected display images, caption/alt text/credits/order, unpublish and automatic withdrawal on archive/draft/rights review, related work and product links, enlarged viewer, and the shared public shop-style navbar. See [public gallery](34-public-gallery.md). Broader publishing, homepage composition, collections, and SEO groups below remain open.
 
 - [ ] **B/E/N** Implement design tokens and shared mobile UI primitives from the [design brief](05-design.md).
@@ -227,7 +231,7 @@ Implemented gallery slice: `/art` and stable artwork detail pages, search/series
 - [ ] **N** Build the art-first landing sequence, latest collection, appearances, collaborations, artist intro, and inquiry links.
 - [ ] **B/E/N** Adapt content editing for public artwork stories, collaborations, journal, biography, and events with draft/publish controls.
 - [ ] **N** Verify partner credits, permitted images, external links, and portfolio publication rights; distinguish non-sale features from products.
-- [ ] **B/E/N** Adapt metadata, canonical URLs, social previews, sitemap, robots, structured data, and redirects for the chosen domain.
+- [ ] **B/E/N** Complete domain deployment/alias redirects and live SEO verification. Metadata, canonical URLs, social previews, sitemap, robots, website structured data and admin SEO controls are implemented; `sadboi.art` connection, Search Console setup and production verification remain pending.
 - [ ] **N** Add optimized artwork derivatives, accessible image viewing, reduced-motion behavior, and optional restrained animation.
 - [ ] **N** Build mailing-list consent/subscription management and privacy-aware analytics if enabled.
 - [ ] **N** Implement mobile dashboard/POS/commission-review/signing designs and readable financial/document surfaces.

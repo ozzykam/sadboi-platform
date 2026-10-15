@@ -30,7 +30,7 @@ export function ShopIntro() {
 
 export function GallerySkeleton() {
   return (
-    <main id="gallery-main" className="gallery-main">
+    <main id="gallery-main" className="gallery-main gallery-main-fluid">
       <GalleryIntro />
       <p role="status" className="sr-only">
         Loading artwork…
@@ -45,7 +45,7 @@ export function GallerySkeleton() {
           <span className="skeleton-surface skeleton-line" />
           <span>THE GALLERY</span>
         </div>
-        <div className="gallery-grid">
+        <div className="gallery-grid gallery-grid-fluid">
           {[0, 1, 2, 3, 4, 5].map((n) => (
             <div className="gallery-card" key={n}>
               <div

@@ -12,11 +12,17 @@ import {
 import { useState } from "react";
 import { useDrafts } from "@/lib/draft-store";
 import { ArtworkMark, Badge, PageHeading } from "./ui";
+import {
+  ArtworkTable,
+  ArtworkViewToggle,
+  type ArtworkView,
+} from "./artwork-table";
 
 export function ArtworkList() {
   const { catalog, ready } = useDrafts();
   const params = useSearchParams();
   const [query, setQuery] = useState("");
+  const [view, setView] = useState<ArtworkView>("table");
   const [status, setStatus] = useState(params.get("status") ?? "all");
   const [rights, setRights] = useState(params.get("rights") ?? "all");
   const filtered = catalog.artworks.filter(
@@ -79,49 +85,53 @@ export function ArtworkList() {
             ? `${filtered.length} ${filtered.length === 1 ? "work" : "works"}`
             : "Opening archive…"}
         </span>
-        <span>LOCAL DRAFT CATALOG</span>
+        <ArtworkViewToggle view={view} onChange={setView} />
       </div>
       {filtered.length ? (
-        <div className="artwork-grid">
-          {filtered.map((art, index) => (
-            <Link
-              href={`/admin/artworks/${art.id}`}
-              className="artwork-card"
-              key={art.id}
-            >
-              <div className="artwork-card-image">
-                <ArtworkMark title={art.title} large />
-                <span className="artwork-index">
-                  {(index + 1).toString().padStart(2, "0")}
-                </span>
-                <span className="artwork-arrow">
-                  <ArrowUpRight size={20} />
-                </span>
-              </div>
-              <div className="artwork-card-info">
-                <div>
-                  <h2>{art.title}</h2>
-                  <p>
-                    {art.series || "Independent work"} · {art.year}
-                  </p>
+        view === "table" ? (
+          <ArtworkTable artworks={filtered} />
+        ) : (
+          <div className="artwork-grid">
+            {filtered.map((art, index) => (
+              <Link
+                href={`/admin/artworks/${art.id}`}
+                className="artwork-card"
+                key={art.id}
+              >
+                <div className="artwork-card-image">
+                  <ArtworkMark title={art.title} large />
+                  <span className="artwork-index">
+                    {(index + 1).toString().padStart(2, "0")}
+                  </span>
+                  <span className="artwork-arrow">
+                    <ArrowUpRight size={20} />
+                  </span>
                 </div>
-                <Badge tone={art.status === "ready" ? "green" : "neutral"}>
-                  {art.status}
-                </Badge>
-              </div>
-              <div className="artwork-card-footer">
-                <span>{art.medium}</span>
-                <span>
-                  {art.rights === "review"
-                    ? "Rights review needed"
-                    : art.rights === "owned"
-                      ? "Artist owned"
-                      : "Licensed work"}
-                </span>
-              </div>
-            </Link>
-          ))}
-        </div>
+                <div className="artwork-card-info">
+                  <div>
+                    <h2>{art.title}</h2>
+                    <p>
+                      {art.series || "Independent work"} · {art.year}
+                    </p>
+                  </div>
+                  <Badge tone={art.status === "ready" ? "green" : "neutral"}>
+                    {art.status}
+                  </Badge>
+                </div>
+                <div className="artwork-card-footer">
+                  <span>{art.medium}</span>
+                  <span>
+                    {art.rights === "review"
+                      ? "Rights review needed"
+                      : art.rights === "owned"
+                        ? "Artist owned"
+                        : "Licensed work"}
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )
       ) : (
         <div className="empty-state roomy">
           <GalleryVerticalEnd size={34} strokeWidth={1.2} />
