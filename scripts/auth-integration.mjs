@@ -115,7 +115,7 @@ try {
  const legalCookie=session(legalSession); check("request role cannot override assigned role");
  redirected(await request("/admin/settings",{headers:{Cookie:legalCookie}}),"/admin");check("legal cannot access workspace settings");
  redirected(await request("/admin/artworks/new",{headers:{Cookie:legalCookie}}),"/admin");check("legal cannot create artwork");
- if(process.argv.includes("--product-pages")) { const {productPageChecks}=await import("./product-pages-integration.mjs"); await productPageChecks({request,csrf,ownerCookie,db,check,origin}); }
+ if(process.argv.includes("--product-pages")) { const {productPageChecks}=await import("./product-pages-integration.mjs"); await productPageChecks({request,csrf,ownerCookie,legalCookie,db,check,origin}); }
  if(process.argv.includes("--collections")) { const {collectionChecks}=await import("./shop-collections-integration.mjs"); await collectionChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin}); }
  if(process.argv.includes("--seo")) { const {seoChecks}=await import("./seo-integration.mjs"); await seoChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin}); }
  if(process.argv.includes("--workspace")) { const {workspaceChecks}=await import("./workspace-integration.mjs"); await workspaceChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin}); }

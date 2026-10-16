@@ -496,6 +496,15 @@ export default async function Page() {
           <p className="eyebrow">01 / CATALOG SETUP</p>
           <h2 id="products-title">Create a product and its variants</h2>
           <p>
+            Inventory shows image cards with a product title. The pencil in the
+            upper-right opens the product edit page; the eye at the bottom opens
+            its full details and variations table. Open a variation from that
+            table to view its images, description, specifications, and price.
+            Choose <strong>Edit variation</strong> to update it, or
+            <strong> View stock &amp; history</strong> to manage its inventory.
+            Saving an edit returns you to the details page.
+          </p>
+          <p>
             <strong>Artwork</strong> is the original creative work. A{" "}
             <strong>product</strong> is an item based on it, such as an art
             print or T-shirt. A <strong>variant</strong> (sometimes called a
@@ -527,7 +536,7 @@ export default async function Page() {
             <li>
               <strong>Add its first variant.</strong> Choose{" "}
               <strong>Add first variant</strong> after saving, or{" "}
-              <strong>Add variant</strong> on the product card. Enter a unique
+              <strong>Add variation</strong> on the product details page. Enter a unique
               SKU such as SB-MG-PRINT-A3, a variant name, and the relevant size,
               color, material, or finish. For example, an apparel product can
               have Small/Black and Medium/Black variants, while a print product
@@ -543,7 +552,8 @@ export default async function Page() {
             <li>
               <strong>Repeat for each version.</strong> Give each separately
               priced or counted version its own SKU. Choose{" "}
-              <strong>Record stock</strong> after saving to begin tracking units
+              <strong>Record stock</strong> after saving in Inventory, or
+              <strong> View stock &amp; history</strong> on its detail page, to begin tracking units
               by location.
             </li>
           </ol>
@@ -1271,7 +1281,9 @@ export default async function Page() {
               example: “Signed 8 × 10 print on archival cotton paper, with a
               white border for framing.” Choose up to 12 JPEG, PNG, or WebP
               images, each up to 12 MB. Images save immediately in selection
-              order; the first is the cover. Remove an unwanted image using its
+              order; the first is the cover. Click <strong>Set as cover</strong>
+              under another image to make it the cover immediately. Its thumbnail
+              appears beside the variation details in the order form. Remove an unwanted image using its
               Remove button. Save applies the description and other variation
               details. Existing single images remain as the first gallery image.
             </p>

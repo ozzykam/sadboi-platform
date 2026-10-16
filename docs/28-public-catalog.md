@@ -20,7 +20,21 @@ Staff maintain the page through Inventory → Products & variants; no new publis
 
 ## Verification
 
+### Inventory browsing and detail pages
+
+The staff inventory catalog uses equal-sized image cards with a two-line product title. A pencil in the upper-right opens a dedicated edit page and a centered eye at the bottom of the image opens the product details. Missing images have an explicit placeholder; private images use the authenticated inventory image route.
+
+`/admin/inventory/products/[id]` shows product details and a thumbnail table of all variations, including private and archived variations. `/admin/inventory/variants/[id]` shows its full image gallery, description, SKU, price, specifications and fulfillment method. Both have dedicated `/edit` pages that reuse the existing revision-aware forms and image controls. Save returns to the detail page; Close leaves metadata unchanged (image actions still save immediately). Product pages offer Add variation, and variation pages link to the selected SKU's stock and history. Super admins can edit; accounting can view. Other roles and anonymous requests cannot access these pages.
+
+All **42 combined integration checks passed**, covering staff detail/editor access, anonymous and unrelated-role rejection, private/archived records, invalid routes, variant galleries and stock retrieval. Browser checks covered equal card dimensions, image and missing-image cards, the product pencil action, product and variation saves returning to updated details, variation cover persistence, thumbnail selection, stock-link selection, and 390px layouts without horizontal page overflow. Only disposable emulator records were edited.
+
+The inventory redesign also passed the complete `pnpm check`: type checking, lint, 138 domain tests, seven credential tests, two runtime tests and the production build. Build output was isolated with `SADBOI_AUTH_TEST=1`.
+
 ### Variation descriptions and image galleries
+
+Each saved variation image now offers **Set as cover**. This immediately moves the selected image to the front of the gallery, preserving the order of the other images. Cover changes are transactional, require staff authorization and CSRF, and cannot select an image that has been removed. The shared order form shows a 48px cover thumbnail beside each variation's details; clicking it opens the existing details/carousel dialog. Variations without their own image keep their text-only order row.
+
+Cover selection passed **40 combined integration checks**, including idempotent selection, unknown/removed-image rejection, stale metadata preservation and matching public cover bytes/thumbnail markup. Browser verification confirmed selecting another cover in Inventory, the changed shop thumbnail, opening details, and mobile reflow without horizontal overflow. The inventory state also receives saved gallery changes so reopening the editor uses the current cover. The complete isolated `pnpm check` passed (type checking, lint, 138 domain tests, seven credential tests, two runtime tests and production build). These checks used disposable emulator records only.
 
 Saved variants now have an optional 3,000-character description and an ordered gallery of up to 12 images. Inventory supports selecting multiple JPEG/PNG/WebP files (12 MB each), saved previews and per-image removal. Uploads append transactionally; the first image remains the cover. Removing it promotes the next image. Older single-image records remain supported, and metadata saves preserve the independently managed gallery. Image files remain private storage objects; removed members no longer resolve through admin/public image routes.
 

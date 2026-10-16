@@ -4,6 +4,7 @@ import {
   uploadInventoryImage,
   readStaffInventoryImage,
   removeVariantImage,
+  setVariantCover,
 } from "@/server/inventory-images";
 export async function GET(
   _request: Request,
@@ -21,6 +22,28 @@ export async function GET(
       id,
       new URL(_request.url).searchParams.get("asset"),
     );
+  } catch (error) {
+    return inventoryFailure(error);
+  }
+}
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ resource: string; id: string }> },
+) {
+  try {
+    const { resource, id } = await params;
+    if (resource !== "variants")
+      return Response.json(
+        { error: "Variation images only." },
+        { status: 400 },
+      );
+    return Response.json({
+      image: await setVariantCover(
+        id,
+        new URL(request.url).searchParams.get("asset") ?? "",
+        request,
+      ),
+    });
   } catch (error) {
     return inventoryFailure(error);
   }

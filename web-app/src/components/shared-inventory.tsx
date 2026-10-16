@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { VariantImages } from "./variant-images";
-import {Lightbulb } from "lucide-react";
+import { Lightbulb } from "lucide-react";
+import { InventoryProductCards } from "./inventory-product-cards";
 import {
   parseUsd,
   type InventoryCatalog,
@@ -21,7 +22,6 @@ import {
   Select,
   Status,
   value,
-  usd,
 } from "./inventory-form";
 import { InventoryStockPanel } from "./inventory-stock";
 import { ReplenishmentPanel } from "./inventory-planning";
@@ -267,11 +267,13 @@ function VariantFields({
   productId,
   catalog,
   onUploadingChange,
+  onImagesChange,
 }: {
   record?: StockVariantRecord;
   productId?: string;
   catalog: InventoryCatalog;
   onUploadingChange: (uploading: boolean) => void;
+  onImagesChange: (assetIds: string[]) => void;
 }) {
   return (
     <>
@@ -377,6 +379,7 @@ function VariantFields({
           id={record.id}
           initial={record.imageAssetIds ?? (record.imageAssetId ? [record.imageAssetId] : [])}
           onUploadingChange={onUploadingChange}
+          onImagesChange={onImagesChange}
         />
       )}
       <Status initial={record?.status} />
@@ -432,16 +435,18 @@ function LocationFields({ record }: { record?: StockLocationRecord }) {
     </>
   );
 }
-function MetadataEditor({
+export function MetadataEditor({
   editing,
   catalog,
   onSaved,
   onClose,
+  onVariantImagesChange,
 }: {
   editing: Editing;
   catalog: InventoryCatalog;
   onSaved: (id: string) => Promise<void>;
   onClose: () => void;
+  onVariantImagesChange: (id: string, assetIds: string[]) => void;
 }) {
   const [imageUploading, setImageUploading] = useState(false);
   const product =
@@ -527,6 +532,7 @@ function MetadataEditor({
             productId={editing.productId}
             catalog={catalog}
             onUploadingChange={setImageUploading}
+            onImagesChange={(assetIds) => onVariantImagesChange(editing.id, assetIds)}
           />
         ) : (
           <LocationFields record={location} />
@@ -538,20 +544,22 @@ function MetadataEditor({
 export function SharedInventory({
   initial,
   canEdit,
+  initialVariant,
 }: {
   initial: InventoryCatalog;
   canEdit: boolean;
+  initialVariant?: string;
 }) {
   const [catalog, setCatalog] = useState(initial),
     [tab, setTab] = useState<
       "catalog" | "stock" | "locations" | "replenishment" | "reservations"
-    >("catalog");
+    >(initialVariant ? "stock" : "catalog");
   const [nextStep, setNextStep] = useState<{
     resource: Editing["resource"];
     id: string;
   } | null>(null);
   const [editing, setEditing] = useState<Editing | null>(null),
-    [selected, setSelected] = useState(initial.variants[0]?.id ?? "");
+    [selected, setSelected] = useState(initialVariant ?? initial.variants[0]?.id ?? "");
   const [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
     [query, setQuery] = useState(""),
@@ -701,6 +709,12 @@ export function SharedInventory({
           catalog={catalog}
           onSaved={saved}
           onClose={() => setEditing(null)}
+          onVariantImagesChange={(id, assetIds) => setCatalog((current) => ({
+            ...current,
+            variants: current.variants.map((variant) => variant.id === id
+              ? { ...variant, imageAssetIds: assetIds, imageAssetId: assetIds[0] }
+              : variant),
+          }))}
         />
       ) : tab === "reservations" ? (
         <InventoryReservations inventory={catalog} canEdit={canEdit} />
@@ -748,8 +762,8 @@ export function SharedInventory({
             )}
           </div>
           <p className="field-hint">
-            This is your private product catalog. Storefront publishing and
-            checkout come later.
+            Open a product to view its details and variations. Use the pencil
+            to edit its information.
           </p>
           {!catalog.products.length && (
             <div className="empty-state roomy">
@@ -763,87 +777,7 @@ export function SharedInventory({
           {!!catalog.products.length && !products.length && (
             <p className="notice">No products match your search.</p>
           )}
-          <div className="inv-cards">
-            {products.map((p) => (
-              <article className="inv-panel" key={p.id}>
-                <div className="section-heading">
-                  <div>
-                    <h2>{p.title}</h2>
-                    <p className="field-hint">
-                      {p.kind} / {p.status}
-                    </p>
-                  </div>
-                  {canEdit && (
-                    <Button
-                      variant="ghost"
-                      onClick={() => edit("products", p.id)}
-                    >
-                      Edit product
-                    </Button>
-                  )}
-                </div>
-                {p.description && (
-                  <p className="inv-description">{p.description}</p>
-                )}
-                {canEdit && (
-                  <Link
-                    className="inline-link"
-                    href={"/admin/artworks/" + p.artworkId}
-                  >
-                    View original artwork
-                  </Link>
-                )}
-                <ul className="inv-variants">
-                  {catalog.variants
-                    .filter((v) => v.productId === p.id)
-                    .map((v) => (
-                      <li key={v.id}>
-                        <div>
-                          <strong>{v.name}</strong>
-                          <p>
-                            {v.sku} / {usd(v.priceMinor)} /{" "}
-                            {v.fulfillment.replaceAll("_", " ")}
-                          </p>
-                          <p>
-                            {[v.size, v.color, v.material, v.finish]
-                              .filter(Boolean)
-                              .join(" / ")}
-                          </p>
-                          {v.status === "archived" && <Badge>Archived</Badge>}
-                        </div>
-                        <div className="inv-actions">
-                          <Button
-                            variant="secondary"
-                            onClick={() => {
-                              setSelected(v.id);
-                              setTab("stock");
-                            }}
-                          >
-                            View stock
-                          </Button>
-                          {canEdit && (
-                            <Button
-                              variant="ghost"
-                              onClick={() => edit("variants", v.id)}
-                            >
-                              Edit
-                            </Button>
-                          )}
-                        </div>
-                      </li>
-                    ))}
-                </ul>
-                {canEdit && p.status === "active" && (
-                  <Button
-                    variant="secondary"
-                    onClick={() => edit("variants", "new", p.id)}
-                  >
-                    Add variant
-                  </Button>
-                )}
-              </article>
-            ))}
-          </div>
+          <InventoryProductCards products={products} canEdit={canEdit} />
         </section>
       ) : tab === "locations" ? (
         <section>

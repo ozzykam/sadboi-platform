@@ -111,6 +111,45 @@ export async function uploadInventoryImage(
   });
   return { assetId, assetIds: images };
 }
+export async function setVariantCover(
+  id: string,
+  assetId: string,
+  request: Request,
+) {
+  const staff = await inventoryStaff(true);
+  await validateMutation(request);
+  inventoryId(id);
+  if (!/^[a-f0-9-]{36}$/.test(assetId))
+    throw new AccessError(400, "invalid-image", "Choose a saved image.");
+  const ref = adminServices().db.doc(
+    `businesses/${businessId}/productVariants/${id}`,
+  );
+  return adminServices().db.runTransaction(async (tx) => {
+    const record = await tx.get(ref);
+    if (!record.exists)
+      throw new AccessError(404, "not-found", "Variation not found.");
+    const images = inventoryImages(record.data()!);
+    const cover = images.find((image) => image.assetId === assetId);
+    if (!cover)
+      throw new AccessError(
+        404,
+        "not-found",
+        "Image no longer belongs to this variation. Reopen the variation and try again.",
+      );
+    const ordered = [
+      cover,
+      ...images.filter((image) => image.assetId !== assetId),
+    ];
+    tx.update(ref, {
+      catalogImages: ordered,
+      "input.imageAssetId": cover.assetId,
+      imagePath: cover.path,
+      imageUpdatedAt: new Date().toISOString(),
+      imageUpdatedBy: staff.uid,
+    });
+    return { assetIds: ordered.map((image) => image.assetId) };
+  });
+}
 export async function removeVariantImage(
   id: string,
   assetId: string,

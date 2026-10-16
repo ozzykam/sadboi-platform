@@ -11,6 +11,7 @@ export async function productPageChecks({
   request,
   csrf,
   ownerCookie,
+  legalCookie,
   db,
   check,
   origin,
@@ -92,6 +93,7 @@ export async function productPageChecks({
     });
   const balance = collection("stockBalances").doc(id());
   await balance.set({
+    businessId: "sadboi",
     variantId,
     locationId,
     onHand: 10,
@@ -291,6 +293,17 @@ export async function productPageChecks({
     variant,
     variantInput,
     sharp,
+    check,
+  });
+  const { inventoryPageChecks } =
+    await import("./inventory-pages-integration.mjs");
+  await inventoryPageChecks({
+    request,
+    ownerCookie,
+    legalCookie,
+    product,
+    variant,
+    hiddenId,
     check,
   });
   if (process.argv.includes("--product-preview")) {

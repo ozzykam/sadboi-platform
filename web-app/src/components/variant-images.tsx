@@ -7,10 +7,12 @@ export function VariantImages({
   id,
   initial,
   onUploadingChange,
+  onImagesChange,
 }: {
   id: string;
   initial: string[];
   onUploadingChange: (busy: boolean) => void;
+  onImagesChange: (assetIds: string[]) => void;
 }) {
   const [images, setImages] = useState(initial);
   const [busy, setBusy] = useState(false);
@@ -49,6 +51,7 @@ export function VariantImages({
         const data = await response.json();
         if (!response.ok) throw new Error(data.error ?? "Upload failed.");
         setImages(data.image.assetIds);
+        onImagesChange(data.image.assetIds);
         saved++;
       }
       setMessage(
@@ -67,7 +70,7 @@ export function VariantImages({
       onUploadingChange(false);
     }
   }
-  async function remove(assetId: string) {
+  async function updateImage(assetId: string, action: "cover" | "remove") {
     if (lock.current) return;
     lock.current = true;
     setBusy(true);
@@ -77,13 +80,18 @@ export function VariantImages({
     try {
       const result = await inventoryRequest(
         `/api/inventory/images/variants/${id}?asset=${encodeURIComponent(assetId)}`,
-        { method: "DELETE" },
+        { method: action === "cover" ? "PATCH" : "DELETE" },
       );
       setImages(result.image.assetIds);
-      setMessage("Image removed from this variation.");
+      onImagesChange(result.image.assetIds);
+      setMessage(
+        action === "cover"
+          ? "Cover image saved."
+          : "Image removed from this variation.",
+      );
     } catch (cause) {
       setError(
-        cause instanceof Error ? cause.message : "Could not remove the image.",
+        cause instanceof Error ? cause.message : "Could not update the image.",
       );
     } finally {
       lock.current = false;
@@ -109,7 +117,8 @@ export function VariantImages({
       <p className="field-hint">
         Choose one or more JPEG, PNG, or WebP files, up to 12 MB each and 12
         images total. Images save immediately, in selection order. The first
-        image is the cover.
+        image is the cover. Use Set as cover to choose a different image; this
+        saves immediately.
       </p>
       <div className="inv-variant-images">
         {images.map((assetId, index) => (
@@ -124,11 +133,22 @@ export function VariantImages({
             <figcaption>
               {index === 0 ? "Cover image" : `Image ${index + 1}`}
             </figcaption>
+            {index > 0 && (
+              <button
+                type="button"
+                className="button secondary"
+                disabled={busy}
+                onClick={() => void updateImage(assetId, "cover")}
+                aria-label={`Set variation image ${index + 1} as cover`}
+              >
+                Set as cover
+              </button>
+            )}
             <button
               type="button"
               className="button secondary"
               disabled={busy}
-              onClick={() => void remove(assetId)}
+              onClick={() => void updateImage(assetId, "remove")}
               aria-label={`Remove variation image ${index + 1}`}
             >
               Remove

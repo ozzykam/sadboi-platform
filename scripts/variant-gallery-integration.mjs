@@ -73,6 +73,64 @@ export async function variantGalleryChecks({
   check(
     "variation descriptions persist and public pages expose the full gallery without metadata saves overwriting it",
   );
+  const chooseCover = (asset, requestHeaders = headers) =>
+    request(endpoint + `?asset=${asset}`, {
+      method: "PATCH",
+      headers: requestHeaders,
+    });
+  assert.equal(
+    (
+      await chooseCover(gallery[2].assetId, {
+        Origin: origin,
+        Cookie: ownerCookie,
+      })
+    ).status,
+    403,
+  );
+  assert.equal(
+    (await chooseCover(gallery[2].assetId, { Origin: origin })).status,
+    401,
+  );
+  assert.equal((await chooseCover(randomUUID())).status, 404);
+  assert.equal((await chooseCover("invalid")).status, 400);
+  const reordered = [gallery[2], gallery[0], gallery[1]];
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const response = await chooseCover(gallery[2].assetId);
+    assert.equal(response.status, 200, await response.clone().text());
+    assert.deepEqual(
+      (await response.json()).image.assetIds,
+      reordered.map((image) => image.assetId),
+    );
+  }
+  assert.equal((await save({ imageAssetId: initial })).status, 200);
+  const afterCover = (await variant.get()).data();
+  assert.deepEqual(afterCover.catalogImages, reordered);
+  assert.equal(afterCover.input.imageAssetId, gallery[2].assetId);
+  assert.equal(afterCover.imagePath, gallery[2].path);
+  const coverResponse = await request(
+    `/api/store/catalog/images/variants/${variant.id}`,
+  );
+  const selectedResponse = await request(publicUrl(gallery[2].assetId));
+  assert.equal(coverResponse.status, 200);
+  assert.deepEqual(
+    Buffer.from(await coverResponse.arrayBuffer()),
+    Buffer.from(await selectedResponse.arrayBuffer()),
+  );
+  const coverHtml = await (await request(`/shop/${product.id}`)).text();
+  assert.ok(coverHtml.includes(`v=${gallery[2].assetId}`));
+  assert.match(
+    coverHtml,
+    new RegExp(
+      `class="shop-variation-cover"[\\s\\S]*?asset=${gallery[2].assetId}`,
+    ),
+  );
+  // Restore the original order for the removal checks below.
+  assert.equal((await chooseCover(gallery[1].assetId)).status, 200);
+  assert.equal((await chooseCover(gallery[0].assetId)).status, 200);
+  assert.deepEqual((await variant.get()).data().catalogImages, gallery);
+  check(
+    "cover selection requires authentication and CSRF, preserves every image, survives stale metadata saves and updates the public cover and order-form thumbnail",
+  );
   for (const ref of [variant, product]) {
     await ref.update({ "input.publication": "private" });
     for (const image of gallery)
@@ -99,6 +157,7 @@ export async function variantGalleryChecks({
     });
     assert.equal(removed.status, 200);
     assert.equal((await request(publicUrl(image.assetId))).status, 404);
+    assert.equal((await chooseCover(image.assetId)).status, 404);
     assert.equal(
       (
         await request(endpoint + `?asset=${image.assetId}`, {

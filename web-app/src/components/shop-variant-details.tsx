@@ -16,6 +16,7 @@ export function ShopVariantDetails({
   const dialog = useRef<HTMLDialogElement>(null);
   const touch = useRef<{ x: number; y: number } | null>(null);
   const [index, setIndex] = useState(0);
+  const cover = variant.imageUrls?.[0] ?? variant.imageUrl;
   const images = variant.imageUrls?.length
     ? variant.imageUrls
     : variant.imageUrl
@@ -45,8 +46,13 @@ export function ShopVariantDetails({
           dialog.current?.showModal();
         }}
       >
-        <strong>${(variant.priceMinor / 100).toFixed(2)}</strong>
-        <span>
+        {cover && (
+          <span className="shop-variation-cover" aria-hidden="true">
+            <CatalogImage variant="shop" src={cover} alt="" sizes="48px" />
+          </span>
+        )}
+        <span className="shop-variation-summary">
+          <strong>${(variant.priceMinor / 100).toFixed(2)}</strong>
           {variant.name}
           <small>
             {[variant.size, variant.color, variant.material, variant.finish]
@@ -119,9 +125,9 @@ export function ShopVariantDetails({
                       move(point.clientX < start.x ? 1 : -1);
                   }}
                 >
-                <CatalogImage
-                  variant="shop"
-                  sizes="(max-width: 680px) 90vw, 480px"
+                  <CatalogImage
+                    variant="shop"
+                    sizes="(max-width: 680px) 90vw, 480px"
                     key={images[index]}
                     src={images[index]}
                     alt={`${variant.name}, image ${index + 1} of ${images.length}`}

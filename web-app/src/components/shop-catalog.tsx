@@ -365,7 +365,7 @@ export function ShopCatalog({ products, shipping, detailProduct, collection, col
                   <div className="shop-dialog-title-header">
                     <p className="eyebrow">{selected.kind}</p>
                     <h2 id="shop-dialog-title">{selected.title}</h2>
-                    <Link className="inline-link" href={`/shop/${selected.id}`}>Open product page ↗</Link>
+                    <Link className="inline-link" href={`/shop/${selected.id}`}>...view more</Link>
                   </div>
                   <div className="shop-dialog-description">
                     {(
