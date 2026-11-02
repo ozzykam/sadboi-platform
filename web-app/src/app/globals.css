@@ -4193,6 +4193,35 @@ td small {
   min-width: 0;
   overflow-wrap: anywhere;
 }
+.shop-product-meta > div {
+  flex: 1;
+  min-width: 0;
+}
+.shop-product-meta > strong {
+  flex-shrink: 0;
+}
+.shop-product-meta .shop-card-title {
+  overflow: hidden;
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+.shop-card-title > span {
+  display: inline-block;
+  width: max-content;
+  transform: translateX(0);
+}
+.shop-card-title[data-overflow="true"] {
+  mask-image: linear-gradient(to right, #000 calc(100% - 18px), transparent);
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .shop-product:hover .shop-card-title[data-overflow="true"] > span {
+    animation: shop-title-scroll var(--title-duration) linear infinite alternate;
+  }
+}
+@keyframes shop-title-scroll {
+  0%, 10% { transform: translateX(0); }
+  90%, 100% { transform: translateX(var(--title-travel)); }
+}
 .shop-product-view {
   box-sizing: border-box;
 }

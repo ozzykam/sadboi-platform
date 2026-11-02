@@ -22,6 +22,7 @@ import {
 import { CatalogImage } from "./catalog-image";
 import Link from "next/link";
 import { ShopProductDetail } from "./shop-product-detail";
+import { ShopCardTitle } from "./shop-card-title";
 import type { PublicCollection } from "@sadboi/core";
 import { ShopIntro } from "./catalog-skeletons";
 import { ArrowLeft, Eye, ShoppingBag } from "lucide-react";
@@ -292,7 +293,7 @@ export function ShopCatalog({ products, shipping, detailProduct, collection, col
                       className="shop-product-meta shop-product-meta-button"
                     >
                       <div>
-                        <h3>{product.title}</h3>
+                        <ShopCardTitle title={product.title} />
                         <p>
                           {product.variants.length}{" "}
                           {product.variants.length === 1 ? "option" : "options"}
