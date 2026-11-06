@@ -1,5 +1,7 @@
 # Build checklist
 
+November 5 priority exception requested by user: reusable standalone invoicing for a current custom-artwork job is implemented locally alongside the existing signed-commission billing path. See [standalone invoice scope](50-standalone-invoices.md). This does not complete broader licensing, Stripe collection, or business-finance scope; the priority order below remains in effect.
+
 October 14 user priority order: **Catalog and public website → Agreements and licensing → Business finances → In-person sales → Event preparation → Commission completion → Gallery consignment**. Work follows that order; phase numbering below describes dependencies rather than current priority. Existing explicit provider/proof-review deferrals remain in effect.
 
 October 5 agreement continuation: accepted-proposal agreements now include frozen terms and proposal snapshots, revocable seven-day private signing links, explicit client consent, immutable signature history and retry recovery. This is a single-signatory slice; countersigning, amendments, attachments and legal templates remain open. See [agreements and signing](45-agreements-and-signing.md) for validation and limits.

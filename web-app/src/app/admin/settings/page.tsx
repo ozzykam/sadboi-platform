@@ -11,6 +11,11 @@ export default async function Page() {
     return (
       <>
         <section className="notice">
+          <strong>Invoices</strong>
+          <p>Set studio billing details, payment terms, and reusable usage language.</p>
+          <Link className="button secondary" href="/admin/settings/invoices">Invoice defaults</Link>
+        </section>
+        <section className="notice">
           <strong>Public website</strong>
           <p>Manage search visibility, homepage metadata and social sharing.</p>
           <Link className="button secondary" href="/admin/settings/seo">

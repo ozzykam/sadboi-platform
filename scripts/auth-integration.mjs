@@ -18,12 +18,13 @@ const auth = getAuth(app); const db = getFirestore(app);
 // Browser previews use a separate hostname so their cookies cannot replace a
 // live developer session on 127.0.0.1:3100 (cookies are not scoped to ports).
 const browserPreview = process.argv.includes("--collection-preview") || process.argv.includes("--product-preview") || process.argv.includes("--seo-preview") || process.argv.includes("--commission-preview") || process.argv.includes("--dispute-preview") || process.argv.includes("--shipment-preview") || process.argv.includes("--after-sales-preview") || process.argv.includes("--shipping-preview") || process.argv.includes("--gallery-preview") || process.argv.includes("--fulfillment-preview") || process.argv.includes("--payment-preview") || process.argv.includes("--lifecycle-preview") || process.argv.includes("--email-preview");
+const invoicePreview = process.argv.includes("--invoice-preview");
 const paymentSecret = "emulator-only-" + randomUUID();
 const expirySecret = "emulator-only-expiry-" + randomUUID();
 const stripe = (process.argv.includes("--disputes") || process.argv.includes("--after-sales") || process.argv.includes("--order-lifecycle") || process.argv.includes("--shipping")) ? await (await import("./stripe-fixture.mjs")).stripeFixture() : null;
 const email = process.argv.includes("--order-emails") ? await (await import("./email-fixture.mjs")).emailFixture() : null;
-const origin = browserPreview || process.argv.includes("--proposal-preview") || process.argv.includes("--billing-preview") || process.argv.includes("--event-preview") ? "http://localhost:3102" : "http://127.0.0.1:3102";
-const aliasOrigin = browserPreview || process.argv.includes("--proposal-preview") || process.argv.includes("--billing-preview") || process.argv.includes("--event-preview") ? "http://127.0.0.1:3102" : "http://localhost:3102";
+const origin = browserPreview || invoicePreview || process.argv.includes("--proposal-preview") || process.argv.includes("--billing-preview") || process.argv.includes("--event-preview") ? "http://localhost:3102" : "http://127.0.0.1:3102";
+const aliasOrigin = browserPreview || invoicePreview || process.argv.includes("--proposal-preview") || process.argv.includes("--billing-preview") || process.argv.includes("--event-preview") ? "http://127.0.0.1:3102" : "http://localhost:3102";
 const server = spawn(process.execPath, [fromWeb.resolve("next/dist/bin/next"), "dev", "--hostname", "127.0.0.1", "--port", "3102"], {
  cwd: path.join(root, "web-app"),
  env: {...process.env, SADBOI_MODE:"staff", SADBOI_AUTH_ENV:"emulator", SADBOI_APP_ORIGIN:origin, SADBOI_AUTH_TEST:"1", NEXT_TELEMETRY_DISABLED:"1", SADBOI_PAYMENT_WEBHOOK_SECRET:paymentSecret, SADBOI_EXPIRY_SECRET:expirySecret, SADBOI_STRIPE_ENABLED:"0", SADBOI_ORDER_EMAIL_MODE:"disabled", ...(stripe?.env ?? {}), ...(email?.env ?? {})},
@@ -124,6 +125,7 @@ try {
  if(process.argv.includes("--proposals")) { const {proposalChecks}=await import("./proposal-integration.mjs"); await proposalChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin}); }
  if(process.argv.includes("--agreements")) { const {agreementChecks}=await import("./agreement-integration.mjs"); await agreementChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin}); }
  if(process.argv.includes("--commission-billing")) { const {commissionBillingChecks}=await import("./commission-billing-integration.mjs"); await commissionBillingChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin}); }
+ if(process.argv.includes("--studio-invoices")) { const {studioInvoiceChecks}=await import("./studio-invoices-integration.mjs"); await studioInvoiceChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin}); }
  if(process.argv.includes("--events")) { const {eventChecks}=await import("./events-integration.mjs"); await eventChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin}); }
  if(process.argv.includes("--public-inquiries")) { const {publicInquiryChecks}=await import("./public-inquiry-integration.mjs"); await publicInquiryChecks({request,ownerCookie,legalCookie,identity,signIn,session,db,check,origin}); }
  if(process.argv.includes("--artworks")) { const {artworkChecks}=await import("./artwork-integration.mjs"); await artworkChecks({request,csrf,ownerCookie,legalCookie,identity,signIn,session,db,check,origin}); }

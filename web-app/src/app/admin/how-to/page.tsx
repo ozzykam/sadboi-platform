@@ -5,6 +5,7 @@ import { requireStaff } from "@/server/staff";
 import { AgreementHelp } from "@/components/agreement-help";
 import { ProposalFieldExamples } from "@/components/proposal-field-examples";
 import { CommissionBillingHelp } from "@/components/commission-billing-help";
+import { StudioInvoiceHelp } from "@/components/studio-invoice-help";
 import { EventHelp } from "@/components/event-help";
 import { SeoHelp } from "@/components/seo-help";
 import { ShopCollectionsHelp } from "@/components/shop-collections-help";
@@ -16,6 +17,7 @@ const topics = [
   ["seo", "Manage website SEO"],
   ["agreements", "Prepare and sign agreements"],
   ["commission-billing", "Invoice commission deposits and balances"],
+  ["studio-invoices", "Create standalone invoices"],
   ["events", "Plan events and publish appearances"],
   ["gallery", "Publish artwork to the gallery"],
   ["products", "Create products & variants"],
@@ -73,6 +75,7 @@ export default async function Page() {
       <div className="howto-content">
         <AgreementHelp />
         <CommissionBillingHelp />
+        <StudioInvoiceHelp />
         <EventHelp />
         <SeoHelp />
         <ShopCollectionsHelp />

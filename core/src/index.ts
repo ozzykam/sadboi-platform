@@ -33,6 +33,7 @@ export * from "./store-disputes";
 export * from "./commissions";
 export * from "./agreements";
 export * from "./commission-billing";
+export * from "./studio-invoices";
 export * from "./proposals";
 export * from "./public-inquiries";
 export * from "./events";
