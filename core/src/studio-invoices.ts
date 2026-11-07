@@ -214,6 +214,38 @@ export const studioInvoiceSchema = z
   })
   .strict();
 export type StudioInvoice = z.infer<typeof studioInvoiceSchema>;
+export const studioInvoiceTimeZone = "America/Chicago";
+export function studioInvoiceNumber(
+  lastDraftSavedAt: string,
+  billToName: string,
+  sequence: number,
+) {
+  if (
+    !z.iso.datetime().safeParse(lastDraftSavedAt).success ||
+    !Number.isSafeInteger(sequence) ||
+    sequence < 1
+  )
+    throw new Error("Invoice numbering needs a valid saved date and sequence.");
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: studioInvoiceTimeZone,
+    year: "2-digit",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date(lastDraftSavedAt));
+  const date = ["year", "month", "day"]
+    .map((type) => parts.find((part) => part.type === type)!.value)
+    .join("");
+  const letters = billToName
+    .normalize("NFKD")
+    .replace(/\p{M}/gu, "")
+    .replace(/[^\p{L}]/gu, "")
+    .toUpperCase();
+  const name = (Array.from(letters).slice(0, 3).join("") || "INV").padEnd(
+    3,
+    "X",
+  );
+  return `${date}-${name}-${String(sequence).padStart(3, "0")}`;
+}
 const commandFields = {
   invoiceId: z.uuid(),
   operationId: z.uuid(),

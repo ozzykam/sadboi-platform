@@ -689,9 +689,10 @@ export function StudioInvoiceEditor({
                 </div>
               )}
               <p>
-                Issue freezes the saved details, assigns an invoice number, and
-                sets the due date. Nothing is emailed and no Stripe invoice is
-                created.
+                Issue freezes the saved details and sets the due date. Numbers
+                use the draft’s last saved date in Chicago time, the first three
+                letters of the billed-to name, and a sequence: YYMMDD-NAM-001.
+                Nothing is emailed and no Stripe invoice is created.
               </p>
               <Button
                 disabled={

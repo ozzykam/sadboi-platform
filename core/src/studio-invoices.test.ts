@@ -8,6 +8,7 @@ import {
   studioInvoiceTotals,
   studioInvoicePaid,
   studioInvoiceStatus,
+  studioInvoiceNumber,
   type StudioInvoiceCommand,
 } from "./studio-invoices";
 
@@ -52,6 +53,44 @@ const draft = () =>
 const issued = () =>
   applyStudioInvoice(draft(), command("issue", 1), now, "INV-000001");
 describe("standalone invoices", () => {
+  it("numbers invoices from the last saved draft date in Chicago time and the recipient's first three letters", () => {
+    expect(
+      studioInvoiceNumber(
+        "2026-11-07T02:30:00.000Z",
+        "Jermaine of Flight of the Conchords",
+        1,
+      ),
+    ).toBe("261106-JER-001");
+    expect(
+      studioInvoiceNumber("2026-07-02T03:30:00.000Z", "  Élodie & Co.", 42),
+    ).toBe("260701-ELO-042");
+    expect(studioInvoiceNumber(now, "Li", 9)).toBe("261105-LIX-009");
+    expect(studioInvoiceNumber(now, "123", 10)).toBe("261105-INV-010");
+    expect(studioInvoiceNumber(now, "Jermaine", 1000)).toBe("261105-JER-1000");
+    expect(() => studioInvoiceNumber("bad-date", "Jermaine", 1)).toThrow(
+      "valid saved date",
+    );
+    expect(() => studioInvoiceNumber(now, "Jermaine", 0)).toThrow("sequence");
+  });
+  it("freezes the saved-date number when issued later and when voided", () => {
+    const saved = draft(),
+      number = studioInvoiceNumber(saved.updatedAt, saved.input.billTo.name, 8);
+    const invoice = applyStudioInvoice(
+      saved,
+      command("issue", 1),
+      "2026-11-10T14:00:00.000Z",
+      number,
+    );
+    expect(invoice.number).toBe("261105-JER-008");
+    expect(invoice.dueDate).toBe("2026-12-10");
+    expect(
+      applyStudioInvoice(
+        invoice,
+        command("void", 2),
+        "2026-11-11T14:00:00.000Z",
+      ).number,
+    ).toBe(number);
+  });
   it("keeps incomplete drafts but blocks unresolved tax, recipient and Stripe details on issue", () => {
     const initial = newStudioInvoice(defaultInvoiceDefaults);
     initial.billTo.name = "Provisional recipient";

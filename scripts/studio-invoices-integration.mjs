@@ -167,7 +167,7 @@ export async function studioInvoiceChecks({
   const draftHtml = await draftPrint.text();
   assert.equal(draftPrint.status, 200);
   assert.match(draftHtml, /Needs review/);
-  assert.match(draftHtml, /provisional recipient/);
+  assert.match(draftHtml, /Provisional recipient/);
   assert.match(draftHtml, /2,300.00/);
   assert.ok(!draftHtml.includes("PRIVATE CHANGE NOTE"));
   check(
@@ -185,12 +185,16 @@ export async function studioInvoiceChecks({
     post(cmd("save", 1, { input: ready })),
   ]);
   assert.deepEqual(race.map((r) => r.status).sort(), [201, 409]);
+  // An older draft saved late in Chicago must retain that local date on issue.
+  await c("studioInvoices").doc(invoiceId).update({
+    updatedAt: "2026-01-07T02:30:00.000Z",
+  });
   const issue = cmd("issue", 2);
   await Promise.all([ok(post(issue), 201), ok(post(issue), 201)]);
   detail = await ok(read(invoiceId));
   const issued = detail.invoice;
   assert.equal(issued.revision, 3);
-  assert.match(issued.number, /^INV-\d{6}$/);
+  assert.equal(issued.number, "260106-JER-001");
   assert.equal(
     (await c("counters").doc("studioInvoice").get()).data().value,
     1,
@@ -229,6 +233,7 @@ export async function studioInvoiceChecks({
     },
   });
   await Promise.all([ok(post(payment), 201), ok(post(payment), 201)]);
+  assert.equal((await ok(read(invoiceId))).invoice.number, issued.number);
   assert.equal(
     (await post({ ...payment, operationId: randomUUID(), expectedRevision: 4 }))
       .status,
@@ -255,7 +260,7 @@ export async function studioInvoiceChecks({
   const html = await printed.text();
   assert.equal(printed.status, 200);
   assert.match(html, /1,800.00/);
-  assert.match(html, /awaiting client approval/);
+  assert.match(html, /Awaiting client approval/);
   for (const secret of ["PRIVATE CHANGE NOTE", "PRIVATE STRIPE REFERENCE"])
     assert.ok(!html.includes(secret));
   for (const suffix of ["", "/print"])

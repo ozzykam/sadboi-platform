@@ -57,7 +57,9 @@ export function StudioInvoiceHelp() {
           Add a Private change note, such as “Prepared draft while confirming
           billing recipient and tax,” and Save draft. Review the saved document.
           Once the required details are complete, add a Private action note and
-          Issue invoice. This freezes the details, assigns an INV number and
+          Issue invoice. This freezes the details, assigns a number such as
+          261106-JER-001 (last draft save date in Chicago time, first three
+          letters of the billed-to name, and a continuous sequence), and
           calculates the due date in UTC calendar days. Issuing does not send
           anything or record a signature.
         </li>

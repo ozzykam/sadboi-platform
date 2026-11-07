@@ -9,6 +9,7 @@ import {
   studioInvoiceSchema,
   studioInvoicePaid,
   studioInvoiceTotals,
+  studioInvoiceNumber,
   type InvoiceDefaults,
   type StudioInvoice,
 } from "@sadboi/core";
@@ -225,7 +226,9 @@ export async function saveStudioInvoice(raw: unknown, staff: Staff) {
         old,
         command,
         now,
-        `INV-${String(sequence).padStart(6, "0")}`,
+        command.action === "issue" && old
+          ? studioInvoiceNumber(old.updatedAt, old.input.billTo.name, sequence)
+          : undefined,
       );
     } catch (error) {
       fail(
